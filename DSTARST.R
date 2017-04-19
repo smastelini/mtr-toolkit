@@ -1,4 +1,4 @@
-# dstars.n.folds.tracking <- 5
+# n.folds.tracking <- 5
 # # Delta de erro para continuar aprofundando camadas
 # dstars.delta <- 0.0001
 # # Porcentagem de utilização de uma camada durante tuning para esta ser utilizada no treinamento final
@@ -38,7 +38,7 @@ for(i in 1:length(bases)) {
 	if(length(bases.teste) > 0 && folds.num == 1) {
 		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
 		dataset.teste <- as.data.frame(sapply(dataset.teste, function(x) as.numeric(x)))
-		dataset.teste <- as.data.frame(scale(dataset.teste, center = mins, scale = maxs - mins))
+		dataset.teste <- as.data.frame(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 		init.bound <- nrow(dataset) + 1
 		dataset <- rbind(dataset, dataset.teste)
 		sample.names <- c(sample.names, rownames(dataset.teste))
@@ -80,10 +80,10 @@ for(i in 1:length(bases)) {
 		testing.set.x <- x[testing.idx,]
 		testing.set.y <- y[testing.idx,]
 
-		len.fold.tuning <- round(nrow(modelling.set.x)/dstars.n.folds.tracking)
+		len.fold.tuning <- round(nrow(modelling.set.x)/n.folds.tracking)
 
-		convergence.layers <- as.data.frame(setNames(replicate(length(targets[[i]]), numeric(length(dstars.n.folds.tracking)), simplify = F), targets[[i]]))
-		convergence.layers <- cbind(1:dstars.n.folds.tracking, convergence.layers)
+		convergence.layers <- as.data.frame(setNames(replicate(length(targets[[i]]), numeric(length(n.folds.tracking)), simplify = F), targets[[i]]))
+		convergence.layers <- cbind(1:n.folds.tracking, convergence.layers)
 		colnames(convergence.layers)[1] <- "folds/layers"
 
 		convergence.tracking <- as.data.frame(setNames(replicate(length(targets[[i]]), numeric(0), simplify = F), targets[[i]]))
@@ -91,10 +91,10 @@ for(i in 1:length(bases)) {
 		print(paste("Tuning"))
 
 		# Cross validation
-		for(k in 1:dstars.n.folds.tracking) {
+		for(k in 1:n.folds.tracking) {
 			print(paste("Fold tuning", k))
-			validation.idx <- as.numeric(rownames(modelling.set.x[((k-1)*len.fold.tuning + 1):(ifelse(k==dstars.n.folds.tracking, nrow(modelling.set.x), k*len.fold.tuning)),]))
-			training.idx <- if(dstars.n.folds.tracking == 1) validation.idx else as.numeric(rownames(modelling.set.x[-validation.idx,]))
+			validation.idx <- as.numeric(rownames(modelling.set.x[((k-1)*len.fold.tuning + 1):(ifelse(k==n.folds.tracking, nrow(modelling.set.x), k*len.fold.tuning)),]))
+			training.idx <- if(n.folds.tracking == 1) validation.idx else as.numeric(rownames(modelling.set.x[-validation.idx,]))
 
 			x.training.tuning <- modelling.set.x[training.idx,]
 			y.training.tuning <- modelling.set.y[training.idx,]
@@ -155,7 +155,7 @@ for(i in 1:length(bases)) {
 		rownames(convergence.tracking) <- 0:(nrow(convergence.tracking)-1)
 		write.csv(convergence.tracking, paste0(output.dir.dstarst, "/output_logs/convergence_layers_logs/", bases[i], "_", tech, "_convergence_accounting_EV_fold_", formatC(j, width=2, flag="0"), ".csv"))
 
-		convergence.tracking <- convergence.tracking/dstars.n.folds.tracking
+		convergence.tracking <- convergence.tracking/n.folds.tracking
 		convergence.layers_ <- convergence.layers
 
 		# Varia valores de phi
@@ -255,7 +255,7 @@ lapply(bases, function(b) {
 				r <- (maxs[[i]][t]-mins[[i]][t])*log[,t] + mins[[i]][t]
 				p <- (maxs[[i]][t]-mins[[i]][t])*log[,paste0(t, ".pred")] + mins[[i]][t]
 
-				folds.log[nrow(folds.log), paste0("RMSE.", t)] <<- RMSE(r, p)
+				repetition.log[nrow(repetition.log), paste0("RMSE.", t)] <<- RMSE(r, p)
 			}
 
 		})

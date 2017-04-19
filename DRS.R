@@ -1,3 +1,4 @@
+layers <- c(1:number.layers)
 # dir.create(paste0(output.dir.drs, "/prediction_logs/", tech), showWarnings = FALSE, recursive = TRUE)
 
 dir.create(paste0(output.dir.drs, "/output_logs/internal_logs"), showWarnings = FALSE, recursive = TRUE)
@@ -34,7 +35,7 @@ for (b in 1:length(bases)) { ### para b bases
 	if(length(bases.teste) > 0 && folds.num == 1) {
 		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[b], ".csv"))
 		dataset.teste <- as.data.frame(sapply(dataset.teste, function(x) as.numeric(x)))
-		dataset.teste <- as.data.frame(scale(dataset.teste, center = mins, scale = maxs - mins))
+		dataset.teste <- as.data.frame(scale(dataset.teste, center = mins[[b]], scale = maxs[[b]] - mins[[b]]))
 		init.bound <- nrow(dataset) + 1
 		dataset <- rbind(dataset, dataset.teste)
 		sample.names <- c(sample.names, rownames(dataset.teste))
@@ -78,7 +79,7 @@ for (b in 1:length(bases)) { ### para b bases
 
 		x.teste <- x1[test.out.idx,]
 		y.teste <- y1[test.out.idx,]
-		len.fold.tuning <- round(nrow(x)/folds.num)
+		len.fold.tuning <- round(nrow(x)/n.folds.tracking)
 
 
 		#############loop para recortes, ao final de cada loop o target que obteve o menor rmse sera "removido"
@@ -96,9 +97,9 @@ for (b in 1:length(bases)) { ### para b bases
 			print("Begin tracking")
 
 			#####começa o cross validation "interno"
-			for(k in 1:folds.num) {
-				test.idx <- as.numeric(rownames(x[(ifelse(((k-1)*len.fold.tuning + 1)>nrow(x), nrow(x), (k-1)*len.fold.tuning + 1)):(ifelse(k==folds.num, nrow(x), k*len.fold.tuning)),]))
-				train.idx <- if(folds.num == 1) test.idx else as.numeric(rownames(x[-test.idx,]))
+			for(k in 1:n.folds.tracking) {
+				test.idx <- as.numeric(rownames(x[(ifelse(((k-1)*len.fold.tuning + 1)>nrow(x), nrow(x), (k-1)*len.fold.tuning + 1)):(ifelse(k==n.folds.tracking, nrow(x), k*len.fold.tuning)),]))
+				train.idx <- if(n.folds.tracking == 1) test.idx else as.numeric(rownames(x[-test.idx,]))
 
 				x.train <- x[train.idx,]
 				y.train <- as.data.frame(y[train.idx,])
@@ -162,7 +163,7 @@ for (b in 1:length(bases)) { ### para b bases
 														simplify = F), names.perf.log)), stringsAsFactors = FALSE)
 			folds.log <<- as.data.frame(setNames(replicate(length(names.perf.log),numeric(0),
 														simplify = F), names.perf.log), stringsAsFactors = FALSE)
-			lapply(1:folds.num, function(k) {
+			lapply(1:n.folds.tracking, function(k) {
 				log <- read.csv(paste(getwd(),"/", bases[b], "_", tech, paste("_validation_predictions_EV_fold_", formatC(out, width=2, flag="0"), "_step", paradas, "_TN_fold", formatC(k, width=2, flag="0"), sep=""), ".csv", sep=""), header=TRUE, check.names = FALSE)
 					# targets
 					for (l in layers){

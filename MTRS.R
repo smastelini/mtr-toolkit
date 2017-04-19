@@ -33,7 +33,7 @@ for(i in 1:length(bases)) {
 	if(length(bases.teste) > 0 && folds.num == 1) {
 		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
 		dataset.teste <- as.data.frame(sapply(dataset.teste, function(x) as.numeric(x)))
-		dataset.teste <- as.data.frame(scale(dataset.teste, center = mins, scale = maxs - mins))
+		dataset.teste <- as.data.frame(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 		init.bound <- nrow(dataset) + 1
 		dataset <- rbind(dataset, dataset.teste)
 		sample.names <- c(sample.names, rownames(dataset.teste))

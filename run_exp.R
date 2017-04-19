@@ -11,46 +11,18 @@ library(xgboost)
 library(caret)
 library(BBmisc)
 library(permute)
-
-use.pls <- FALSE
-
-dstars.n.folds.tracking <- 10
-dstars.delta <- 0.0001
-# dstars.phi <- 0.0
-
-#DRS
-number.layers <- 10
-layers <- c(1:number.layers)
-###############################################################################
-#########################CONFIGURAÇÕES GERAIS##################################
-###############################################################################
-
-# bases <- c("andro","edm","enb","jura","slump","sf1","sf2","scpf")
-# n.targets <- c(6,2,2,3,3,3,3,3)
-bases <- c("atp1d", "atp7d")
-n.targets <- c(6,6)
-
-bases.teste <- NULL
-
-# techs <- c("cart")
-# techs <- c("parrf", "svm", "xgboost", "cart")
-techs <- c("svm", "xgboost", "cart")
-
-folds.num <- 10
-
-datasets.folder <- "~/MEGA/MT_datasets"
-output.prefix <- "~/MEGA/Experimentos/DRS_BRACIS"
-
-# mt.techs <- c("DRS")
-mt.techs <- c("ST", "MTRS", "ERC", "DSTARST", "DRS")
-
-must.compare <- FALSE
-generate.final.table <- FALSE
-###############################################################################
-###############################################################################
-###############################################################################
-
+#Bibliotecas extras
 source("utils_MT.R")
+# DSTARS -> Default
+n.folds.tracking <- 10
+dstars.delta <- 0.0001
+dstars.phi <- 0.5
+#DRS -> Default
+number.layers <- 10
+
+#Carrega arquivo de configuração
+source("config.mtr")
+
 #Numero maximo de componentes da PLS para avaliar
 train.test$comp.limit <- 40
 
@@ -73,7 +45,7 @@ for(tech in techs) {
 }
 
 if(must.compare) {
-	mt.techs <- gsub("DSTARST", "DSTARS", mt.techs)
+	# mt.techs <- gsub("DSTARST", "DSTARS", mt.techs)
 	comparison.folder <- paste0(output.prefix, "/comparison_results")
 	dir.create(comparison.folder, showWarnings = FALSE, recursive = TRUE)
 	sapply(mt.techs, function(MT) {
