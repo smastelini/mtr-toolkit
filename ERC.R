@@ -1,6 +1,8 @@
 dir.create(paste0(output.dir.erc, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
 
 targets <- list()
+maxs <- list()
+mins <- list()
 
 for(i in 1:length(bases)) {
 	dataset <- read.csv(paste0(datasets.folder, "/", bases[i], ".csv"))
@@ -13,9 +15,9 @@ for(i in 1:length(bases)) {
 
 	dataset <- as.data.frame(sapply(dataset, function(x) as.numeric(x)))
 
-	maxs <- apply(dataset, 2, max)
-	mins <- apply(dataset, 2, min)
-	dataset <- as.data.frame(scale(dataset, center = mins, scale = maxs - mins))
+	maxs[[i]] <- apply(dataset, 2, max)
+	mins[[i]] <- apply(dataset, 2, min)
+	dataset <- as.data.frame(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 
 	len.fold <- round(nrow(dataset)/folds.num)
 
@@ -165,7 +167,11 @@ lapply(bases, function(b) {
 		# targets
 		for(t in targets[[i]]) {
 			folds.log[nrow(folds.log), paste0("R2.", t)] <<- summary(lm(log[,t] ~ log[, paste0(t, ".pred")]))$r.squared
-			folds.log[nrow(folds.log), paste0("RMSE.", t)] <<- RMSE(log[,t], log[, paste0(t, ".pred")])
+
+			r <- (maxs[[i]][t]-mins[[i]][t])*log[,t] + mins[[i]][t]
+			p <- (maxs[[i]][t]-mins[[i]][t])*log[,paste0(t, ".pred")] + mins[[i]][t]
+
+			folds.log[nrow(folds.log), paste0("RMSE.", t)] <<- RMSE(r, p)
 		}
 	})
 	performance.log[nrow(performance.log)+1, 1] <<- tech

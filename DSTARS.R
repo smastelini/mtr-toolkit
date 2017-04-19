@@ -13,6 +13,8 @@ dir.create(paste0(output.dir.dstars, "/output_logs/testing_raw_logs"), showWarni
 dir.create(paste0(output.dir.dstars, "/output_logs/testing_final_logs"), showWarnings = FALSE, recursive = TRUE)
 
 targets <- list()
+maxs <- list()
+mins <- list()
 
 for(i in 1:length(bases)) {
 	dataset <- read.csv(paste0(datasets.folder, "/", bases[i], ".csv"))
@@ -22,9 +24,9 @@ for(i in 1:length(bases)) {
 
 	#Center e Scaling
 	dataset <- as.data.frame(sapply(dataset, function(x) as.numeric(x)))
-	maxs <- apply(dataset, 2, max)
-	mins <- apply(dataset, 2, min)
-	dataset <- as.data.frame(scale(dataset, center = mins, scale = maxs - mins))
+	maxs[[i]] <- apply(dataset, 2, max)
+	mins[[i]] <- apply(dataset, 2, min)
+	dataset <- as.data.frame(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 
 	dataset <- dataset[sample(nrow(dataset)),]
 	sample.names <- rownames(dataset)
@@ -234,7 +236,11 @@ lapply(bases, function(b) {
 		# targets
 		for(t in targets[[i]]) {
 			repetition.log[nrow(repetition.log), paste0("R2.", t)] <<- summary(lm(log[,t] ~ log[, paste0(t, ".pred")]))$r.squared
-			repetition.log[nrow(repetition.log), paste0("RMSE.", t)] <<- RMSE(log[,t], log[, paste0(t, ".pred")])
+
+			r <- (maxs[[i]][t]-mins[[i]][t])*log[,t] + mins[[i]][t]
+			p <- (maxs[[i]][t]-mins[[i]][t])*log[,paste0(t, ".pred")] + mins[[i]][t]
+
+			folds.log[nrow(folds.log), paste0("RMSE.", t)] <<- RMSE(r, p)
 		}
 
 	})

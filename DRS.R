@@ -9,6 +9,8 @@ dir.create(paste0(output.dir.drs, "/output_logs/EV_raw"), showWarnings = FALSE, 
 #number.layers<-10
 
 targets <- list()
+maxs <- list()
+mins <- list()
 
 for (b in 1:length(bases)) { ### para b bases
 	print(bases[b])
@@ -21,16 +23,16 @@ for (b in 1:length(bases)) { ### para b bases
 	sample.names <- rownames(dataset)
 
 	dataset <- as.data.frame(sapply(dataset,function(x) as.numeric(x)))
-	maxs <- apply(dataset, 2, max)
-	mins <- apply(dataset, 2, min)
-	dataset <- as.data.frame(scale(dataset, center = mins, scale = maxs - mins))
+	maxs[[b]] <- apply(dataset, 2, max)
+	mins[[b]] <- apply(dataset, 2, min)
+	dataset <- as.data.frame(scale(dataset, center = mins[[b]], scale = maxs[[b]] - mins[[b]]))
 
 
 	len.fold <- round(nrow(dataset)/folds.num)
 
 	######Usar um testing set
 	if(length(bases.teste) > 0 && folds.num == 1) {
-		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
+		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[b], ".csv"))
 		dataset.teste <- as.data.frame(sapply(dataset.teste, function(x) as.numeric(x)))
 		dataset.teste <- as.data.frame(scale(dataset.teste, center = mins, scale = maxs - mins))
 		init.bound <- nrow(dataset) + 1
@@ -161,7 +163,6 @@ for (b in 1:length(bases)) { ### para b bases
 			folds.log <<- as.data.frame(setNames(replicate(length(names.perf.log),numeric(0),
 														simplify = F), names.perf.log), stringsAsFactors = FALSE)
 			lapply(1:folds.num, function(k) {
-				# TODO remover metricas desnecessarias
 				log <- read.csv(paste(getwd(),"/", bases[b], "_", tech, paste("_validation_predictions_EV_fold_", formatC(out, width=2, flag="0"), "_step", paradas, "_TN_fold", formatC(k, width=2, flag="0"), sep=""), ".csv", sep=""), header=TRUE, check.names = FALSE)
 					# targets
 					for (l in layers){
@@ -210,13 +211,6 @@ for (b in 1:length(bases)) { ### para b bases
 
 			temporaria <- which.min(mins.maxs[,"Min.Value.Target"])
 			maxima.camada <- mins.maxs[temporaria, "Min.Layer"]
-
-			# for(tar in 1:length(targets[[b]])){
-			# if(mins.maxs[tar,"Min.Value.Target"]==temporaria){
-			# temporaria<-tar
-			# maxima.camada<-mins.maxs[tar, "Min.Layer"]
-			# }
-			# }
 
 			input <- x
 			input.tes <- x.teste
@@ -308,7 +302,10 @@ for (b in 1:length(bases)) {
 
 			save.the.date <- if(aleats == 1) logt else cbind(save.the.date, logt)
 
-			folds.log2[nrow(folds.log2)+1, paste("RMSE.", colnames(logt)[1], sep = "")]<- RMSE(logt[,colnames(logt)[1]], logt[,colnames(logt)[2]])
+			r <- (maxs[[b]][t]-mins[[b]][t])*logt[,colnames(logt)[1]] + mins[[b]][t]
+			p <- (maxs[[b]][t]-mins[[b]][t])*logt[,colnames(logt)[2]] + mins[[b]][t]
+
+			folds.log2[nrow(folds.log2)+1, paste("RMSE.", colnames(logt)[1], sep = "")]<- RMSE(r, p)
 			folds.log2[nrow(folds.log2), paste("R2.", targets[[b]][aleats], sep = "")] <- summary(lm(logt[,colnames(logt)[1]] ~ logt[, colnames(logt)[2]]))$r.squared
 		}
 
