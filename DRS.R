@@ -167,6 +167,9 @@ for (i in 1:length(bases)) {
 			write.csv(p.mo, paste0(output.dir.drs, "/output_logs/testing_logs/predictions_", bases[i], "_", tech, "_ef", formatC(k, width=2, flag="0"), "_T", r, ".csv"))
 			write.csv(p.te, paste0(output.dir.drs, "/output_logs/testing_logs/predictions_", bases[i], "_", tech, "_ef", formatC(k, width=2, flag="0"), "_T", r, ".csv"))
 
+			moX[,targets2rank[e.idxs[1]]] <- p.mo[,paste0(targets2rank[e.idxs[1]], ".pred")]
+			teX[,targets2rank[e.idxs[1]]] <- p.te[,paste0(targets2rank[e.idxs[1]], ".pred")]
+
 			targets2rank <- targets2rank[-e.idxs[1]]
 		}
 	}

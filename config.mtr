@@ -3,16 +3,16 @@
 ###############################################################################
 
 use.pls <- FALSE
-bases <- c("edm")
-n.targets <- c(2)
+bases <- c("andro","edm","enb","jura","slump","sf1","sf2","scpf","atp1d","atp7d")
+n.targets <- c(6,2,2,3,3,3,3,3,6,6)
 bases.teste <- NULL
 
-techs <- c("svm")
+techs <- c("parrf", "svm", "xgboost", "cart")
 
 folds.num <- 10
 
 datasets.folder <- "~/MEGA/MT_datasets"
-output.prefix <- "~/Desktop"
+output.prefix <- "~/Desktop/DRS_BRACIS"
 
 mt.techs <- c("DRS")
 
