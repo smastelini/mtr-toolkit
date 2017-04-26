@@ -24,7 +24,7 @@ for (i in 1:length(bases)) {
 
 	l.folds <- round(nrow(dataset)/folds.num)
 
-	# Usar um testing set
+	# Use a testing
 	if(length(bases.teste) > 0 && folds.num == 1) {
 		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
 		dataset.teste <- as.data.frame(sapply(dataset.teste, function(x) as.numeric(x)))

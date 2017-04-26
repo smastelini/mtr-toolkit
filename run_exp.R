@@ -11,7 +11,7 @@ library(xgboost)
 library(caret)
 library(BBmisc)
 library(permute)
-#Bibliotecas extras
+#Extra libs
 source("utils_MT.R")
 # DSTARS -> Default
 n.folds.tracking <- 10
@@ -20,13 +20,13 @@ dstars.phi <- 0.5
 #DRS -> Default
 number.layers <- 10
 
-#Carrega arquivo de configuração
+#Loads configuration file
 source("config.mtr")
 
-#Numero maximo de componentes da PLS para avaliar
+#Max. PLS components to evaluate
 train.test$comp.limit <- 40
 
-# Cria diretórios de saída
+# Creates output directories
 for(mt in mt.techs) {
 	assign(paste0("output.dir.", tolower(mt)), paste0(output.prefix, "/", mt))
 }

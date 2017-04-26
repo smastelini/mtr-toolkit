@@ -1,9 +1,3 @@
-# n.folds.tracking <- 5
-# # Delta de erro para continuar aprofundando camadas
-# dstars.delta <- 0.0001
-# # Porcentagem de utilização de uma camada durante tuning para esta ser utilizada no treinamento final
-# # Padrão: "se algum modelo durante o tuning utilizou a camada l, durante a modelagem final também será utilizada"
-# dstars.phi <- 0.1
 epsilon <- 0.0
 
 dir.create(paste0(output.dir.dstars, "/output_logs/tuning_raw_logs"), showWarnings = FALSE, recursive = TRUE)
@@ -18,11 +12,11 @@ mins <- list()
 
 for(i in 1:length(bases)) {
 	dataset <- read.csv(paste0(datasets.folder, "/", bases[i], ".csv"))
-	# dataset <- remove.unique(dataset)
+	dataset <- remove.unique(dataset)
 
 	targets[[i]] <- colnames(dataset)[(ncol(dataset)-n.targets[i]+1):ncol(dataset)]
 
-	#Center e Scaling
+	#Center and Scaling
 	dataset <- as.data.frame(sapply(dataset, function(x) as.numeric(x)))
 	maxs[[i]] <- apply(dataset, 2, max)
 	mins[[i]] <- apply(dataset, 2, min)
@@ -33,7 +27,7 @@ for(i in 1:length(bases)) {
 
 	len.fold.eval <- round(nrow(dataset))/folds.num
 
-	######Usar um testing set
+	######Use a testing set
 	if(length(bases.teste) > 0 && folds.num == 1) {
 		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
 		dataset.teste <- as.data.frame(sapply(dataset.teste, function(x) as.numeric(x)))
@@ -146,7 +140,6 @@ for(i in 1:length(bases)) {
 			rownames(predictions.training) <- modelling.names[training.idx]
 			rownames(predictions.validation) <- modelling.names[validation.idx]
 
-			#print log de layers
 			write.csv(predictions.training, paste0(output.dir.dstars, "/output_logs/tuning_raw_logs/", bases[i], "_", tech, "_training_predictions_EV_fold_", formatC(j, width=2, flag="0"), "_TN_fold", formatC(k, width=2, flag="0"), ".csv"))
 			write.csv(predictions.validation, paste0(output.dir.dstars, "/output_logs/tuning_raw_logs/", bases[i], "_", tech, "_validation_predictions_EV_fold_", formatC(j, width=2, flag="0"), "_TN_fold", formatC(k, width=2, flag="0"), ".csv"))
 		}

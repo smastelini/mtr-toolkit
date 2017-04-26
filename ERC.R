@@ -21,7 +21,7 @@ for(i in 1:length(bases)) {
 
 	len.fold <- round(nrow(dataset)/folds.num)
 
-	######Usar um testing set
+	######Use a testing set
 	if(length(bases.teste) > 0 && folds.num == 1) {
 		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
 		dataset.teste <- as.data.frame(sapply(dataset.teste, function(x) as.numeric(x)))
@@ -44,9 +44,9 @@ for(i in 1:length(bases)) {
 		col.names.targets <- c(col.names.targets, paste0(t, ".pred"))
 	}
 
-	#Combinacoes chains
+	# Chain combinations
 	nperm <- factorial(n.targets[i])
-	#Filtro tamanho
+	#Length filter
 	if(nperm > 10) {
 		cbn <- shuffleSet(n.targets[i], 500, quietly = TRUE)
 		cbn <- rbind(cbn, c(1:ncol(y)))
@@ -95,7 +95,7 @@ for(i in 1:length(bases)) {
 			xtrn <- x.train
 			xtst <- x.test
 
-			# Construcao dos conjuntos de treinamento e teste
+			# Training and testing sets building
 			len.cbn <- length(combinations[[j]])
 			if(length(models[[paste(combinations[[j]][1:(len.cbn-1)], collapse="-")]]) != 0) {
 				for(l in 1:(len.cbn-1)) {
@@ -118,7 +118,7 @@ for(i in 1:length(bases)) {
 			models[[actual.model]] <- list(pred.trn=pred.train, pred.tst=pred.test)
 		}
 
-		#Logs predicoes
+		#Prediction logs
 		prediction.log <- as.data.frame(setNames(replicate(length(col.names.targets),numeric(nrow(x.test)), simplify = F),
 															col.names.targets))
 

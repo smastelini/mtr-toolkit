@@ -34,7 +34,7 @@ dataset <- read.csv("~/Desktop/Base_NIR.csv", stringsAsFactors = F)
 amostras <- dataset[,1]
 dataset <- dataset[,-1]
 pca.m <- prcomp(dataset, center = TRUE, scale. = TRUE)
-# Escolha de qual componente utilizar
+# Component choice
 summary(pca.m)
 
 output <- matrix(nrow=nrow(dataset), ncol=14, 0)
@@ -50,7 +50,7 @@ output <- cbind(amostras, output)
 
 targets <- read.csv("~/Desktop/Resultados_WB.csv")[,-1]
 full10t <- cbind(output, targets[,1:10])
-#BASE FULL
+#Full dataset
 write.csv(full10t, "~/Desktop/NIR_Wooden_FULL10t.csv", row.names = F)
 
 half12t <- cbind(output[c(1:20, 41:60),], targets[c(1:20, 41:60),])

@@ -1,11 +1,3 @@
-###############################################################
-####################Definiçoes iniciais########################
-# output.dir.mtrs <- "~/mastelini/regression_MT/exp_benchmarks2.0/NO_TUNE/MTRS"
-# bases <- c("andro","atp1d","atp7d","edm","enb","jura","oes10","oes97","osales","rf1","rf2","scm1d",
-# 					 "scm20d","scpf","sf1","sf2","slump","wq")
-# n.targets <- c(6,6,6,2,2,3,16,16,12,8,8,16,16,3,3,3,3,14)
-# datasets.folder <- "~/mastelini/regression_MT/exp_benchmarks2.0/datasets"
-
 dir.create(paste0(output.dir.mtrs, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
 
 targets <- list()
@@ -29,7 +21,7 @@ for(i in 1:length(bases)) {
 
 	len.fold <- round(nrow(dataset)/folds.num)
 
-	######Usar um testing set
+	######Use a testing set
 	if(length(bases.teste) > 0 && folds.num == 1) {
 		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
 		dataset.teste <- as.data.frame(sapply(dataset.teste, function(x) as.numeric(x)))
@@ -75,14 +67,14 @@ for(i in 1:length(bases)) {
 		x.test <- x[test.idx,]
 		y.test <- y[test.idx,]
 
-		# Predicoes train set => input segunda camada de preditores
+		# Predictions trainining set => input to the second layer of regressors
 		predictions.l1.train <- as.data.frame(setNames(replicate(length(targets[[i]]),numeric(nrow(x.train)), simplify = F),
 																									targets[[i]]))
-		# Predicoes test set => input segunda camada de preditores
+		# Predictions testing set => input to the second layer of regressors
 		predictions.l1.test <- as.data.frame(setNames(replicate(length(targets[[i]]),numeric(nrow(x.test)), simplify = F),
 																									targets[[i]]))
 
-		# Logs finais
+		# Final logs
 		prediction.log <- as.data.frame(setNames(replicate(length(col.names.targets),numeric(nrow(x.test)), simplify = F),
 																									col.names.targets))
 

@@ -1,11 +1,3 @@
-###############################################################
-####################Definiçoes iniciais########################
-# output.dir.st <- "~/mastelini/regression_MT/exp_benchmarks2.0/NO_TUNE/ST"
-# bases <- c("andro","atp1d","atp7d","edm","enb","jura","oes10","oes97","osales","rf1","rf2","scm1d",
-#			"scm20d","scpf","sf1","sf2","slump","wq")
-# n.targets <- c(6,6,6,2,2,3,16,16,12,8,8,16,16,3,3,3,3,14)
-
-
 dir.create(paste0(output.dir.st, "/prediction_logs/", tech), showWarnings = FALSE, recursive = TRUE)
 
 targets <- list()
@@ -17,9 +9,6 @@ for(i in 1:length(bases)) {
 	dataset <- remove.unique(dataset)
 
 	targets[[i]] <- colnames(dataset)[(ncol(dataset)-n.targets[i]+1):ncol(dataset)]
-
-	# Remocao de atributos de qualidade de imagem
-	# dataset <- subset(dataset, select = -c(SNM, GCF, EME))
 
 	dataset <- dataset[sample(nrow(dataset)),]
 	# sample.names <- dataset[,c(1)]
@@ -34,7 +23,7 @@ for(i in 1:length(bases)) {
 
 	len.fold <- round(nrow(dataset)/folds.num)
 
-	######Usar um testing set
+	###### Use a testing set
 	if(length(bases.teste) > 0 && folds.num == 1) {
 		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
 		dataset.teste <- as.data.frame(sapply(dataset.teste, function(x) as.numeric(x)))

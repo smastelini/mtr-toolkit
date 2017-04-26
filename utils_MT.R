@@ -1,5 +1,5 @@
 ###############################################################
-###################MÃ©tricas de AvaliaÃ§Ã£o#######################
+###################Evaluation metrics##########################
 ###############################################################
 # average Correlation Coefficient
 aCC <- function(log, targets) {
@@ -215,7 +215,7 @@ predict_ <- function(regressor, new.data, tech = 'svm', targets) {
 	return(predicted)
 }
 ###############################################################
-# Remocao de atributos com um unico valor
+# Remove columns with an unique value
 remove.unique <- function(dataset) {
 	uniquelength <- sapply(dataset, function(x) length(unique(x)))
 	return(subset(dataset, select = uniquelength > 1))

@@ -13,7 +13,7 @@ library(caret)
 use.pls <- FALSE
 source("utils_MT.R")
 # cmpfile("utils_MT.R")
-#Numero maximo de componentes para avaliar
+# Max PLS components to evaluate
 train.test$comp.limit <- 40
 
 library("foreach")
