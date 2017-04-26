@@ -1,5 +1,5 @@
 ###############################################################
-###################Métricas de Avaliação#######################
+###################MÃ©tricas de AvaliaÃ§Ã£o#######################
 ###############################################################
 # average Correlation Coefficient
 aCC <- function(log, targets) {
@@ -91,7 +91,7 @@ train_ <- function(x, y, tech='svm', targets) {
 			x <- x[, !(colnames(x) %in% filtered)]
 			x <- as.matrix(x)
 			train.test$pls.model <- plsr(y ~ x, ncomp = train.test$comp.limit, validation = "CV")
-			determination <- R2(train.test$pls.model)$val[,1,-1]
+			determination <- pls::R2(train.test$pls.model)$val[,1,-1]
 			train.test$max.comp <- which.max(determination)
 
 			x.extracted <- cbind(x %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,], tgts)
@@ -99,7 +99,7 @@ train_ <- function(x, y, tech='svm', targets) {
 		} else {
 			x <- as.matrix(x)
 			train.test$pls.model <- plsr(y ~ x, ncomp = train.test$comp.limit, validation = "CV")
-			determination <- R2(train.test$pls.model)$val[,1,-1]
+			determination <- pls::R2(train.test$pls.model)$val[,1,-1]
 			train.test$max.comp <- which.max(determination)
 
 			x.extracted <- as.data.frame(x %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,])
