@@ -94,7 +94,9 @@ train_ <- function(x, y, tech='svm', targets) {
 			determination <- pls::R2(train.test$pls.model)$val[,1,-1]
 			train.test$max.comp <- which.max(determination)
 
-			x.extracted <- cbind(x %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,], tgts)
+			x.extracted <- as.data.frame(cbind(x %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,], tgts))
+			colnames(x.extracted)[1:train.test$max.comp] <- paste0("comp", 1:train.test$max.comp)
+
 
 		} else {
 			x <- as.matrix(x)
@@ -103,9 +105,8 @@ train_ <- function(x, y, tech='svm', targets) {
 			train.test$max.comp <- which.max(determination)
 
 			x.extracted <- as.data.frame(x %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,])
+			colnames(x.extracted) <- paste0("comp", 1:ncol(x.extracted))
 		}
-		if(train.test$max.comp == 1)
-		  colnames(x.extracted)[1] <- "1 comp"
 		x <- x.extracted
 	}
 
@@ -146,8 +147,10 @@ train_ <- function(x, y, tech='svm', targets) {
 			lm.ridge(y ~ x)
 		},
 		lr={
-			x <- as.matrix(x)
-			lm(y ~ x)
+		  data2fit <- cbind(x,y)
+		  colnames(data2fit)[ncol(data2fit)] <- "LR_Target"
+		  lr.form <- as.formula(paste0("LR_Target ~ ", paste(colnames(x), collapse = " + ")))
+			lm(lr.form, data = data2fit)
 		},
 		parrf={
 			foreach(ntree = c(70,70,70,70,70,70,80), .combine = combine, .packages = "randomForest") %dopar% randomForest(x, y, ntree = ntree)
@@ -165,15 +168,13 @@ predict_ <- function(regressor, new.data, tech = 'svm', targets) {
 			x_ <- new.data[, !(colnames(new.data) %in% filtered)]
 			x_ <- as.matrix(x_)
 			x.extracted <- as.data.frame(cbind(x_ %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,], tgts))
-
+			colnames(x.extracted)[1:train.test$max.comp] <- paste0("comp", 1:train.test$max.comp)
 
 		} else {
 			x_ <- as.matrix(new.data)
 			x.extracted <- as.data.frame(x_ %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,])
+			colnames(x.extracted) <- paste0("comp", 1:ncol(x.extracted))
 		}
-
-		if(train.test$max.comp == 1)
-		  colnames(x.extracted)[1] <- "1 comp"
 		new.data <- x.extracted
 	}
 
@@ -204,8 +205,9 @@ predict_ <- function(regressor, new.data, tech = 'svm', targets) {
 			scale(as.matrix(new.data), center = regressor$xm, scale = regressor$scales)%*%regressor$coef + regressor$ym
 		},
 		lr={
-		  regressor$coefficients[is.na(regressor$coefficients)] <- 0
-		  as.numeric(as.matrix(new.data)%*%regressor$coefficients[-1] + regressor$coefficients[1])
+		  # regressor$coefficients[is.na(regressor$coefficients)] <- 0
+		  # as.numeric(as.matrix(new.data)%*%regressor$coefficients[-1] + regressor$coefficients[1])
+		  predict(regressor, new.data)
 		},
 		parrf={
 			predict(regressor, new.data)

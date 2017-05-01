@@ -24,7 +24,7 @@ number.layers <- 10
 source("config.mtr")
 
 #Max. PLS components to evaluate
-train.test$comp.limit <- 40
+train.test$comp.limit <- 25
 
 # Creates output directories
 for(mt in mt.techs) {
