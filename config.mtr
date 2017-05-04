@@ -3,18 +3,18 @@
 ###############################################################################
 
 use.pls <- FALSE
-bases <- c("andro","edm","enb","jura","slump","sf1","sf2","scpf","atp1d","atp7d")
-n.targets <- c(6,2,2,3,3,3,3,3,6,6)
+bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scfp")
+n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
 bases.teste <- NULL
 
 techs <- c("parrf", "svm", "xgboost", "cart")
 
 folds.num <- 10
 
-datasets.folder <- "~/MEGA/MT_datasets"
-output.prefix <- "~/Desktop/DRS_BRACIS"
+datasets.folder <- "~/MT_datasets"
+output.prefix <- "~/mastelini/FULL_BENCH"
 
-mt.techs <- c("DRS")
+mt.techs <- c("ST", "MTRS", "ERC")
 
 must.compare <- TRUE
 generate.final.table <- FALSE
