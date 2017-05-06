@@ -36,7 +36,8 @@ for(i in 1:length(bases)) {
 	x <- dataset[, 1:(ncol(dataset)-length(targets[[i]]))]
 	y <- dataset[, targets[[i]]]
 
-	print(bases[i])
+	if(showProgress){pb$tick()}else{print(bases[i])}
+	#print(bases[i])
 
 	col.names.targets <- c()
 	for(t in targets[[i]]) {
@@ -67,8 +68,8 @@ for(i in 1:length(bases)) {
 
 	# Cross validation
 	for(k in 1:folds.num) {
-		print(paste0("Fold ", k))
-
+		#print(paste0("Fold ", k))
+	  
 		if(folds.num == 1) {
 			if(length(bases.teste) > 0) {
 				train.idx <- 1:(init.bound-1)
@@ -90,11 +91,11 @@ for(i in 1:length(bases)) {
 
 
 		models <- list()
-
 		for(j in 1:length(combinations)) {
+			if(showProgress){pb$tick()}else{print(paste0("Fold ", k))}
 			xtrn <- x.train
 			xtst <- x.test
-
+			
 			# Training and testing sets building
 			len.cbn <- length(combinations[[j]])
 			if(length(models[[paste(combinations[[j]][1:(len.cbn-1)], collapse="-")]]) != 0) {
@@ -111,6 +112,7 @@ for(i in 1:length(bases)) {
 			pred.test <- as.data.frame(setNames(replicate(1, numeric(nrow(x.test)), simplify=F), t))
 
 			regressor <- train_(xtrn, y.train[,t], tech, targets[[i]])
+			
 
 			pred.train[,1] <- predict_(regressor, xtrn, tech, targets[[i]])
 			pred.test[,1] <- predict_(regressor, xtst, tech, targets[[i]])
@@ -123,13 +125,14 @@ for(i in 1:length(bases)) {
 															col.names.targets))
 
 		for(t in targets[[i]]) {
-			idx <- sapply(1:length(combinations), function(x) {
+		  if(showProgress){pb$tick()}
+		  idx <- sapply(1:length(combinations), function(x) {
 				return(combinations[[x]][length(combinations[[x]])] == t)
 			})
 			idx <- which(idx)
 
 			pred <- models[[idx[1]]]$pred.tst
-
+      
 			for(j in 2:length(idx)) {
 				pred <- cbind(pred, models[[idx[j]]]$pred.tst)
 			}
