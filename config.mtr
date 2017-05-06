@@ -16,6 +16,9 @@ output.prefix <- "~/mastelini/FULL_BENCH"
 
 mt.techs <- c("ST", "MTRS", "ERC")
 
+#Progress bar and remaining time exhibition
+showProgress <- TRUE
+
 must.compare <- TRUE
 generate.final.table <- FALSE
 ###############################################################################
