@@ -38,8 +38,7 @@ for(i in 1:length(bases)) {
 	x <- dataset[, 1:(ncol(dataset)-length(targets[[i]]))]
 	y <- dataset[, targets[[i]]]
 
-	print(bases[i])
-
+	if(showProgress){}else{print(bases[i])}
 	col.names.targets <- c()
 	for(t in targets[[i]]) {
 		col.names.targets <- c(col.names.targets, t)
@@ -48,7 +47,7 @@ for(i in 1:length(bases)) {
 
 	# Cross validation
 	for(k in 1:folds.num) {
-		print(paste0("Fold ", k))
+	  if(showProgress){}else{print(paste0("Fold ", k))}
 
 		if(folds.num == 1) {
 			if(length(bases.teste) > 0) {
@@ -73,7 +72,7 @@ for(i in 1:length(bases)) {
 													col.names.targets))
 
 		for(t in targets[[i]]) {
-			print(t)
+			if(showProgress){pb$tick()}else{print(t)}
 			predictions <- rep(0, nrow(x.test))
 			regressor <- train_(x.train, y.train[,t], tech, targets[[i]])
 			predictions <- predict_(regressor, x.test, tech, targets[[i]])
