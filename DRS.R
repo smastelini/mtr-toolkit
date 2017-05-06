@@ -9,7 +9,8 @@ maxs <- list()
 mins <- list()
 
 for (i in 1:length(bases)) {
-	print(bases[i])
+  if(showProgress){}else{print(bases[i])}
+  #print(bases[i])
 	dataset <- read.csv(paste0(datasets.folder, "/", bases[i], ".csv"))
 	dataset <- remove.unique(dataset)
 	targets[[i]] <- colnames(dataset)[(ncol(dataset)-n.targets[i]+1):ncol(dataset)]
@@ -40,7 +41,8 @@ for (i in 1:length(bases)) {
 
 	# Cross validation Evaluation
 	for(k in 1:folds.num) {
-		print(paste("Fold", k))
+	  if(showProgress){}else{print(paste("Fold", k))}
+	  #print(paste("Fold", k))
 
 		if(folds.num == 1) {
 			if(length(bases.teste) > 0) {
@@ -64,13 +66,16 @@ for (i in 1:length(bases)) {
 
 		targets2rank <- targets[[i]]
 		for(r in 1:length(targets2rank)) { # Ranking targets
-			print(paste("Target", r))
+		  if(showProgress){}else{print(paste("Target", r))}
+		  #print(paste("Target", r))
 
 			l.errors <- matrix(data= 0, nrow=length(targets2rank), ncol=number.layers)
 			rownames(l.errors) <- targets2rank
 			colnames(l.errors) <- paste0("l", layers)
-
-			print("Tracking layers")
+			
+			if(showProgress){}else{print("Tracking layers")}
+			#print("Tracking layers")
+			
 			for(m in 1:n.folds.tracking) {
 				if(n.folds.tracking == 1) {
 					validation.idx <- 1:nrow(moX)
@@ -91,6 +96,7 @@ for (i in 1:length(bases)) {
 
 				for(l in layers) {
 					for(t in targets2rank) {
+					  if(showProgress){pb$tick()}else{}
 						regressor <- train_(trX, trY[,t], tech, targets2rank)
 
 						p.tr[,paste(t, "pred", l, sep=".")] <- predict_(regressor, trX, tech, targets2rank)
@@ -117,7 +123,7 @@ for (i in 1:length(bases)) {
 				write.csv(tr.errors, paste0(output.dir.drs, "/output_logs/layers_errors/layers_errors_", bases[i], "_", tech, "_ef", formatC(k, width=2, flag="0"), "_step", r, "_tf", formatC(m, width=2, flag="0"), ".csv"))
 				l.errors <- l.errors + tr.errors
 			}
-			print("Done")
+			if(showProgress){}else{print("Done")}
 
 			#Normalize accounted errors
 			l.errors <- l.errors/n.folds.tracking
