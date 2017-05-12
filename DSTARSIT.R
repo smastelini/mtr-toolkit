@@ -185,8 +185,6 @@ for(i in 1:length(bases)) {
 					convergence.tracking[layer+1,] <- convergence.tracking[layer+1,] + as.numeric(!converged)
 				}
 
-				# x.training.tuning[, targets[[i]]] <- predictions.training[, paste(convergence.layers[k,-1], targets[[i]],sep=".")]
-				# x.validation.tuning[, targets[[i]]] <- predictions.validation[, paste(convergence.layers[k,-1], targets[[i]],sep=".")]
 				layer <- layer + 1
 			}
 
