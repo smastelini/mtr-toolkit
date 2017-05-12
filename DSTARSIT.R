@@ -141,7 +141,12 @@ for(i in 1:length(bases)) {
 				error.validation[t] <- rmse.validation
 				convergence.layers[k,t] <- 0
 			}
-			convergence.tracking[nrow(convergence.tracking)+1,] <- as.numeric(!converged)
+
+			if(nrow(convergence.tracking) == 0) {
+				convergence.tracking[nrow(convergence.tracking)+1,] <- as.numeric(!converged)
+			} else {
+				convergence.tracking[1,] <- convergence.tracking[1,] + as.numeric(!converged)
+			}
 			#
 
 			layer <- 1
