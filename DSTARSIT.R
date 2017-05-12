@@ -185,8 +185,6 @@ for(i in 1:length(bases)) {
 				layer <- layer + 1
 			}
 
-			browser()
-
 			rownames(predictions.training) <- modelling.names[training.idx]
 			rownames(predictions.validation) <- modelling.names[validation.idx]
 
