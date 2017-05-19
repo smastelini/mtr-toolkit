@@ -123,7 +123,6 @@ for(i in 1:length(bases)) {
 						error.validation[t] <- rmse.validation
 						convergence.layers[k,t] <- layer
 					}
-
 				}
 
 				if(layer + 1 > nrow(convergence.tracking)) {

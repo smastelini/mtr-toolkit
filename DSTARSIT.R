@@ -75,7 +75,7 @@ for(i in 1:length(bases)) {
 			imp.aux <- importance(rf.aux, type = 1)
 			imp.aux[imp.aux < 0] <- 0
 
-			imp.aux[imp.aux < mean(imp.aux)] <- 0
+			# imp.aux[imp.aux < mean(imp.aux)] <- 0
 			rf.importance[[targets[[i]][k]]] <- as.logical(imp.aux > 0)
 			timportance[k,] <- imp.aux
 		}
@@ -121,15 +121,17 @@ for(i in 1:length(bases)) {
 			converged <- rep(FALSE, n.targets[i])
 			names(converged) <- targets[[i]]
 
+			uncorr <- rep(FALSE, n.targets[i])
+			names(uncorr) <- targets[[i]]
+
 			# Uncorrelated targets are removed from the deep tracking process
 			for(t in 1:length(targets[[i]])) {
-				converged[t] <- all(!rf.importance[[t]][-t])
+				uncorr[t] <- all(!rf.importance[[t]][-t])
 			}
 
 			# TODO verify error
 			error.validation <- rep(Inf, n.targets[i])
 			names(error.validation) <- targets[[i]]
-
 
 			# ST layer
 			for(t in targets[[i]]) {
@@ -155,7 +157,7 @@ for(i in 1:length(bases)) {
 				print(paste("Layer", layer))
 
 				for(t in targets[[i]]) {
-					if(!converged[t]) {
+					if(!uncorr[t]) {
 						tck.tra <- x.training.tuning
 						tck.val <- x.validation.tuning
 
@@ -221,20 +223,35 @@ for(i in 1:length(bases)) {
 			predictions.modelling <- modelling.set.y
 			predictions.testing <- testing.set.y
 
-			modelling.set.x_ <- modelling.set.x
-			testing.set.x_ <- testing.set.x
-
-			layer <- 0
-
 			max.layers.reached <- rep(FALSE, n.targets[i])
 			names(max.layers.reached) <- targets[[i]]
 
+			print("Layer 0")
+			for(t in targets[[i]]) {
+				regressor <- train_(modelling.set.x, modelling.set.y[,t], tech, targets[[i]])
+				predictions.modelling[, paste(0,t,sep=".")] <- predict_(regressor, modelling.set.x, tech, targets[[i]])
+				predictions.testing[, paste(0,t,sep=".")] <- predict_(regressor, testing.set.x, tech, targets[[i]])
+
+				if(as.numeric(convergence.layers_[nrow(convergence.layers_),t]) == 0) {
+					max.layers.reached[t] <- TRUE
+				}
+			}
+
 			chosen.layers <- rep(0, n.targets[i])
+			names(chosen.layers) <- targets[[i]]
+			layer <- 1
 
 			while(!all(max.layers.reached)) {
 				print(paste("Layer", layer))
 				for(t in targets[[i]]) {
 					if(convergence.tracking_[as.character(layer),t]) {
+						modelling.set.x_ <- modelling.set.x
+						testing.set.x_ <- testing.set.x
+						chosen.t <- targets[[i]][rf.importance[[t]]]
+
+						modelling.set.x_[, chosen.t] <- predictions.modelling[, paste(chosen.layers[chosen.t], chosen.t, sep=".")]
+						testing.set.x_[, chosen.t] <- predictions.testing[, paste(chosen.layers[chosen.t], chosen.t, sep=".")]
+
 						regressor <- train_(modelling.set.x_, modelling.set.y[,t], tech, targets[[i]])
 						predictions.modelling[, paste(layer,t,sep=".")] <- predict_(regressor, modelling.set.x_, tech, targets[[i]])
 						predictions.testing[, paste(layer,t,sep=".")] <- predict_(regressor, testing.set.x_, tech, targets[[i]])
@@ -248,9 +265,6 @@ for(i in 1:length(bases)) {
 				addressing <- convergence.tracking_[as.character(layer),]
 				addressing <- which(addressing == TRUE)
 				chosen.layers[addressing] <- layer
-
-				modelling.set.x_[, targets[[i]]] <- predictions.modelling[, paste(chosen.layers, targets[[i]],sep=".")]
-				testing.set.x_[, targets[[i]]] <- predictions.testing[, paste(chosen.layers, targets[[i]],sep=".")]
 
 				layer <- layer + 1
 			}
