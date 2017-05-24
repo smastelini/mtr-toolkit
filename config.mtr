@@ -9,7 +9,7 @@ bases <- c("osales")
 n.targets <- c(12)
 bases.teste <- NULL
 
-techs <- c("parrf", "svm", "xgboost", "cart")
+techs <- c("parrf","svm","xgboost","cart")
 
 folds.num <- 10
 

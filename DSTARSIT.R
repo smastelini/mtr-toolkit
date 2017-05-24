@@ -75,7 +75,6 @@ for(i in 1:length(bases)) {
 			imp.aux <- importance(rf.aux, type = 1)
 			imp.aux[imp.aux < 0] <- 0
 
-			# imp.aux[imp.aux < mean(imp.aux)] <- 0
 			rf.importance[[targets[[i]][k]]] <- as.logical(imp.aux > 0)
 			timportance[k,] <- imp.aux
 		}
