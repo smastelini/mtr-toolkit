@@ -15,13 +15,13 @@ library(permute)
 source("utils_MT.R")
 # DSTARS -> Default
 n.folds.tracking <- 5
-dstars.delta <- 0.0001
+dstars.delta <- 0.00001
 dstars.phi <- 0.5
 #DRS -> Default
 number.layers <- 10
 
 #Loads configuration file
-source("config.mtr")
+source("config.R")
 
 #ProgressBar creation
 if(showProgress){

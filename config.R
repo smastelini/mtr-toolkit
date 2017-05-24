@@ -4,19 +4,20 @@
 
 use.pls <- FALSE
 # bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scfp")
-bases <- c("osales")
+bases <- c("oes10")
 # n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
-n.targets <- c(12)
+n.targets <- c(16)
 bases.teste <- NULL
 
-techs <- c("parrf","svm","xgboost","cart")
+# techs <- c("parrf","svm","xgboost","cart")
+techs <- c("svm")
 
 folds.num <- 10
 
 datasets.folder <- "~/MEGA/MT_datasets"
 output.prefix <- "~/mastelini/IMP_TEST"
 
-mt.techs <- c("DSTARSIT")
+mt.techs <- c("ST", "MTRS", "ERC", "DSTARSIT")
 
 #Progress bar and remaining time exhibition
 showProgress <- FALSE

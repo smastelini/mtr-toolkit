@@ -69,7 +69,8 @@ for(i in 1:length(bases)) {
 	# Cross validation
 	for(k in 1:folds.num) {
 		#print(paste0("Fold ", k))
-	  
+		if(showProgress){pb$tick()}else{print(paste0("Fold ", k))}
+		
 		if(folds.num == 1) {
 			if(length(bases.teste) > 0) {
 				train.idx <- 1:(init.bound-1)
@@ -92,7 +93,6 @@ for(i in 1:length(bases)) {
 
 		models <- list()
 		for(j in 1:length(combinations)) {
-			if(showProgress){pb$tick()}else{print(paste0("Fold ", k))}
 			xtrn <- x.train
 			xtst <- x.test
 			
