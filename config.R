@@ -16,7 +16,7 @@ datasets.folder <- "~/MEGA/MT_datasets"
 output.prefix <- "~/MEGA/exp_benchmarks_18dts"
 
 # mt.techs <- c("ST", "MTRS", "ERC", "DSTARSIT")
-mt.techs <- c("DSTARSIT")
+mt.techs <- c("DSTARST")
 
 #Progress bar and remaining time exhibition
 showProgress <- FALSE
