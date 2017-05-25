@@ -72,6 +72,8 @@ for(i in 1:length(bases)) {
 			imp.aux <- importance(rf.aux, type = 1)
 			imp.aux[imp.aux < 0] <- 0
 
+			# imp.aux[imp.aux < imp.aux[k]/n.targets[i]] <- 0
+
 			rf.importance[[targets[[i]][k]]] <- as.logical(imp.aux > 0)
 			timportance[k,] <- imp.aux
 		}
@@ -119,17 +121,17 @@ for(i in 1:length(bases)) {
 
 			uncorr <- rep(FALSE, n.targets[i])
 			names(uncorr) <- targets[[i]]
-			
+
 			# Uncorrelated targets are removed from the deep tracking process
-			for(t in 1:length(targets[[i]])) {
+			for(t in 1:n.targets[i]) {
 				uncorr[t] <- all(!rf.importance[[t]][-t])
 			}
 
-			# TODO verify error
 			error.validation <- rep(Inf, n.targets[i])
 			names(error.validation) <- targets[[i]]
 
 			# ST layer
+			print("Layer 0")
 			for(t in targets[[i]]) {
 				regressor <- train_(x.training.tuning, y.training.tuning[,t], tech, targets[[i]])
 				predictions.training[, paste(0,t,sep=".")] <- predict_(regressor, x.training.tuning, tech, targets[[i]])
@@ -147,8 +149,11 @@ for(i in 1:length(bases)) {
 			}
 			#
 
-			rlayer <- 1
+			for(t in 1:n.targets[i]) {
+				converged[t] <- uncorr[t]
+			}
 
+			rlayer <- 1
 			while(!all(converged)) {
 				print(paste("Layer", rlayer))
 
@@ -167,7 +172,7 @@ for(i in 1:length(bases)) {
 						predictions.validation[, paste(rlayer,t,sep=".")] <- predict_(regressor, tck.val, tech, targets[[i]])
 
 						rmse.validation <- RMSE(y.validation.tuning[,t], predictions.validation[, paste(rlayer,t,sep=".")])
-						if(rmse.validation + dstars.delta > error.validation[t]) {	
+						if(rmse.validation + dstars.delta > error.validation[t]) {
 							converged[t] <- TRUE
 						} else {
 							converged[t] <- FALSE
@@ -176,7 +181,7 @@ for(i in 1:length(bases)) {
 						}
 					}
 				}
-
+				
 				if(rlayer + 1 > nrow(convergence.tracking)) {
 					convergence.tracking[nrow(convergence.tracking)+1,] <- as.numeric(!converged)
 				} else {
@@ -185,7 +190,7 @@ for(i in 1:length(bases)) {
 
 				rlayer <- rlayer + 1
 			}
-
+			
 			rownames(predictions.training) <- modelling.names[training.idx]
 			rownames(predictions.validation) <- modelling.names[validation.idx]
 
@@ -197,20 +202,23 @@ for(i in 1:length(bases)) {
 		write.csv(convergence.tracking, paste0(output.dir.dstarsit, "/output_logs/convergence_layers_logs/", bases[i], "_", tech, "_convergence_accounting_EV_fold_", formatC(j, width=2, flag="0"), ".csv"))
 
 		convergence.tracking <- convergence.tracking/n.folds.tracking
-		convergence.layers_ <- convergence.layers
 
 		# Test different phi values
-		for(dstars.phi in seq(0,1, 0.2)) {
+		for(dstars.phi in seq(0,1, 0.1)) {
 			dir.create(paste0(output.dir.dstarsit, "/output_logs/convergence_layers_logs/phi=",dstars.phi), showWarnings = FALSE, recursive = TRUE)
 			dir.create(paste0(output.dir.dstarsit, "/output_logs/modelling_raw_logs/phi=",dstars.phi), showWarnings = FALSE, recursive = TRUE)
 			dir.create(paste0(output.dir.dstarsit, "/output_logs/testing_raw_logs/phi=",dstars.phi), showWarnings = FALSE, recursive = TRUE)
 			dir.create(paste0(output.dir.dstarsit, "/output_logs/testing_final_logs/phi=",dstars.phi), showWarnings = FALSE, recursive = TRUE)
 
-			convergence.tracking_ <- as.data.frame(sapply(convergence.tracking, function(z, threshold) z >= threshold, threshold = dstars.phi))
-
+			if(nrow(convergence.tracking) > 1)
+				convergence.tracking_ <- data.frame(sapply(convergence.tracking, function(z, threshold) z >= threshold, threshold = dstars.phi))
+			else
+				convergence.tracking_ <- data.frame(t(sapply(convergence.tracking, function(z, threshold) z >= threshold, threshold = dstars.phi)))
+			
 			rownames(convergence.tracking_) <- 0:(nrow(convergence.tracking_)-1)
 			write.csv(convergence.tracking_, paste0(output.dir.dstarsit, "/output_logs/convergence_layers_logs/phi=",dstars.phi, "/", bases[i], "_", tech, "_convergence_tracking_EV_fold_", formatC(j, width=2, flag="0"), ".csv"))
 
+			convergence.layers_ <- convergence.layers
 			convergence.layers_[nrow(convergence.layers_)+1,] <- c("modelling", as.numeric(sapply(convergence.tracking_, function(z) BBmisc::which.last(z) - 1)))
 			write.csv(convergence.layers_, paste0(output.dir.dstarsit, "/output_logs/convergence_layers_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_convergence_layers_EV_fold_", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
 
@@ -288,7 +296,7 @@ lapply(bases, function(b) {
 	names.perf.log <- c("aCC", "ARE", "MSE", "aRMSE", "aRRMSE", paste0("R2.", targets[[i]]), paste0("RMSE.", targets[[i]]))
 	performance.log <<- data.frame(dataset=character(0), as.data.frame(setNames(replicate(length(names.perf.log),numeric(0),
 							simplify = F), names.perf.log)), stringsAsFactors = FALSE)
-	lapply(seq(0,1, 0.2), function(phi) {
+	lapply(seq(0,1, 0.1), function(phi) {
 
 
 		repetition.log <<- as.data.frame(setNames(replicate(length(names.perf.log),numeric(0),

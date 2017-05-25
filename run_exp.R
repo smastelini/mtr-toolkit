@@ -14,8 +14,8 @@ library(permute)
 #Extra libs
 source("utils_MT.R")
 # DSTARS -> Default
-n.folds.tracking <- 5
-dstars.delta <- 0.00001
+n.folds.tracking <- 10
+dstars.delta <- 0.0001
 dstars.phi <- 0.5
 #DRS -> Default
 number.layers <- 10
@@ -27,6 +27,7 @@ source("config.R")
 if(showProgress){
   source("progress_exp.R")
 }
+
 
 #Max. PLS components to evaluate
 train.test$comp.limit <- 25
