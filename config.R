@@ -3,25 +3,31 @@
 ###############################################################################
 
 use.pls <- FALSE
-bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scfp")
-n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
+# bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scfp")
+# n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
+
+bases <- c("NIR_Wooden_HALF12t")
+n.targets <- c(12)
+#SVM
+# bases <- c("rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scfp")
+# n.targets <- c(8,8,16,16,2,3,3,3,14,2,3,6,12,3)
 bases.teste <- NULL
 
-# techs <- c("parrf","svm","xgboost","cart")
-techs <- c("svm","xgboost","cart")
+techs <- c("parrf", "svm", "gbm", "cart")
 
 folds.num <- 10
 
-datasets.folder <- "~/MEGA/MT_datasets"
-output.prefix <- "~/MEGA/exp_benchmarks_18dts"
+# datasets.folder <- "~/MEGA/MT_datasets"
+datasets.folder <- "~/Desktop"
+output.prefix <- "~/Desktop/Poultry12tSGSST"
 
 # mt.techs <- c("ST", "MTRS", "ERC", "DSTARSIT")
-mt.techs <- c("DSTARST")
+mt.techs <- c("SGSST")
 
 #Progress bar and remaining time exhibition
 showProgress <- FALSE
 
-must.compare <- FALSE
+must.compare <- TRUE
 generate.final.table <- FALSE
 ###############################################################################
 ###############################################################################
