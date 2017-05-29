@@ -1,3 +1,7 @@
+library(foreach)
+library(doSNOW)
+registerDoSNOW(makeCluster(7, type="SOCK"))
+
 dir.create(paste0(output.dir.sgsst, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
 dir.create(paste0(output.dir.sgsst, "/out_imp_assessment/",tech), showWarnings = FALSE, recursive = TRUE)
 
