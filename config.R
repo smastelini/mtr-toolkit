@@ -7,25 +7,28 @@ use.pls <- FALSE
 # n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
 
 #SVM
-bases <- c("enb","slump","andro","osales")
-n.targets <- c(2,3,6,12)
+bases <- c("NIR_Wooden_HALF12t")
+n.targets <- c(12)
 bases.teste <- NULL
 
 # techs <- c("parrf", "svm", "xgboost", "cart")
-techs <- c("cart")
+techs <- c("parrf","svm","gbm","cart")
 
 folds.num <- 10
 
-datasets.folder <- "~/MEGA/MT_datasets"
-output.prefix <- "~/MEGA/Experimentos/exp_benchmarks_18dts"
+# datasets.folder <- "~/MEGA/MT_datasets"
+# output.prefix <- "~/MEGA/Experimentos/exp_benchmarks_18dts"
+
+datasets.folder <- "~/Desktop"
+output.prefix <- "~/Desktop/Poultry12tSGSST"
 
 # mt.techs <- c("ST", "MTRS", "ERC", "DSTARSIT")
-mt.techs <- c("DSTARST")
+mt.techs <- c("DRC")
 
 #Progress bar and remaining time exhibition
 showProgress <- FALSE
 
-must.compare <- FALSE
+must.compare <- TRUE
 generate.final.table <- FALSE
 ###############################################################################
 ###############################################################################

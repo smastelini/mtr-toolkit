@@ -4,9 +4,9 @@ dir.create(paste0(output.dir.drc, "/raw_logs/",tech), showWarnings = FALSE, recu
 
 getDRC <- function(rfImp, targ, maxl) {
   bt <- targ
-  drc <- c(rownames(rfImp[targ]))
+  drc <- c(rownames(rfImp)[targ])
   for(l in 1:(maxl-1)) {
-    bt <- which.max(rImp[bt,])
+    bt <- which.max(rfImp[bt,])
     drc <- c(drc, colnames(rfImp)[bt])
   }
   return(rev(drc))
@@ -122,11 +122,16 @@ for(i in 1:length(bases)) {
       prediction.log[,targets[[i]][t]] <- y.test[,t]
       prediction.log[,paste0(targets[[i]][t], ".pred")] <- xtestrc[,ncol(xtestrc)]
 
-      write.csv(cbind(sample.names[train.idx], y.train[,t], xtrainrc[,(ncol(x.train)+1):ncol(xtrainrc)]),
+      raw.log <- cbind(sample.names[train.idx], y.train[,t], xtrainrc[,(ncol(x.train)+1):ncol(xtrainrc)])
+      colnames(raw.log)[1:2] <- c("sample.idx", targets[[i]][t])
+
+      write.csv(raw.log,
         paste0(output.dir.drc, "/raw_logs/",tech,"/raw_modelling_predictions_DRC_", bases[i],
           paste0("_fold", formatC(k, width=2, flag="0")), "_T", t, ".csv"), row.names = FALSE)
 
-      write.csv(cbind(sample.names[test.idx], y.test[,t], xtestrc[,(ncol(x.test)+1):ncol(xtestrc)]),
+      raw.log <- cbind(sample.names[test.idx], y.test[,t], xtestrc[,(ncol(x.test)+1):ncol(xtestrc)])
+      colnames(raw.log)[1:2] <- c("sample.idx", targets[[i]][t])
+      write.csv(raw.log,
         paste0(output.dir.drc, "/raw_logs/",tech,"/raw_testing_predictions_DRC_", bases[i],
           paste0("_fold", formatC(k, width=2, flag="0")), "_T", t, ".csv"), row.names = FALSE)
 
