@@ -135,7 +135,7 @@ train_ <- function(x, y, tech='svm', targets) {
 			# grid.xgboost <- data.frame(nrounds=150, max_depth=13, eta=0.3, gamma=0, colsample_bytree=1, min_child_weight=1, subsample=1)
 			# train(as.matrix(x), y, trControl = trainControl(method="none"), method = "xgbTree", tuneGrid=grid.xgboost)$finalModel
 			x <- as.matrix(x)
-			xgboost(x, y, nrounds = 150, early_stopping_rounds = 5, base_score = mean(y), silent = 1, save_period = NULL)
+			xgboost(x, y, nrounds = 100, early_stopping_rounds = 3, base_score = mean(y), silent = 1, print_every_n = 500, save_period = NULL)
 
 		},
 		cart={
