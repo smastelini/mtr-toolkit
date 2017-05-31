@@ -62,8 +62,13 @@ if(must.compare) {
 					to.merge <- read.csv(paste0(paste0(output.prefix, "/", MT), "/performance_", MT, "_", tech, "_", base, "_L", number.layers, ".csv"), stringsAsFactors = F)
 				else
 					to.merge <- read.csv(paste0(paste0(output.prefix, "/", MT), "/performance_", MT, "_", tech, "_", base, ".csv"), stringsAsFactors = F)
+
+        if(MT == "DSTARST") {
+          best.phi <- which.min(to.merge[,"aRRMSE"])
+          to.merge <- to.merge[best.phi,]
+        }
 				merged <<- rbind(merged, to.merge)
-				merged[nrow(merged),1] <<- tech
+				# merged[nrow(merged),1] <<- tech
 			})
 
 			write.csv(merged, paste0(comparison.folder, "/performance_", MT, "_", base, ".csv"), row.names = FALSE)
