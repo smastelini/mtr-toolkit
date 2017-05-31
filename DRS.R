@@ -72,10 +72,10 @@ for (i in 1:length(bases)) {
 			l.errors <- matrix(data= 0, nrow=length(targets2rank), ncol=number.layers)
 			rownames(l.errors) <- targets2rank
 			colnames(l.errors) <- paste0("l", layers)
-			
+
 			if(showProgress){}else{print("Tracking layers")}
 			#print("Tracking layers")
-			
+
 			for(m in 1:n.folds.tracking) {
 				if(n.folds.tracking == 1) {
 					validation.idx <- 1:nrow(moX)

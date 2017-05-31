@@ -40,10 +40,10 @@ for(i in 1:length(bases)) {
 	x <- subset(dataset, select = !(colnames(dataset) %in% targets[[i]]))
 	y <- subset(dataset, select = colnames(dataset) %in% targets[[i]])
 
-	print(bases[i])
+	if(showProgress){}else{print(bases[i])}
 
 	for(j in 1:folds.num) {
-		print(paste("Fold Training:", j))
+		if(showProgress){}else{print(paste("Fold Training:", j))}
 
 		if(folds.num == 1) {
 			if(length(bases.teste) > 0) {
@@ -98,11 +98,11 @@ for(i in 1:length(bases)) {
 
 		convergence.tracking <- as.data.frame(setNames(replicate(length(targets[[i]]), numeric(0), simplify = F), targets[[i]]))
 
-		print(paste("Tuning"))
+		if(showProgress){}else{print(paste("Tuning"))}
 
 		# Cross validation
 		for(k in 1:n.folds.tracking) {
-			print(paste("Fold tuning", k))
+			if(showProgress){pb$tick()}else{print(paste("Fold tuning", k))}
 			validation.idx <- as.numeric(rownames(modelling.set.x[((k-1)*len.fold.tuning + 1):(ifelse(k==n.folds.tracking, nrow(modelling.set.x), k*len.fold.tuning)),]))
 			training.idx <- if(n.folds.tracking == 1) validation.idx else as.numeric(rownames(modelling.set.x[-validation.idx,]))
 
@@ -131,7 +131,7 @@ for(i in 1:length(bases)) {
 			names(error.validation) <- targets[[i]]
 
 			# ST layer
-			print("Layer 0")
+			if(showProgress){pb$tick()}else{print("Layer 0")}
 			for(t in targets[[i]]) {
 				regressor <- train_(x.training.tuning, y.training.tuning[,t], tech, targets[[i]])
 				predictions.training[, paste(0,t,sep=".")] <- predict_(regressor, x.training.tuning, tech, targets[[i]])
@@ -155,7 +155,7 @@ for(i in 1:length(bases)) {
 
 			rlayer <- 1
 			while(!all(converged)) {
-				print(paste("Layer", rlayer))
+				if(showProgress){pb$tick()}else{print(paste("Layer", rlayer))}
 
 				for(t in targets[[i]]) {
 					if(!uncorr[t]) {
@@ -222,7 +222,7 @@ for(i in 1:length(bases)) {
 			convergence.layers_[nrow(convergence.layers_)+1,] <- c("modelling", as.numeric(sapply(convergence.tracking_, function(z) BBmisc::which.last(z) - 1)))
 			write.csv(convergence.layers_, paste0(output.dir.dstarst, "/output_logs/convergence_layers_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_convergence_layers_EV_fold_", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
 
-			print(paste("Fold", j, ", phi = ", dstars.phi, ", final modelling"))
+			if(showProgress){}else{print(paste("Fold", j, ", phi = ", dstars.phi, ", final modelling"))}
 
 			predictions.modelling <- modelling.set.y
 			predictions.testing <- testing.set.y
@@ -230,7 +230,7 @@ for(i in 1:length(bases)) {
 			max.layers.reached <- rep(FALSE, n.targets[i])
 			names(max.layers.reached) <- targets[[i]]
 
-			print("Layer 0")
+			if(showProgress){}else{print("Layer 0")}
 			for(t in targets[[i]]) {
 				regressor <- train_(modelling.set.x, modelling.set.y[,t], tech, targets[[i]])
 				predictions.modelling[, paste(0,t,sep=".")] <- predict_(regressor, modelling.set.x, tech, targets[[i]])
@@ -246,7 +246,7 @@ for(i in 1:length(bases)) {
 			rlayer <- 1
 
 			while(!all(max.layers.reached)) {
-				print(paste("Layer", rlayer))
+				if(showProgress){}else{print(paste("Layer", rlayer))}
 				for(t in targets[[i]]) {
 					if(convergence.tracking_[as.character(rlayer),t]) {
 						modelling.set.x_ <- modelling.set.x

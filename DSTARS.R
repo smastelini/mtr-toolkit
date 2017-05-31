@@ -88,7 +88,7 @@ for(i in 1:length(bases)) {
 		# Cross validation
 		for(k in 1:n.folds.tracking) {
 		  if(showProgress){pb$tick()}else{print(paste("Fold tuning", k))}
-			
+
 			validation.idx <- as.numeric(rownames(modelling.set.x[((k-1)*len.fold.tuning + 1):(ifelse(k==n.folds.tracking, nrow(modelling.set.x), k*len.fold.tuning)),]))
 			training.idx <- if(n.folds.tracking == 1) validation.idx else as.numeric(rownames(modelling.set.x[-validation.idx,]))
 
@@ -113,7 +113,7 @@ for(i in 1:length(bases)) {
 			while(!all(converged)) {
 				#print(paste("Layer", layer))
 			  if(showProgress){pb$tick()}else{print(paste("Layer", layer))}
-			  
+
 				for(t in targets[[i]]) {
 					regressor <- train_(x.training.tuning, y.training.tuning[,t], tech, targets[[i]])
 					predictions.training[, paste(layer,t,sep=".")] <- predict_(regressor, x.training.tuning, tech, targets[[i]])
@@ -163,7 +163,7 @@ for(i in 1:length(bases)) {
 
 		if(showProgress){}else{print(paste("Fold", j, "final modelling"))}
 		#print(paste("Fold", j, "final modelling"))
-		
+
 		predictions.modelling <- modelling.set.y
 		predictions.testing <- testing.set.y
 

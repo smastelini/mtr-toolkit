@@ -3,6 +3,7 @@ totalIterationST = 0
 totalIterationMTRS = 0
 totalIterationERC = 0
 totalIterationDSTARS = 0
+totalIterationDSTARST = 0
 totalIterationDRS = 0
 if("ST" %in% mt.techs){ #Algorithm * Targets
   totalIterationST = length(techs)*sum(n.targets)*folds.num
@@ -17,12 +18,16 @@ if("ERC" %in% mt.techs){ #Algorithms * Targets * Ten permutations
     totalIterationERC = length(techs)*10*folds.num*sum(n.targets)+sum(n.targets)
 }
 if("DRS" %in% mt.techs){
-  totalIterationDRS = length(techs)*(sum(n.targets))*folds.num*sum(n.targets)*number.layers*sum(n.targets)
+  totalIterationDRS = length(techs)*(sum(n.targets))*folds.num*sum(n.targets)*number.layers*n.folds.tracking
 }
 if("DSTARS" %in% mt.techs){
   totalIterationDSTARS = length(techs)*(sum(n.targets))*n.folds.tracking*folds.num
 }
-totalIteration = totalIterationST+totalIterationMTRS+totalIterationERC+totalIterationDSTARS+totalIterationDRS
+if("DSTARST" %in% mt.techs){
+  totalIterationDSTARST = length(techs)*(sum(n.targets))*n.folds.tracking*folds.num*10
+}
+
+totalIteration = totalIterationST+totalIterationMTRS+totalIterationERC+totalIterationDSTARS+totalIterationDRS+totalIterationDSTARST
 
 pb <- progress_bar$new(format = "  Executing for (:elapsed) [:bar] :percent  (:eta)",
                        total = totalIteration)
