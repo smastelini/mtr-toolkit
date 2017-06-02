@@ -34,24 +34,26 @@ dataset <- read.csv("~/Desktop/Base_NIR.csv", stringsAsFactors = F)
 amostras <- dataset[,1]
 dataset <- dataset[,-1]
 pca.m <- prcomp(dataset, center = TRUE, scale. = TRUE)
-# Component choice
-summary(pca.m)
+# # Component choice
+# summary(pca.m)
 
-output <- matrix(nrow=nrow(dataset), ncol=14, 0)
+num.comp <- 5
+
+output <- matrix(nrow=nrow(dataset), ncol=num.comp, 0)
 
 for(i in 1:nrow(dataset)) {
   pca.m <- prcomp(dataset[-i,], center = TRUE, scale. = TRUE)
-  output[i,] <- predict(pca.m, dataset[i,])[,1:14]
+  output[i,] <- predict(pca.m, dataset[i,])[,1:num.comp]
 }
 
-colnames(output) <- paste0("PC", 1:14)
+colnames(output) <- paste0("PC", 1:num.comp)
 output <- as.data.frame(output)
 output <- cbind(amostras, output)
 
 targets <- read.csv("~/Desktop/Resultados_WB.csv")[,-1]
-full10t <- cbind(output, targets[,1:10])
-#Full dataset
-write.csv(full10t, "~/Desktop/NIR_Wooden_FULL10t.csv", row.names = F)
+# full10t <- cbind(output, targets[,1:10])
+# #Full dataset
+# write.csv(full10t, "~/Desktop/NIR_Wooden_FULL10t.csv", row.names = F)
 
 half12t <- cbind(output[c(1:20, 41:60),], targets[c(1:20, 41:60),])
-write.csv(half12t, "~/Desktop/NIR_Wooden_HALF12t.csv", row.names = F)
+write.csv(half12t, "~/Desktop/NIR_Wooden_HALF12t5PC.csv", row.names = F)
