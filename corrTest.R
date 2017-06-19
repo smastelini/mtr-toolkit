@@ -2,10 +2,12 @@ rm(list = ls())
 
 library(reshape2)
 library(ggplot2)
+library(randomForest)
 
-dataset.folder <- "~/MT_datasets"
-bases <- c("atp1d", "atp7d")
-n.targets <- c(6, 6)
+dataset.folder <- "~/MEGA/Experimentos/exp_A1-ExpertSystems/datasets"
+out.path <- "~/MEGA/Experimentos/exp_A1-ExpertSystems/correlation_analysis"
+bases <- c("base_PM_TR", "base_WB_TR")
+n.targets <- c(5, 6)
 
 
 deps <- list()
@@ -29,34 +31,12 @@ reorder_cormat <- function(cormat){
   cormat <-cormat[hc$order, hc$order]
 }
 
-
-for(b in 1:length(bases)) {
-  dplot <- data.frame(matrix(nrow=0,ncol=4), stringsAsFactors = F)
-  colnames(dplot) <- NA
-  
-  
-  dataset <- read.csv(paste0(dataset.folder, "/", bases[b], ".csv"))
-  targets <- dataset[,(ncol(dataset)-n.targets[b]+1):ncol(dataset)]
-  colnames(targets) <- paste("Target", 1:n.targets[b])
-  
-  
-  aux <- melt(get_lower_tri(cor(targets, method = "pearson")), na.rm = T)
-  aux <- cbind(aux, rep("Pearson", nrow(aux)))
-  colnames(aux) <- NA
-  dplot <- rbind(dplot, aux)
-  
-  aux <- melt(get_lower_tri(cor(targets, method = "spearman")), na.rm = T)
-  aux <- cbind(aux, rep("Spearman", nrow(aux)))
-  colnames(aux) <- NA
-  dplot <- rbind(dplot, aux)
-  
-  colnames(dplot) <- c("Targetsx", "Targetsy", "value", "Test")
+plot_corr <- function(dplot, plot.title, out.path) {
+  colnames(dplot) <- c("Targetsx", "Targetsy", "value")
   
   ggplot(data = dplot, aes(x=Targetsx, y=Targetsy, fill = value)) +
-    geom_tile(color = "white") + facet_grid(. ~ Test)+
-    scale_fill_gradient2(mid = "white", high = "black", limit = c(0,1), space = "Lab", 
-                         name="Correlation") +
-    theme_minimal()+ 
+    geom_tile(color = "white") + 
+    scale_fill_gradient2(name=plot.title, low = "gray", mid = "darkgray", high = "black", limit = c(0,1)) +
     theme(axis.text.x = element_text(angle = 0, vjust = 1, 
                                      size = 12, hjust = 0.5),
           axis.text.y = element_text(angle = 0, vjust = 0.5, 
@@ -71,9 +51,41 @@ for(b in 1:length(bases)) {
       panel.border = element_blank(),
       panel.background = element_blank(),
       axis.ticks = element_blank(),
-      legend.justification = c(1, 1),
-      legend.position = "none", strip.text.x = element_text(size = 20)) 
+      # legend.justification = c(1, 1),
+      legend.position = "none") + ggtitle(plot.title) +
+      theme(plot.title = element_text(hjust = 0.5, size = 16))
   
-  ggsave(file=paste0("~/Desktop/", bases[b], "_corr.pdf"), width = 10, height = 5)
+  ggsave(file=paste0(out.path, "/", bases[b], "_", plot.title, "_corr.pdf"), width = 6, height = 5)
+}
+
+
+for(b in 1:length(bases)) {
+  dplot <- data.frame(matrix(nrow=0,ncol=3), stringsAsFactors = F)
+  colnames(dplot) <- NA
+  
+  
+  dataset <- read.csv(paste0(dataset.folder, "/", bases[b], ".csv"))
+  targets <- dataset[,(ncol(dataset)-n.targets[b]+1):ncol(dataset)]
+  # colnames(targets) <- paste("Target", 1:n.targets[b])
+  
+  # dplot <- melt(get_lower_tri(cor(targets, method = "pearson")), na.rm = T)
+  dplot <- melt(cor(targets, method = "pearson"), na.rm = T)
+  plot_corr(dplot, "Pearson Correlation", out.path)
+  
+  # dplot <- melt(get_lower_tri(cor(targets, method = "spearman")), na.rm = T)
+  dplot <- melt(cor(targets, method = "spearman"), na.rm = T)
+  plot_corr(dplot, "Spearman Correlation", out.path)
+  
+  rf.imp <- matrix(nrow=ncol(targets), ncol=ncol(targets))
+  for(j in 1:ncol(targets)) {
+    regressor <- randomForest(x = targets, y = targets[,j], importance = TRUE)
+    rf.imp[,j] <- importance(regressor)[,1]/100.0
+  }
+  
+  rownames(rf.imp) <- colnames(rf.imp) <- colnames(targets)
+  
+  dplot <- melt(rf.imp)
+  
+  plot_corr(dplot, "Random Forest Importance", out.path)
 }
 

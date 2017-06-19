@@ -30,7 +30,7 @@ if(showProgress){
 
 
 #Max. PLS components to evaluate
-train.test$comp.limit <- 25
+train.test$comp.limit <- 40
 
 # Creates output directories
 for(mt in mt.techs) {
