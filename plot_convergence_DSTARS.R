@@ -1,9 +1,10 @@
 logs.folder <- "~/MEGA/Experimentos/exp_A1-ExpertSystems/outputP/DSTARST/output_logs"
 out.folder <- "~/MEGA/Experimentos/exp_A1-ExpertSystems/outputP/convergence_plot"
 n.targets <- 6
-base.learners <- c("parrf", "svm", "lr")
+base.learners <- c("svm", "lr")
 # phi.values <- c(0,0,0.2)
-phi.values <- c(0.9,0.6,0.9)
+# phi.values <- c(0.8,0.5,0.9)
+phi.values <- c(0.5,0.9)
 dataset.name <- "base_WB_TR"
 fold.number <- 1
 
@@ -61,8 +62,6 @@ for(learner in base.learners) {
     
     error.seq <- seq(0,max.error, 0.05)
     axis(side = 2, at = if(counter %% 2 > 0) error.seq else FALSE, labels = if(counter %% 2 > 0) format(error.seq, nsmall=2) else FALSE)
-    
-    browser()
     
     if(max(which(convergence.tracking[,t])-1) > 0) {
       for(coord.x in 0:(max(which(convergence.tracking[,t])-1)-1)) {

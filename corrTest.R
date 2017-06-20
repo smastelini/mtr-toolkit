@@ -34,7 +34,7 @@ reorder_cormat <- function(cormat){
 plot_corr <- function(dplot, plot.title, out.path) {
   colnames(dplot) <- c("Targetsx", "Targetsy", "value")
   
-  ggplot(data = dplot, aes(x=Targetsx, y=Targetsy, fill = value)) +
+  ggplot(data = dplot, aes(x=Targetsx, y=Targetsy, fill = abs(value))) +
     geom_tile(color = "white") + 
     scale_fill_gradient2(name=plot.title, low = "gray", mid = "darkgray", high = "black", limit = c(0,1)) +
     theme(axis.text.x = element_text(angle = 0, vjust = 1, 
