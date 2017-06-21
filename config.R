@@ -8,15 +8,16 @@ use.pls <- TRUE
 
 bases <- c("base_PM_TR")
 n.targets <- c(5)
-bases.teste <- NULL
+bases.teste <- c("base_PM_TS")
 # bases.teste <- c("base_PM_TS", "base_WB_TS")
 
 techs <- c("parrf", "svm", "lr")
 
-folds.num <- 10
+folds.num <- 1
 
-datasets.folder <- "~/MEGA/Experimentos/exp_A1-ExpertSystems/datasets"
-output.prefix <- "~/MEGA/Experimentos/exp_A1-ExpertSystems/outputCV"
+# datasets.folder <- "~/MEGA/Experimentos/exp_A1-ExpertSystems/datasets"
+datasets.folder <- "~/Dropbox/datasets"
+output.prefix <- "~/Desktop/DSTARST_TEST"
 
 mt.techs <- c("DSTARST")
 

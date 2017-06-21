@@ -63,25 +63,6 @@ for(i in 1:length(bases)) {
 		modelling.set.x <- x[modelling.idx,]
 		modelling.set.y <- y[modelling.idx,]
 
-		############################ RF Importance calc ###################################
-		rf.importance <- list()
-		timportance <- matrix(nrow = length(targets[[i]]), ncol = length(targets[[i]]))
-
-		for(k in 1:length(targets[[i]])) {
-			rf.aux <- randomForest(modelling.set.y, modelling.set.y[,k], importance = TRUE)
-			imp.aux <- importance(rf.aux, type = 1)
-			imp.aux[imp.aux < 0] <- 0
-
-			# imp.aux[imp.aux < imp.aux[k]/n.targets[i]] <- 0
-
-			rf.importance[[targets[[i]][k]]] <- as.logical(imp.aux > 0)
-			timportance[k,] <- imp.aux
-		}
-
-		write.csv(timportance, paste0(output.dir.dstarst, "/output_logs/convergence_layers_logs/", bases[i], "_", tech, "_RF_importance_", formatC(j, width=2, flag="0"), ".csv"))
-
-		###################################################################################
-
 		rownames(modelling.set.x) <- 1:nrow(modelling.set.x)
 		rownames(modelling.set.y) <- 1:nrow(modelling.set.y)
 
@@ -91,6 +72,61 @@ for(i in 1:length(bases)) {
 		testing.set.y <- y[testing.idx,]
 
 		len.fold.tuning <- round(nrow(modelling.set.x)/n.folds.tracking)
+
+		predictions.training <- list()
+		predictions.validation <- list()
+
+		# Builds all tracking step ST models to verificate correlation between outcome variables
+		for(k in 1:n.folds.tracking) {
+			validation.idx <- as.numeric(rownames(modelling.set.x[((k-1)*len.fold.tuning + 1):(ifelse(k==n.folds.tracking, nrow(modelling.set.x), k*len.fold.tuning)),]))
+			training.idx <- if(n.folds.tracking == 1) validation.idx else as.numeric(rownames(modelling.set.x[-validation.idx,]))
+
+			x.training.tuning <- modelling.set.x[training.idx,]
+			y.training.tuning <- modelling.set.y[training.idx,]
+
+			x.validation.tuning <- modelling.set.x[validation.idx,]
+			y.validation.tuning <- modelling.set.y[validation.idx,]
+
+			predictions.training[[k]] <- y.training.tuning
+			predictions.validation[[k]] <- y.validation.tuning
+
+			for(t in targets[[i]]) {
+				regressor <- train_(x.training.tuning, y.training.tuning[,t], tech, targets[[i]])
+				predictions.training[[k]][, paste(0,t,sep=".")] <- predict_(regressor, x.training.tuning, tech, targets[[i]])
+				predictions.validation[[k]][, paste(0,t,sep=".")] <- predict_(regressor, x.validation.tuning, tech, targets[[i]])
+
+				# rmse.validation <- RMSE(y.validation.tuning[,t], predictions.validation[[k]][, paste(0,t,sep=".")])
+				# error.validation[t] <- rmse.validation
+				# convergence.layers[k,t] <- 0
+			}
+
+			if(k == 1)
+				pimp <- predictions.validation[[k]]
+			else
+				pimp <- rbind(pimp, predictions.validation[[k]])
+		}
+
+		############################ RF Importance calc ###################################
+		rf.importance <- list()
+		timportance <- matrix(nrow = length(targets[[i]]), ncol = length(targets[[i]]))
+
+		cont <- 1
+		for(k in targets[[i]]) {
+			rf.aux <- randomForest(pimp[, paste(0,targets[[i]],sep=".")], pimp[,k], importance = TRUE)
+			imp.aux <- importance(rf.aux, type = 1)
+			imp.aux[imp.aux < 0] <- 0
+
+			# imp.aux[imp.aux < imp.aux[k]/n.targets[i]] <- 0
+
+			rf.importance[[targets[[i]][cont]]] <- as.logical(imp.aux > 0)
+			timportance[cont,] <- imp.aux
+			cont <- cont + 1
+		}
+
+		rownames(timportance) <- colnames(timportance) <- targets[[i]]
+		write.csv(timportance, paste0(output.dir.dstarst, "/output_logs/convergence_layers_logs/", bases[i], "_", tech, "_RF_importance_", formatC(j, width=2, flag="0"), ".csv"))
+		rm(pimp)
+		###################################################################################
 
 		convergence.layers <- as.data.frame(setNames(replicate(length(targets[[i]]), numeric(length(n.folds.tracking)), simplify = F), targets[[i]]))
 		convergence.layers <- cbind(1:n.folds.tracking, convergence.layers)
@@ -112,9 +148,6 @@ for(i in 1:length(bases)) {
 			x.validation.tuning <- modelling.set.x[validation.idx,]
 			y.validation.tuning <- modelling.set.y[validation.idx,]
 
-			predictions.training <- y.training.tuning
-			predictions.validation <- y.validation.tuning
-
 			# Training
 			converged <- rep(FALSE, n.targets[i])
 			names(converged) <- targets[[i]]
@@ -131,13 +164,9 @@ for(i in 1:length(bases)) {
 			names(error.validation) <- targets[[i]]
 
 			# ST layer
-			if(showProgress){pb$tick()}else{print("Layer 0")}
+			# if(showProgress){pb$tick()}else{print("Layer 0")}
 			for(t in targets[[i]]) {
-				regressor <- train_(x.training.tuning, y.training.tuning[,t], tech, targets[[i]])
-				predictions.training[, paste(0,t,sep=".")] <- predict_(regressor, x.training.tuning, tech, targets[[i]])
-				predictions.validation[, paste(0,t,sep=".")] <- predict_(regressor, x.validation.tuning, tech, targets[[i]])
-
-				rmse.validation <- RMSE(y.validation.tuning[,t], predictions.validation[, paste(0,t,sep=".")])
+				rmse.validation <- RMSE(y.validation.tuning[,t], predictions.validation[[k]][, paste(0,t,sep=".")])
 				error.validation[t] <- rmse.validation
 				convergence.layers[k,t] <- 0
 			}
@@ -149,10 +178,11 @@ for(i in 1:length(bases)) {
 			}
 			#
 
-			for(t in 1:n.targets[i]) {
-				converged[t] <- uncorr[t]
-			}
+			# for(t in 1:n.targets[i]) {
+			# 	converged[t] <- uncorr[t]
+			# }
 
+			converged <- uncorr
 			rlayer <- 1
 			while(!all(converged)) {
 				if(showProgress){pb$tick()}else{print(paste("Layer", rlayer))}
@@ -164,14 +194,14 @@ for(i in 1:length(bases)) {
 
 						chosen.t <- targets[[i]][rf.importance[[t]]]
 
-						tck.tra[, chosen.t] <- predictions.training[, paste(convergence.layers[k,chosen.t], chosen.t,sep=".")]
-						tck.val[, chosen.t] <- predictions.validation[, paste(convergence.layers[k,chosen.t], chosen.t,sep=".")]
+						tck.tra[, chosen.t] <- predictions.training[[k]][, paste(convergence.layers[k,chosen.t], chosen.t,sep=".")]
+						tck.val[, chosen.t] <- predictions.validation[[k]][, paste(convergence.layers[k,chosen.t], chosen.t,sep=".")]
 
 						regressor <- train_(tck.tra, y.training.tuning[,t], tech, targets[[i]])
-						predictions.training[, paste(rlayer,t,sep=".")] <- predict_(regressor, tck.tra, tech, targets[[i]])
-						predictions.validation[, paste(rlayer,t,sep=".")] <- predict_(regressor, tck.val, tech, targets[[i]])
+						predictions.training[[k]][, paste(rlayer,t,sep=".")] <- predict_(regressor, tck.tra, tech, targets[[i]])
+						predictions.validation[[k]][, paste(rlayer,t,sep=".")] <- predict_(regressor, tck.val, tech, targets[[i]])
 
-						rmse.validation <- RMSE(y.validation.tuning[,t], predictions.validation[, paste(rlayer,t,sep=".")])
+						rmse.validation <- RMSE(y.validation.tuning[,t], predictions.validation[[k]][, paste(rlayer,t,sep=".")])
 						if(rmse.validation + dstars.delta > error.validation[t]) {
 							converged[t] <- TRUE
 						} else {
@@ -191,13 +221,14 @@ for(i in 1:length(bases)) {
 				rlayer <- rlayer + 1
 			}
 
-			rownames(predictions.training) <- modelling.names[training.idx]
-			rownames(predictions.validation) <- modelling.names[validation.idx]
+			rownames(predictions.training[[k]]) <- modelling.names[training.idx]
+			rownames(predictions.validation[[k]]) <- modelling.names[validation.idx]
 
-			write.csv(predictions.training, paste0(output.dir.dstarst, "/output_logs/tuning_raw_logs/", bases[i], "_", tech, "_training_predictions_EV_fold_", formatC(j, width=2, flag="0"), "_TN_fold", formatC(k, width=2, flag="0"), ".csv"))
-			write.csv(predictions.validation, paste0(output.dir.dstarst, "/output_logs/tuning_raw_logs/", bases[i], "_", tech, "_validation_predictions_EV_fold_", formatC(j, width=2, flag="0"), "_TN_fold", formatC(k, width=2, flag="0"), ".csv"))
+			write.csv(predictions.training[[k]], paste0(output.dir.dstarst, "/output_logs/tuning_raw_logs/", bases[i], "_", tech, "_training_predictions_EV_fold_", formatC(j, width=2, flag="0"), "_TN_fold", formatC(k, width=2, flag="0"), ".csv"))
+			write.csv(predictions.validation[[k]], paste0(output.dir.dstarst, "/output_logs/tuning_raw_logs/", bases[i], "_", tech, "_validation_predictions_EV_fold_", formatC(j, width=2, flag="0"), "_TN_fold", formatC(k, width=2, flag="0"), ".csv"))
 		}
 
+		rm(predictions.training, predictions.validation)
 		rownames(convergence.tracking) <- 0:(nrow(convergence.tracking)-1)
 		write.csv(convergence.tracking, paste0(output.dir.dstarst, "/output_logs/convergence_layers_logs/", bases[i], "_", tech, "_convergence_accounting_EV_fold_", formatC(j, width=2, flag="0"), ".csv"))
 
