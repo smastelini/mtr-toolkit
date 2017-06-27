@@ -14,31 +14,38 @@ for(i in 1:length(bases)) {
 
 	targets[[i]] <- colnames(dataset)[(ncol(dataset)-n.targets[i]+1):ncol(dataset)]
 
-	#Center and Scaling
-	dataset <- as.data.frame(sapply(dataset, function(x) as.numeric(x)))
-	maxs[[i]] <- apply(dataset, 2, max)
-	mins[[i]] <- apply(dataset, 2, min)
-	dataset <- as.data.frame(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
-
 	dataset <- dataset[sample(nrow(dataset)),]
 	sample.names <- rownames(dataset)
+
+	#Center and Scaling
+	dataset <- as.data.table(dataset)
+	invisible(dataset[, names(dataset) := lapply(.SD, as.numeric)])
+
+
+  maxs[[i]] <- as.numeric(dataset[, lapply(.SD, max)])
+	mins[[i]] <- as.numeric(dataset[, lapply(.SD, min)])
+
+	dataset <- as.data.table(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 
 	len.fold.eval <- round(nrow(dataset))/folds.num
 
 	######Use a testing set
 	if(length(bases.teste) > 0 && folds.num == 1) {
 		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
-		dataset.teste <- as.data.frame(sapply(dataset.teste, function(x) as.numeric(x)))
-		dataset.teste <- as.data.frame(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
+
+		# dataset.teste <- dataset.teste[, lapply(.SD, as.numeric)]
+		dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)]
+
+		dataset.teste <- as.data.table(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 		init.bound <- nrow(dataset) + 1
-		dataset <- rbind(dataset, dataset.teste)
+
+		dataset <- rbindlist(list(dataset, dataset.teste))
 		sample.names <- c(sample.names, rownames(dataset.teste))
 	}
-	rownames(dataset) <- 1:nrow(dataset)
 	#######
 
-	x <- subset(dataset, select = !(colnames(dataset) %in% targets[[i]]))
-	y <- subset(dataset, select = colnames(dataset) %in% targets[[i]])
+	x <- dataset[,!targets[[i]], with = FALSE]
+	y <- dataset[,targets[[i]], with = FALSE]
 
 	if(showProgress){}else{print(bases[i])}
 
@@ -54,22 +61,19 @@ for(i in 1:length(bases)) {
 				modelling.idx <- testing.idx
 			}
 		} else {
-			testing.idx <- as.numeric(rownames(dataset[((j-1)*len.fold.eval + 1):(ifelse(j==folds.num, nrow(dataset), j*len.fold.eval)),]))
-			modelling.idx <- as.numeric(rownames(dataset[-testing.idx,]))
+			testing.idx <- ((j-1)*len.fold.eval + 1):(ifelse(j==folds.num, nrow(dataset), j*len.fold.eval))
+			modelling.idx <- setdiff(1:nrow(dataset), testing.idx)
 		}
 
 		modelling.names <- sample.names[modelling.idx]
 
-		modelling.set.x <- x[modelling.idx,]
-		modelling.set.y <- y[modelling.idx,]
-
-		rownames(modelling.set.x) <- 1:nrow(modelling.set.x)
-		rownames(modelling.set.y) <- 1:nrow(modelling.set.y)
+		modelling.set.x <- x[modelling.idx]
+		modelling.set.y <- y[modelling.idx]
 
 		testing.names <- sample.names[testing.idx]
 
-		testing.set.x <- x[testing.idx,]
-		testing.set.y <- y[testing.idx,]
+		testing.set.x <- x[testing.idx]
+		testing.set.y <- y[testing.idx]
 
 		len.fold.tuning <- round(nrow(modelling.set.x)/n.folds.tracking)
 
@@ -78,32 +82,28 @@ for(i in 1:length(bases)) {
 
 		# Builds all tracking step ST models to verificate correlation between outcome variables
 		for(k in 1:n.folds.tracking) {
-			validation.idx <- as.numeric(rownames(modelling.set.x[((k-1)*len.fold.tuning + 1):(ifelse(k==n.folds.tracking, nrow(modelling.set.x), k*len.fold.tuning)),]))
-			training.idx <- if(n.folds.tracking == 1) validation.idx else as.numeric(rownames(modelling.set.x[-validation.idx,]))
+			validation.idx <- ((k-1)*len.fold.tuning + 1):(ifelse(k==n.folds.tracking, nrow(modelling.set.x), k*len.fold.tuning))
+			training.idx <- if(n.folds.tracking == 1) validation.idx else setdiff(1:nrow(modelling.set.x), validation.idx)
 
-			x.training.tuning <- modelling.set.x[training.idx,]
-			y.training.tuning <- modelling.set.y[training.idx,]
+			x.training.tuning <- modelling.set.x[training.idx]
+			y.training.tuning <- modelling.set.y[training.idx]
 
-			x.validation.tuning <- modelling.set.x[validation.idx,]
-			y.validation.tuning <- modelling.set.y[validation.idx,]
+			x.validation.tuning <- modelling.set.x[validation.idx]
+			y.validation.tuning <- modelling.set.y[validation.idx]
 
 			predictions.training[[k]] <- y.training.tuning
 			predictions.validation[[k]] <- y.validation.tuning
 
 			for(t in targets[[i]]) {
-				regressor <- train_(x.training.tuning, y.training.tuning[,t], tech, targets[[i]])
-				predictions.training[[k]][, paste(0,t,sep=".")] <- predict_(regressor, x.training.tuning, tech, targets[[i]])
-				predictions.validation[[k]][, paste(0,t,sep=".")] <- predict_(regressor, x.validation.tuning, tech, targets[[i]])
-
-				# rmse.validation <- RMSE(y.validation.tuning[,t], predictions.validation[[k]][, paste(0,t,sep=".")])
-				# error.validation[t] <- rmse.validation
-				# convergence.layers[k,t] <- 0
+				regressor <- train_(x.training.tuning, y.training.tuning[[t]], tech, targets[[i]])
+				set(predictions.training[[k]], NULL, paste(0,t,sep="."), predict_(regressor, x.training.tuning, tech, targets[[i]]))
+				set(predictions.validation[[k]], NULL, paste(0,t,sep="."), predict_(regressor, x.validation.tuning, tech, targets[[i]]))
 			}
 
 			if(k == 1)
 				pimp <- predictions.validation[[k]]
 			else
-				pimp <- rbind(pimp, predictions.validation[[k]])
+				pimp <- rbindlist(list(pimp, predictions.validation[[k]]))
 		}
 
 		############################ RF Importance calc ###################################
@@ -112,7 +112,7 @@ for(i in 1:length(bases)) {
 
 		cont <- 1
 		for(k in targets[[i]]) {
-			rf.aux <- randomForest(pimp[, paste(0,targets[[i]],sep=".")], pimp[,k], importance = TRUE)
+			rf.aux <- randomForest((pimp[, paste(0,targets[[i]],sep="."), with = FALSE]), pimp[[k]], importance = TRUE)
 			imp.aux <- importance(rf.aux, type = 1)
 			imp.aux[imp.aux < 0] <- 0
 
@@ -128,25 +128,23 @@ for(i in 1:length(bases)) {
 		rm(pimp)
 		###################################################################################
 
-		convergence.layers <- as.data.frame(setNames(replicate(length(targets[[i]]), numeric(length(n.folds.tracking)), simplify = F), targets[[i]]))
-		convergence.layers <- cbind(1:n.folds.tracking, convergence.layers)
-		colnames(convergence.layers)[1] <- "folds/layers"
-
-		convergence.tracking <- as.data.frame(setNames(replicate(length(targets[[i]]), numeric(0), simplify = F), targets[[i]]))
+		convergence.layers <- as.data.table(matrix(nrow=n.folds.tracking, ncol=length(targets[[i]]) + 1, data = 0))
+		colnames(convergence.layers) <- c("folds/layers", targets[[i]])
+		convergence.tracking <- as.data.table(setNames(replicate(length(targets[[i]]), numeric(0), simplify = F), targets[[i]]))
 
 		if(showProgress){}else{print(paste("Tuning"))}
 
 		# Cross validation
 		for(k in 1:n.folds.tracking) {
 			if(showProgress){pb$tick()}else{print(paste("Fold tuning", k))}
-			validation.idx <- as.numeric(rownames(modelling.set.x[((k-1)*len.fold.tuning + 1):(ifelse(k==n.folds.tracking, nrow(modelling.set.x), k*len.fold.tuning)),]))
-			training.idx <- if(n.folds.tracking == 1) validation.idx else as.numeric(rownames(modelling.set.x[-validation.idx,]))
+			validation.idx <- ((k-1)*len.fold.tuning + 1):(ifelse(k==n.folds.tracking, nrow(modelling.set.x), k*len.fold.tuning))
+			training.idx <- if(n.folds.tracking == 1) validation.idx else setdiff(1:nrow(modelling.set.x), validation.idx)
 
-			x.training.tuning <- modelling.set.x[training.idx,]
-			y.training.tuning <- modelling.set.y[training.idx,]
+			x.training.tuning <- modelling.set.x[training.idx]
+			y.training.tuning <- modelling.set.y[training.idx]
 
-			x.validation.tuning <- modelling.set.x[validation.idx,]
-			y.validation.tuning <- modelling.set.y[validation.idx,]
+			x.validation.tuning <- modelling.set.x[validation.idx]
+			y.validation.tuning <- modelling.set.y[validation.idx]
 
 			# Training
 			converged <- rep(FALSE, n.targets[i])
@@ -163,24 +161,17 @@ for(i in 1:length(bases)) {
 			error.validation <- rep(Inf, n.targets[i])
 			names(error.validation) <- targets[[i]]
 
-			# ST layer
-			# if(showProgress){pb$tick()}else{print("Layer 0")}
 			for(t in targets[[i]]) {
-				rmse.validation <- RMSE(y.validation.tuning[,t], predictions.validation[[k]][, paste(0,t,sep=".")])
+				rmse.validation <- RMSE(y.validation.tuning[[t]], predictions.validation[[k]][[paste(0,t,sep=".")]])
 				error.validation[t] <- rmse.validation
-				convergence.layers[k,t] <- 0
+				set(convergence.layers, k, t, 0)
 			}
 
 			if(nrow(convergence.tracking) == 0) {
-				convergence.tracking[nrow(convergence.tracking)+1,] <- as.numeric(!converged)
+				convergence.tracking <- rbindlist(list(convergence.tracking, as.list(as.numeric(!converged))))
 			} else {
-				convergence.tracking[1,] <- convergence.tracking[1,] + as.numeric(!converged)
+				set(convergence.tracking,1L, targets[[i]], convergence.tracking[1] + as.numeric(!converged))
 			}
-			#
-
-			# for(t in 1:n.targets[i]) {
-			# 	converged[t] <- uncorr[t]
-			# }
 
 			converged <- uncorr
 			rlayer <- 1
@@ -194,45 +185,41 @@ for(i in 1:length(bases)) {
 
 						chosen.t <- targets[[i]][rf.importance[[t]]]
 
-						tck.tra[, chosen.t] <- predictions.training[[k]][, paste(convergence.layers[k,chosen.t], chosen.t,sep=".")]
-						tck.val[, chosen.t] <- predictions.validation[[k]][, paste(convergence.layers[k,chosen.t], chosen.t,sep=".")]
+						set(tck.tra,NULL,chosen.t, predictions.training[[k]][,paste(convergence.layers[k,chosen.t, with = FALSE], chosen.t,sep="."), with = FALSE])
+						set(tck.val,NULL,chosen.t, predictions.validation[[k]][,paste(convergence.layers[k,chosen.t, , with = FALSE], chosen.t,sep="."), with = FALSE])
 
-						regressor <- train_(tck.tra, y.training.tuning[,t], tech, targets[[i]])
-						predictions.training[[k]][, paste(rlayer,t,sep=".")] <- predict_(regressor, tck.tra, tech, targets[[i]])
-						predictions.validation[[k]][, paste(rlayer,t,sep=".")] <- predict_(regressor, tck.val, tech, targets[[i]])
+						regressor <- train_(tck.tra, y.training.tuning[[t]], tech, targets[[i]])
+						set(predictions.training[[k]], NULL, paste(rlayer,t,sep="."), predict_(regressor, tck.tra, tech, targets[[i]]))
+						set(predictions.validation[[k]], NULL, paste(rlayer,t,sep="."), predict_(regressor, tck.val, tech, targets[[i]]))
 
-						rmse.validation <- RMSE(y.validation.tuning[,t], predictions.validation[[k]][, paste(rlayer,t,sep=".")])
+						rmse.validation <- RMSE(y.validation.tuning[[t]], predictions.validation[[k]][[paste(rlayer,t,sep=".")]])
 						if(rmse.validation + dstars.delta > error.validation[t]) {
 							converged[t] <- TRUE
 						} else {
 							converged[t] <- FALSE
 							error.validation[t] <- rmse.validation
-							convergence.layers[k,t] <- rlayer
+							set(convergence.layers, k, t, rlayer)
 						}
 					}
 				}
 
 				if(rlayer + 1 > nrow(convergence.tracking)) {
-					convergence.tracking[nrow(convergence.tracking)+1,] <- as.numeric(!converged)
+					convergence.tracking <- rbindlist(list(convergence.tracking, as.list(as.numeric(!converged))))
 				} else {
-					convergence.tracking[rlayer+1,] <- convergence.tracking[rlayer+1,] + as.numeric(!converged)
+				  set(convergence.tracking, as.integer(rlayer+1), targets[[i]], convergence.tracking[rlayer+1] + as.numeric(!converged))
 				}
 
 				rlayer <- rlayer + 1
 			}
 
-			rownames(predictions.training[[k]]) <- modelling.names[training.idx]
-			rownames(predictions.validation[[k]]) <- modelling.names[validation.idx]
-
-			write.csv(predictions.training[[k]], paste0(output.dir.dstarst, "/output_logs/tuning_raw_logs/", bases[i], "_", tech, "_training_predictions_EV_fold_", formatC(j, width=2, flag="0"), "_TN_fold", formatC(k, width=2, flag="0"), ".csv"))
-			write.csv(predictions.validation[[k]], paste0(output.dir.dstarst, "/output_logs/tuning_raw_logs/", bases[i], "_", tech, "_validation_predictions_EV_fold_", formatC(j, width=2, flag="0"), "_TN_fold", formatC(k, width=2, flag="0"), ".csv"))
+			write.csv(data.frame(id=modelling.names[training.idx], predictions.training[[k]], check.names = F), paste0(output.dir.dstarst, "/output_logs/tuning_raw_logs/", bases[i], "_", tech, "_training_predictions_EV_fold_", formatC(j, width=2, flag="0"), "_TN_fold", formatC(k, width=2, flag="0"), ".csv"), row.names = F)
+			write.csv(data.frame(id=modelling.names[validation.idx], predictions.validation[[k]], check.names = F), paste0(output.dir.dstarst, "/output_logs/tuning_raw_logs/", bases[i], "_", tech, "_validation_predictions_EV_fold_", formatC(j, width=2, flag="0"), "_TN_fold", formatC(k, width=2, flag="0"), ".csv"), row.names = F)
 		}
 
 		rm(predictions.training, predictions.validation)
-		rownames(convergence.tracking) <- 0:(nrow(convergence.tracking)-1)
-		write.csv(convergence.tracking, paste0(output.dir.dstarst, "/output_logs/convergence_layers_logs/", bases[i], "_", tech, "_convergence_accounting_EV_fold_", formatC(j, width=2, flag="0"), ".csv"))
+		write.csv(data.frame(layer=0:(nrow(convergence.tracking)-1),convergence.tracking, check.names = F), paste0(output.dir.dstarst, "/output_logs/convergence_layers_logs/", bases[i], "_", tech, "_convergence_accounting_EV_fold_", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
 
-		convergence.tracking <- convergence.tracking/n.folds.tracking
+		invisible(convergence.tracking[, names(convergence.tracking) := lapply(.SD, function(nmrd, dnmd) nmrd/dnmd, dnmd = n.folds.tracking)])
 
 		# Test different phi values
 		for(dstars.phi in seq(0,1, 0.1)) {
@@ -241,16 +228,14 @@ for(i in 1:length(bases)) {
 			dir.create(paste0(output.dir.dstarst, "/output_logs/testing_raw_logs/phi=",dstars.phi), showWarnings = FALSE, recursive = TRUE)
 			dir.create(paste0(output.dir.dstarst, "/output_logs/testing_final_logs/phi=",dstars.phi), showWarnings = FALSE, recursive = TRUE)
 
-			if(nrow(convergence.tracking) > 1)
-				convergence.tracking_ <- data.frame(sapply(convergence.tracking, function(z, threshold) z >= threshold, threshold = dstars.phi))
-			else
-				convergence.tracking_ <- data.frame(t(sapply(convergence.tracking, function(z, threshold) z >= threshold, threshold = dstars.phi)))
+			# if(nrow(convergence.tracking) > 1)
+			# 	convergence.tracking_ <- data.frame(sapply(convergence.tracking, function(z, threshold) z >= threshold, threshold = dstars.phi))
+			# else
+			# 	convergence.tracking_ <- data.frame(t(sapply(convergence.tracking, function(z, threshold) z >= threshold, threshold = dstars.phi)))
+      convergence.tracking_ <- convergence.tracking[, lapply(.SD, function(z, threshold) z >= threshold, threshold = dstars.phi)]
+			write.csv(data.frame(layer=0:(nrow(convergence.tracking_)-1), convergence.tracking_, check.names = F), paste0(output.dir.dstarst, "/output_logs/convergence_layers_logs/phi=",dstars.phi, "/", bases[i], "_", tech, "_convergence_tracking_EV_fold_", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
 
-			rownames(convergence.tracking_) <- 0:(nrow(convergence.tracking_)-1)
-			write.csv(convergence.tracking_, paste0(output.dir.dstarst, "/output_logs/convergence_layers_logs/phi=",dstars.phi, "/", bases[i], "_", tech, "_convergence_tracking_EV_fold_", formatC(j, width=2, flag="0"), ".csv"))
-
-			convergence.layers_ <- convergence.layers
-			convergence.layers_[nrow(convergence.layers_)+1,] <- c("modelling", as.numeric(sapply(convergence.tracking_, function(z) BBmisc::which.last(z) - 1)))
+			convergence.layers_ <- rbindlist(list(convergence.layers, as.list(c("modelling", as.numeric(convergence.tracking_[,lapply(.SD, function(z) BBmisc::which.last(z) - 1)])))))
 			write.csv(convergence.layers_, paste0(output.dir.dstarst, "/output_logs/convergence_layers_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_convergence_layers_EV_fold_", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
 
 			if(showProgress){}else{print(paste("Fold", j, ", phi = ", dstars.phi, ", final modelling"))}
@@ -262,12 +247,13 @@ for(i in 1:length(bases)) {
 			names(max.layers.reached) <- targets[[i]]
 
 			if(showProgress){}else{print("Layer 0")}
-			for(t in targets[[i]]) {
-				regressor <- train_(modelling.set.x, modelling.set.y[,t], tech, targets[[i]])
-				predictions.modelling[, paste(0,t,sep=".")] <- predict_(regressor, modelling.set.x, tech, targets[[i]])
-				predictions.testing[, paste(0,t,sep=".")] <- predict_(regressor, testing.set.x, tech, targets[[i]])
 
-				if(as.numeric(convergence.layers_[nrow(convergence.layers_),t]) == 0) {
+			for(t in targets[[i]]) {
+				regressor <- train_(modelling.set.x, modelling.set.y[[t]], tech, targets[[i]])
+				set(predictions.modelling, NULL, paste(0,t,sep="."), predict_(regressor, modelling.set.x, tech, targets[[i]]))
+				set(predictions.testing, NULL, paste(0,t,sep="."), predict_(regressor, testing.set.x, tech, targets[[i]]))
+
+				if(as.numeric(convergence.layers_[nrow(convergence.layers_),t, with = FALSE]) == 0) {
 					max.layers.reached[t] <- TRUE
 				}
 			}
@@ -279,42 +265,38 @@ for(i in 1:length(bases)) {
 			while(!all(max.layers.reached)) {
 				if(showProgress){}else{print(paste("Layer", rlayer))}
 				for(t in targets[[i]]) {
-					if(convergence.tracking_[as.character(rlayer),t]) {
+					if(convergence.tracking_[rlayer+1][[t]]) {
 						modelling.set.x_ <- modelling.set.x
 						testing.set.x_ <- testing.set.x
 						chosen.t <- targets[[i]][rf.importance[[t]]]
 
-						modelling.set.x_[, chosen.t] <- predictions.modelling[, paste(chosen.layers[chosen.t], chosen.t, sep=".")]
-						testing.set.x_[, chosen.t] <- predictions.testing[, paste(chosen.layers[chosen.t], chosen.t, sep=".")]
+						set(modelling.set.x_, NULL, chosen.t, predictions.modelling[, paste(chosen.layers[chosen.t], chosen.t, sep="."), with = F])
+						set(testing.set.x_, NULL, chosen.t, predictions.testing[, paste(chosen.layers[chosen.t], chosen.t, sep="."), with = F])
 
-						regressor <- train_(modelling.set.x_, modelling.set.y[,t], tech, targets[[i]])
-						predictions.modelling[, paste(rlayer,t,sep=".")] <- predict_(regressor, modelling.set.x_, tech, targets[[i]])
-						predictions.testing[, paste(rlayer,t,sep=".")] <- predict_(regressor, testing.set.x_, tech, targets[[i]])
+						regressor <- train_(modelling.set.x_, modelling.set.y[[t]], tech, targets[[i]])
+						set(predictions.modelling, NULL, paste(rlayer,t,sep="."), predict_(regressor, modelling.set.x_, tech, targets[[i]]))
+						set(predictions.testing, NULL, paste(rlayer,t,sep="."), predict_(regressor, testing.set.x_, tech, targets[[i]]))
 					}
 
-					if(rlayer == as.numeric(convergence.layers_[nrow(convergence.layers_),t])) {
+					if(rlayer == as.numeric(convergence.layers_[nrow(convergence.layers_),t, with = F])) {
 						max.layers.reached[t] <- TRUE
 					}
 				}
 
-				addressing <- convergence.tracking_[as.character(rlayer),]
+				addressing <- convergence.tracking_[rlayer+1]
 				addressing <- which(addressing == TRUE)
 				chosen.layers[addressing] <- rlayer
 
 				rlayer <- rlayer + 1
 			}
 
-			rownames(predictions.modelling) <- modelling.names
-			rownames(predictions.testing) <- testing.names
-
-			write.csv(predictions.modelling, paste0(output.dir.dstarst, "/output_logs/modelling_raw_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_modelling_predictions_fold", formatC(j, width=2, flag="0"), ".csv"))
-			write.csv(predictions.testing, paste0(output.dir.dstarst, "/output_logs/testing_raw_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_testing_predictions_fold", formatC(j, width=2, flag="0"), ".csv"))
+			write.csv(data.frame(id=modelling.names, predictions.modelling, check.names = F), paste0(output.dir.dstarst, "/output_logs/modelling_raw_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_modelling_predictions_fold", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
+			write.csv(data.frame(id=testing.names, predictions.testing, check.names = F), paste0(output.dir.dstarst, "/output_logs/testing_raw_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_testing_predictions_fold", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
 
 			final.predictions <- testing.set.y
-			final.predictions[, paste0(targets[[i]], ".pred")] <- predictions.testing[, paste(convergence.layers_[nrow(convergence.layers_),-1], targets[[i]],sep=".")]
+			set(final.predictions, NULL, paste0(targets[[i]], ".pred"), predictions.testing[, paste(convergence.layers_[nrow(convergence.layers_),-1], targets[[i]],sep="."), with = F])
 
-			rownames(final.predictions) <- testing.names
-			write.csv(final.predictions, paste0(output.dir.dstarst, "/output_logs/testing_final_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_testing_final_predictions_fold", formatC(j, width=2, flag="0"), ".csv"))
+			write.csv(data.frame(id=testing.names, final.predictions, check.names = F), paste0(output.dir.dstarst, "/output_logs/testing_final_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_testing_final_predictions_fold", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
 		}
 	}
 }
