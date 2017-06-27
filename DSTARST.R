@@ -28,7 +28,7 @@ for(i in 1:length(bases)) {
 	
 	dataset <- as.data.table(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 
-	len.fold.eval <- round(nrow(dataset))/folds.num
+	len.fold.eval <- round(nrow(dataset)/folds.num)
 
 	######Use a testing set
 	if(length(bases.teste) > 0 && folds.num == 1) {
@@ -51,7 +51,6 @@ for(i in 1:length(bases)) {
 
 	for(j in 1:folds.num) {
 		if(showProgress){}else{print(paste("Fold Training:", j))}
-
 		if(folds.num == 1) {
 			if(length(bases.teste) > 0) {
 				modelling.idx <- 1:(init.bound-1)
@@ -84,7 +83,7 @@ for(i in 1:length(bases)) {
 		for(k in 1:n.folds.tracking) {
 			validation.idx <- ((k-1)*len.fold.tuning + 1):(ifelse(k==n.folds.tracking, nrow(modelling.set.x), k*len.fold.tuning))
 			training.idx <- if(n.folds.tracking == 1) validation.idx else setdiff(1:nrow(modelling.set.x), validation.idx)
-
+      
 			x.training.tuning <- modelling.set.x[training.idx]
 			y.training.tuning <- modelling.set.y[training.idx]
 
@@ -140,7 +139,7 @@ for(i in 1:length(bases)) {
 			if(showProgress){pb$tick()}else{print(paste("Fold tuning", k))}
 			validation.idx <- ((k-1)*len.fold.tuning + 1):(ifelse(k==n.folds.tracking, nrow(modelling.set.x), k*len.fold.tuning))
 			training.idx <- if(n.folds.tracking == 1) validation.idx else setdiff(1:nrow(modelling.set.x), validation.idx)
-
+      
 			x.training.tuning <- modelling.set.x[training.idx]
 			y.training.tuning <- modelling.set.y[training.idx]
 
