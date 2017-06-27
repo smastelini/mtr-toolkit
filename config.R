@@ -14,7 +14,7 @@ folds.num <- 10
 
 # datasets.folder <- "~/MEGA/Experimentos/exp_A1-ExpertSystems/datasets"
 datasets.folder <- "~/MEGA/MT_datasets"
-output.prefix <- "~/Desktop/DT_TEST"
+output.prefix <- "~/Desktop/DSTARST_BENCH_V.4-TEST"
 
 mt.techs <- c("DSTARST")
 
