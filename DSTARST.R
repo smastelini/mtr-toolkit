@@ -21,10 +21,10 @@ for(i in 1:length(bases)) {
 	dataset <- as.data.table(dataset)
 	invisible(dataset[, names(dataset) := lapply(.SD, as.numeric)])
 
-  maxs[[i]] <- as.numeric(dataset[, lapply(.SD, max)])
-  names(maxs[[i]]) <- colnames(dataset)
+	maxs[[i]] <- as.numeric(dataset[, lapply(.SD, max)])
+	names(maxs[[i]]) <- colnames(dataset)
 	mins[[i]] <- as.numeric(dataset[, lapply(.SD, min)])
-  names(mins[[i]]) <- colnames(dataset)
+	names(mins[[i]]) <- colnames(dataset)
 	
 	dataset <- as.data.table(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 
@@ -34,8 +34,7 @@ for(i in 1:length(bases)) {
 	if(length(bases.teste) > 0 && folds.num == 1) {
 		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
 
-		# dataset.teste <- dataset.teste[, lapply(.SD, as.numeric)]
-		dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)]
+		invisible(dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)])
 
 		dataset.teste <- as.data.table(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 		init.bound <- nrow(dataset) + 1
@@ -58,7 +57,7 @@ for(i in 1:length(bases)) {
 				modelling.idx <- 1:(init.bound-1)
 				testing.idx <- init.bound:nrow(dataset)
 			} else {
-				testing.idx <- as.numeric(rownames(dataset))
+				testing.idx <- 1:nrow(dataset)
 				modelling.idx <- testing.idx
 			}
 		} else {
@@ -130,6 +129,7 @@ for(i in 1:length(bases)) {
 		###################################################################################
 
 		convergence.layers <- as.data.table(matrix(nrow=n.folds.tracking, ncol=length(targets[[i]]) + 1, data = 0))
+		set(convergence.layers, NULL, 1L, 1:n.folds.tracking)
 		colnames(convergence.layers) <- c("folds/layers", targets[[i]])
 		convergence.tracking <- as.data.table(setNames(replicate(length(targets[[i]]), numeric(0), simplify = F), targets[[i]]))
 
@@ -229,11 +229,7 @@ for(i in 1:length(bases)) {
 			dir.create(paste0(output.dir.dstarst, "/output_logs/testing_raw_logs/phi=",dstars.phi), showWarnings = FALSE, recursive = TRUE)
 			dir.create(paste0(output.dir.dstarst, "/output_logs/testing_final_logs/phi=",dstars.phi), showWarnings = FALSE, recursive = TRUE)
 
-			# if(nrow(convergence.tracking) > 1)
-			# 	convergence.tracking_ <- data.frame(sapply(convergence.tracking, function(z, threshold) z >= threshold, threshold = dstars.phi))
-			# else
-			# 	convergence.tracking_ <- data.frame(t(sapply(convergence.tracking, function(z, threshold) z >= threshold, threshold = dstars.phi)))
-      convergence.tracking_ <- convergence.tracking[, lapply(.SD, function(z, threshold) z >= threshold, threshold = dstars.phi)]
+			convergence.tracking_ <- convergence.tracking[, lapply(.SD, function(z, threshold) z >= threshold, threshold = dstars.phi)]
 			write.csv(data.frame(layer=0:(nrow(convergence.tracking_)-1), convergence.tracking_, check.names = F), paste0(output.dir.dstarst, "/output_logs/convergence_layers_logs/phi=",dstars.phi, "/", bases[i], "_", tech, "_convergence_tracking_EV_fold_", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
 
 			convergence.layers_ <- rbindlist(list(convergence.layers, as.list(c("modelling", as.numeric(convergence.tracking_[,lapply(.SD, function(z) BBmisc::which.last(z) - 1)])))))
