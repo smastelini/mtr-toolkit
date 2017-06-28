@@ -13,6 +13,7 @@ suppressMessages(library(BBmisc))
 suppressMessages(library(permute))
 suppressMessages(library(data.table))
 suppressMessages(library(kernlab))
+suppressMessages(library(ranger))
 #Extra libs
 source("utils_MT.R")
 # DSTARS -> Default
@@ -44,6 +45,12 @@ for(tech in techs) {
 		suppressMessages(library(doSNOW))
 		registerDoSNOW(makeCluster(7, type="SOCK"))
 	}
+
+  if(tech == "h2o.rf") {
+    suppressMessages(library(h2o))
+    h2o.init(nthreads = -1,
+      max_mem_size = "6G")
+  }
 	#Make an experiment
 	for(mt in mt.techs) {
 		set.seed(5465)

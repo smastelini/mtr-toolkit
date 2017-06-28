@@ -111,8 +111,8 @@ for(i in 1:length(bases)) {
 
 		cont <- 1
 		for(k in targets[[i]]) {
-			rf.aux <- randomForest((pimp[, paste(0,targets[[i]],sep="."), with = FALSE]), pimp[[k]], importance = TRUE)
-			imp.aux <- importance(rf.aux, type = 1)
+			rf.aux <- randomForest::randomForest((pimp[, paste(0,targets[[i]],sep="."), with = FALSE]), pimp[[k]], importance = TRUE)
+			imp.aux <- randomForest::importance(rf.aux, type = 1)
 			imp.aux[imp.aux < 0] <- 0
 
 			# imp.aux[imp.aux < imp.aux[k]/n.targets[i]] <- 0

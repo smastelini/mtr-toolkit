@@ -114,9 +114,6 @@ train_ <- function(x, y, tech='svm', targets) {
 		svm={
 			svm(x,y)
 		},
-		lssvm={
-			lssvm(x,y)
-		},
 		rf={
 			randomForest(x,y)
 		},
@@ -135,11 +132,8 @@ train_ <- function(x, y, tech='svm', targets) {
 			train(x, y, trControl = trainControl(method="none"), method = "pls", tuneGrid=grid.pls)$finalModel
 		},
 		xgboost={
-			# grid.xgboost <- data.frame(nrounds=150, max_depth=13, eta=0.3, gamma=0, colsample_bytree=1, min_child_weight=1, subsample=1)
-			# train(as.matrix(x), y, trControl = trainControl(method="none"), method = "xgbTree", tuneGrid=grid.xgboost)$finalModel
 			x <- as.matrix(x)
 			xgboost(x, y, nrounds = 100, early_stopping_rounds = 3, base_score = mean(y), silent = 1, print_every_n = 500, save_period = NULL)
-
 		},
 		cart={
 			grid.cart <- data.frame(cp=0.01)
@@ -157,6 +151,13 @@ train_ <- function(x, y, tech='svm', targets) {
 		},
 		parrf={
 			foreach(ntree = c(70,70,70,70,70,70,80), .combine = combine, .packages = "randomForest") %dopar% randomForest(x, y, ntree = ntree)
+		},
+		ranger={
+			set(x, NULL, "Ranger_Target", y)
+		  ranger.form <- as.formula(paste0("Ranger_Target ~ ", paste(colnames(x)[-ncol(x)], collapse = " + ")))
+			reg <- ranger(ranger.form, data = x)
+			x[, Ranger_Target := NULL]
+			reg
 		}
 	)
 	return(regressor)
@@ -185,9 +186,6 @@ predict_ <- function(regressor, new.data, tech = 'svm', targets) {
 		svm={
 			predict(regressor, new.data)
 		},
-		lssvm={
-			predict(regressor, new.data)
-		},
 		rf={
 			predict(regressor, new.data)
 		},
@@ -211,12 +209,13 @@ predict_ <- function(regressor, new.data, tech = 'svm', targets) {
 			scale(as.matrix(new.data), center = regressor$xm, scale = regressor$scales)%*%regressor$coef + regressor$ym
 		},
 		lr={
-		  # regressor$coefficients[is.na(regressor$coefficients)] <- 0
-		  # as.numeric(as.matrix(new.data)%*%regressor$coefficients[-1] + regressor$coefficients[1])
 		  predict(regressor, new.data)
 		},
 		parrf={
 			predict(regressor, new.data)
+		},
+		ranger={
+			predict(regressor, new.data)$predictions
 		}
 	)
 
