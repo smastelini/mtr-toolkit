@@ -166,7 +166,7 @@ for(i in 1:length(bases)) {
 				error.validation[t] <- rmse.validation
 				set(convergence.layers, k, t, 0)
 			}
-
+      
 			if(nrow(convergence.tracking) == 0) {
 				convergence.tracking <- rbindlist(list(convergence.tracking, as.list(as.numeric(!converged))))
 			} else {
@@ -202,13 +202,13 @@ for(i in 1:length(bases)) {
 						}
 					}
 				}
-
-				if(rlayer + 1 > nrow(convergence.tracking)) {
-					convergence.tracking <- rbindlist(list(convergence.tracking, as.list(as.numeric(!converged))))
-				} else {
-				  set(convergence.tracking, as.integer(rlayer+1), targets[[i]], convergence.tracking[rlayer+1] + as.numeric(!converged))
-				}
-
+        if(!all(converged)) {
+					if(rlayer + 1 > nrow(convergence.tracking)) {
+						convergence.tracking <- rbindlist(list(convergence.tracking, as.list(as.numeric(!converged))))
+					} else {
+					  set(convergence.tracking, as.integer(rlayer+1), targets[[i]], convergence.tracking[rlayer+1] + as.numeric(!converged))
+					}
+        }
 				rlayer <- rlayer + 1
 			}
 
@@ -230,7 +230,7 @@ for(i in 1:length(bases)) {
 
 			convergence.tracking_ <- convergence.tracking[, lapply(.SD, function(z, threshold) z >= threshold, threshold = dstars.phi)]
 			write.csv(data.frame(layer=0:(nrow(convergence.tracking_)-1), convergence.tracking_, check.names = F), paste0(output.dir.dstarst, "/output_logs/convergence_layers_logs/phi=",dstars.phi, "/", bases[i], "_", tech, "_convergence_tracking_EV_fold_", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
-
+			
 			convergence.layers_ <- rbindlist(list(convergence.layers, as.list(c("modelling", as.numeric(convergence.tracking_[,lapply(.SD, function(z) BBmisc::which.last(z) - 1)])))))
 			write.csv(convergence.layers_, paste0(output.dir.dstarst, "/output_logs/convergence_layers_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_convergence_layers_EV_fold_", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
 
