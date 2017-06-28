@@ -1,23 +1,23 @@
 rm(list = ls())
-library(e1071)
-library(RSNNS)
-library(plyr)
-library(gbm)
-library(pls)
-library(rpart)
-library(MASS)
-library(randomForest)
-library(xgboost)
-library(caret)
-library(BBmisc)
-library(permute)
-library(data.table)
+suppressMessages(library(e1071))
+suppressMessages(library(RSNNS))
+suppressMessages(library(plyr))
+suppressMessages(library(gbm))
+suppressMessages(library(pls))
+suppressMessages(library(rpart))
+suppressMessages(library(MASS))
+suppressMessages(library(randomForest))
+suppressMessages(library(xgboost))
+suppressMessages(library(caret))
+suppressMessages(library(BBmisc))
+suppressMessages(library(permute))
+suppressMessages(library(data.table))
+suppressMessages(library(kernlab))
 #Extra libs
 source("utils_MT.R")
 # DSTARS -> Default
 n.folds.tracking <- 10
 dstars.delta <- 0.0001
-dstars.phi <- 0.5
 #DRS -> Default
 number.layers <- 10
 
@@ -40,8 +40,8 @@ for(mt in mt.techs) {
 
 for(tech in techs) {
 	if(tech == "parrf") {
-		library(foreach)
-		library(doSNOW)
+		suppressMessages(library(foreach))
+		suppressMessages(library(doSNOW))
 		registerDoSNOW(makeCluster(7, type="SOCK"))
 	}
 	#Make an experiment

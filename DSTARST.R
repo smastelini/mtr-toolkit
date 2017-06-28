@@ -25,7 +25,7 @@ for(i in 1:length(bases)) {
   names(maxs[[i]]) <- colnames(dataset)
 	mins[[i]] <- as.numeric(dataset[, lapply(.SD, min)])
   names(mins[[i]]) <- colnames(dataset)
-	
+
 	dataset <- as.data.table(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 
 	len.fold.eval <- round(nrow(dataset))/folds.num

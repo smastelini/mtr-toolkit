@@ -114,6 +114,9 @@ train_ <- function(x, y, tech='svm', targets) {
 		svm={
 			svm(x,y)
 		},
+		lssvm={
+			lssvm(x,y)
+		},
 		rf={
 			randomForest(x,y)
 		},
@@ -180,6 +183,9 @@ predict_ <- function(regressor, new.data, tech = 'svm', targets) {
 
 	predicted <- switch(tech,
 		svm={
+			predict(regressor, new.data)
+		},
+		lssvm={
 			predict(regressor, new.data)
 		},
 		rf={
