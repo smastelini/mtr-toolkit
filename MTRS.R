@@ -13,28 +13,35 @@ for(i in 1:length(bases)) {
 	dataset <- dataset[sample(nrow(dataset)),]
 	sample.names <- rownames(dataset)
 
-	dataset <- as.data.frame(sapply(dataset, function(x) as.numeric(x)))
+	#Center and Scaling
+	dataset <- as.data.table(dataset)
+	invisible(dataset[, names(dataset) := lapply(.SD, as.numeric)])
 
-	maxs[[i]] <- apply(dataset, 2, max)
-	mins[[i]] <- apply(dataset, 2, min)
-	dataset <- as.data.frame(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
+	maxs[[i]] <- as.numeric(dataset[, lapply(.SD, max)])
+	names(maxs[[i]]) <- colnames(dataset)
+	mins[[i]] <- as.numeric(dataset[, lapply(.SD, min)])
+	names(mins[[i]]) <- colnames(dataset)
+
+	dataset <- as.data.table(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 
 	len.fold <- round(nrow(dataset)/folds.num)
 
 	######Use a testing set
 	if(length(bases.teste) > 0 && folds.num == 1) {
 		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
-		dataset.teste <- as.data.frame(sapply(dataset.teste, function(x) as.numeric(x)))
-		dataset.teste <- as.data.frame(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
+
+		invisible(dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)])
+
+		dataset.teste <- as.data.table(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 		init.bound <- nrow(dataset) + 1
-		dataset <- rbind(dataset, dataset.teste)
+
+		dataset <- rbindlist(list(dataset, dataset.teste))
 		sample.names <- c(sample.names, rownames(dataset.teste))
 	}
-	rownames(dataset) <- 1:nrow(dataset)
 	#######
 
-	x <- dataset[, 1:(ncol(dataset)-length(targets[[i]]))]
-	y <- dataset[, targets[[i]]]
+	x <- dataset[, !targets[[i]], with = FALSE]
+	y <- dataset[, targets[[i]], with = FALSE]
 
 	if(showProgress){}else{print(bases[i])}
 	#print(bases[i])
@@ -48,7 +55,6 @@ for(i in 1:length(bases)) {
 	# Cross validation
 	for(k in 1:folds.num) {
 	  if(showProgress){}else{print(paste0("Fold ", k))}
-		
 
 		if(folds.num == 1) {
 			if(length(bases.teste) > 0) {
@@ -59,50 +65,44 @@ for(i in 1:length(bases)) {
 				train.idx <- test.idx
 			}
 		} else {
-			test.idx <- as.numeric(rownames(dataset[((k-1)*len.fold + 1):(ifelse(k==folds.num, nrow(dataset), k*len.fold)),]))
-			train.idx <- as.numeric(rownames(dataset[-test.idx,]))
+			test.idx <- ((k-1)*len.fold + 1):(ifelse(k==folds.num, nrow(dataset), k*len.fold))
+			train.idx <- setdiff(1:nrow(dataset), test.idx)
 		}
 
-		x.train <- x[train.idx,]
-		y.train <- y[train.idx,]
+		x.train <- x[train.idx]
+		y.train <- y[train.idx]
 
-		x.test <- x[test.idx,]
-		y.test <- y[test.idx,]
+		x.test <- x[test.idx]
+		y.test <- y[test.idx]
 
 		# Predictions trainining set => input to the second layer of regressors
-		predictions.l1.train <- as.data.frame(setNames(replicate(length(targets[[i]]),numeric(nrow(x.train)), simplify = F),
+		predictions.l1.train <- as.data.table(setNames(replicate(length(targets[[i]]),numeric(nrow(x.train)), simplify = F),
 																									targets[[i]]))
 		# Predictions testing set => input to the second layer of regressors
-		predictions.l1.test <- as.data.frame(setNames(replicate(length(targets[[i]]),numeric(nrow(x.test)), simplify = F),
+		predictions.l1.test <- as.data.table(setNames(replicate(length(targets[[i]]),numeric(nrow(x.test)), simplify = F),
 																									targets[[i]]))
 
 		# Final logs
-		prediction.log <- as.data.frame(setNames(replicate(length(col.names.targets),numeric(nrow(x.test)), simplify = F),
+		prediction.log <- as.data.table(setNames(replicate(length(col.names.targets),numeric(nrow(x.test)), simplify = F),
 																									col.names.targets))
-		
+
 		if(showProgress){}else{print("Level 1")}
-		#print("Level 1")
 		for(t in targets[[i]]) {
 		  if(showProgress){pb$tick()}else{print(t)}
-		  #print(t)
-
-			regressor <- train_(x.train, y.train[,t], tech, targets[[i]])
-			predictions.l1.train[,t] <- predict_(regressor, x.train, tech, targets[[i]])
-			predictions.l1.test[,t] <- predict_(regressor, x.test, tech, targets[[i]])
+			regressor <- train_(x.train, y.train[[t]], tech, targets[[i]])
+			predictions.l1.train[[t]] <- predict_(regressor, x.train, tech, targets[[i]])
+			predictions.l1.test[[t]] <- predict_(regressor, x.test, tech, targets[[i]])
 		}
-    
+
 		if(showProgress){}else{print("Level 2")}
-		#print("Level 2")
-		x.train <- cbind(x.train, predictions.l1.train)
+		set(x.train, NULL, targets[[i]], predictions.l1.train)
+		set(x.test, NULL, targets[[i]], predictions.l1.test)
 		for(t in targets[[i]]) {
 		  if(showProgress){pb$tick()}else{print(t)}
-		  #print(t)
-			predictions <- rep(0, nrow(x.test))
-
-			regressor <- train_(x.train, y.train[,t], tech, targets[[i]])
-			predictions <- predict_(regressor, cbind(x.test, predictions.l1.test), tech, targets[[i]])
-			prediction.log[,t] <- y.test[,t]
-			prediction.log[,paste0(t, ".pred")] <- predictions
+			regressor <- train_(x.train, y.train[[t]], tech, targets[[i]])
+			predictions <- predict_(regressor, x.test, tech, targets[[i]])
+			prediction.log[[t]] <- y.test[[t]]
+			prediction.log[[paste0(t, ".pred")]] <- predictions
 		}
 
 		prediction.log <- cbind(sample.names[test.idx], prediction.log)
