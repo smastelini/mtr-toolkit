@@ -80,38 +80,32 @@ for(i in 1:length(bases)) {
 		predictions.validation <- list()
 
 		# Builds all tracking step ST models to verificate correlation between outcome variables
+		pimp <- data.table(matrix(nrow=length(modelling.idx), ncol=2*n.targets[i], data=0))
+		names(pimp) <- c(targets[[i]], paste(0,targets[[i]],sep="."))
+
 		for(k in 1:n.folds.tracking) {
 			validation.idx <- ((k-1)*len.fold.tuning + 1):(ifelse(k==n.folds.tracking, nrow(modelling.set.x), k*len.fold.tuning))
 			training.idx <- if(n.folds.tracking == 1) validation.idx else setdiff(1:nrow(modelling.set.x), validation.idx)
 
-			x.training.tuning <- modelling.set.x[training.idx]
-			y.training.tuning <- modelling.set.y[training.idx]
-
-			x.validation.tuning <- modelling.set.x[validation.idx]
-			y.validation.tuning <- modelling.set.y[validation.idx]
-
-			predictions.training[[k]] <- y.training.tuning
-			predictions.validation[[k]] <- y.validation.tuning
+			predictions.training[[k]] <- modelling.set.y[training.idx]
+			predictions.validation[[k]] <- modelling.set.y[validation.idx]
 
 			for(t in targets[[i]]) {
-				regressor <- train_(x.training.tuning, y.training.tuning[[t]], tech, targets[[i]])
-				set(predictions.training[[k]], NULL, paste(0,t,sep="."), predict_(regressor, x.training.tuning, tech, targets[[i]]))
-				set(predictions.validation[[k]], NULL, paste(0,t,sep="."), predict_(regressor, x.validation.tuning, tech, targets[[i]]))
+				regressor <- train_(modelling.set.x[training.idx], modelling.set.y[training.idx][[t]], tech, targets[[i]])
+				set(predictions.training[[k]], NULL, paste(0,t,sep="."), predict_(regressor, modelling.set.x[training.idx], tech, targets[[i]]))
+				set(predictions.validation[[k]], NULL, paste(0,t,sep="."), predict_(regressor, modelling.set.x[validation.idx], tech, targets[[i]]))
 			}
 
-			if(k == 1)
-				pimp <- predictions.validation[[k]]
-			else
-				pimp <- rbindlist(list(pimp, predictions.validation[[k]]))
+			pimp[validation.idx] <- predictions.validation[[k]]
 		}
 
 		############################ RF Importance calc ###################################
 		rf.importance <- list()
-		timportance <- matrix(nrow = length(targets[[i]]), ncol = length(targets[[i]]))
+		timportance <- matrix(nrow = n.targets[i], ncol = n.targets[i])
 
 		cont <- 1
 		for(k in targets[[i]]) {
-			rf.aux <- randomForest::randomForest((pimp[, paste(0,targets[[i]],sep="."), with = FALSE]), pimp[[k]], importance = TRUE)
+			rf.aux <- randomForest::randomForest((pimp[,paste(0,targets[[i]],sep="."), with = FALSE]), pimp[[k]], importance = TRUE)
 			imp.aux <- randomForest::importance(rf.aux, type = 1)
 			imp.aux[imp.aux < 0] <- 0
 
@@ -140,12 +134,6 @@ for(i in 1:length(bases)) {
 			validation.idx <- ((k-1)*len.fold.tuning + 1):(ifelse(k==n.folds.tracking, nrow(modelling.set.x), k*len.fold.tuning))
 			training.idx <- if(n.folds.tracking == 1) validation.idx else setdiff(1:nrow(modelling.set.x), validation.idx)
 
-			x.training.tuning <- modelling.set.x[training.idx]
-			y.training.tuning <- modelling.set.y[training.idx]
-
-			x.validation.tuning <- modelling.set.x[validation.idx]
-			y.validation.tuning <- modelling.set.y[validation.idx]
-
 			# Training
 			converged <- rep(FALSE, n.targets[i])
 			names(converged) <- targets[[i]]
@@ -162,7 +150,7 @@ for(i in 1:length(bases)) {
 			names(error.validation) <- targets[[i]]
 
 			for(t in targets[[i]]) {
-				rmse.validation <- RMSE(y.validation.tuning[[t]], predictions.validation[[k]][[paste(0,t,sep=".")]])
+				rmse.validation <- RMSE(predictions.validation[[k]][[t]], predictions.validation[[k]][[paste(0,t,sep=".")]])
 				error.validation[t] <- rmse.validation
 				set(convergence.layers, k, t, 0)
 			}
@@ -180,19 +168,19 @@ for(i in 1:length(bases)) {
 
 				for(t in targets[[i]]) {
 					if(!uncorr[t]) {
-						tck.tra <- x.training.tuning
-						tck.val <- x.validation.tuning
+						tck.tra <- modelling.set.x[training.idx]
+						tck.val <- modelling.set.x[validation.idx]
 
 						chosen.t <- targets[[i]][rf.importance[[t]]]
 
 						set(tck.tra,NULL,chosen.t, predictions.training[[k]][,paste(convergence.layers[k,chosen.t, with = FALSE], chosen.t,sep="."), with = FALSE])
 						set(tck.val,NULL,chosen.t, predictions.validation[[k]][,paste(convergence.layers[k,chosen.t, , with = FALSE], chosen.t,sep="."), with = FALSE])
-
-						regressor <- train_(tck.tra, y.training.tuning[[t]], tech, targets[[i]])
+						
+						regressor <- train_(tck.tra, modelling.set.y[training.idx][[t]], tech, targets[[i]])
 						set(predictions.training[[k]], NULL, paste(rlayer,t,sep="."), predict_(regressor, tck.tra, tech, targets[[i]]))
 						set(predictions.validation[[k]], NULL, paste(rlayer,t,sep="."), predict_(regressor, tck.val, tech, targets[[i]]))
 
-						rmse.validation <- RMSE(y.validation.tuning[[t]], predictions.validation[[k]][[paste(rlayer,t,sep=".")]])
+						rmse.validation <- RMSE(predictions.validation[[k]][[t]], predictions.validation[[k]][[paste(rlayer,t,sep=".")]])
 						if(rmse.validation + dstars.delta > error.validation[t]) {
 							converged[t] <- TRUE
 						} else {
@@ -236,8 +224,8 @@ for(i in 1:length(bases)) {
 
 			if(showProgress){}else{print(paste("Fold", j, ", phi = ", dstars.phi, ", final modelling"))}
 
-			predictions.modelling <- modelling.set.y
-			predictions.testing <- testing.set.y
+			predictions.modelling <- y[modelling.idx]
+			predictions.testing <- y[testing.idx]
 
 			max.layers.reached <- rep(FALSE, n.targets[i])
 			names(max.layers.reached) <- targets[[i]]
@@ -262,13 +250,13 @@ for(i in 1:length(bases)) {
 				if(showProgress){}else{print(paste("Layer", rlayer))}
 				for(t in targets[[i]]) {
 					if(convergence.tracking_[rlayer+1][[t]]) {
-						modelling.set.x_ <- modelling.set.x
-						testing.set.x_ <- testing.set.x
+						modelling.set.x_ <- x[modelling.idx]
+						testing.set.x_ <- x[testing.idx]
 						chosen.t <- targets[[i]][rf.importance[[t]]]
 
 						set(modelling.set.x_, NULL, chosen.t, predictions.modelling[, paste(chosen.layers[chosen.t], chosen.t, sep="."), with = F])
 						set(testing.set.x_, NULL, chosen.t, predictions.testing[, paste(chosen.layers[chosen.t], chosen.t, sep="."), with = F])
-
+						
 						regressor <- train_(modelling.set.x_, modelling.set.y[[t]], tech, targets[[i]])
 						set(predictions.modelling, NULL, paste(rlayer,t,sep="."), predict_(regressor, modelling.set.x_, tech, targets[[i]]))
 						set(predictions.testing, NULL, paste(rlayer,t,sep="."), predict_(regressor, testing.set.x_, tech, targets[[i]]))

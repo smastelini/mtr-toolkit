@@ -45,12 +45,7 @@ for(tech in techs) {
 		suppressMessages(library(doSNOW))
 		registerDoSNOW(makeCluster(7, type="SOCK"))
 	}
-
-  if(tech == "h2o.rf") {
-    suppressMessages(library(h2o))
-    h2o.init(nthreads = -1,
-      max_mem_size = "6G")
-  }
+  
 	#Make an experiment
 	for(mt in mt.techs) {
 		set.seed(5465)
