@@ -227,3 +227,18 @@ remove.unique <- function(dataset) {
 	uniquelength <- sapply(dataset, function(x) length(unique(x)))
 	return(subset(dataset, select = uniquelength > 1))
 }
+
+getTargetImportance <- function(targets, method = "rf_imp") {
+	timportance <- matrix(nrow = ncol(targets), ncol = ncol(targets))
+	for(t in 1:ncol(targets)) {
+		rf.aux <- randomForest::randomForest(targets, targets[[t]], importance = TRUE)
+		imp.aux <- randomForest::importance(rf.aux, type = 1)
+		imp.aux[imp.aux < 0] <- 0
+		timportance[t,] <- imp.aux
+	}
+
+	diag(timportance) <- 0
+  rownames(timportance) <- colnames(timportance) <- colnames(targets)
+
+  return(timportance)
+}
