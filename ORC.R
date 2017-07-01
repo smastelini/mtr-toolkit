@@ -22,8 +22,10 @@ getChainingTree <- function(imp, tar, hb, max.level) {
 		if(level < chain$max.level) {
 			max.i <- which.max(chain$imp[target,])
 			# filter relevant targets
-			# rel.idx <- which(chain$imp[target,] >= chain$imp[target, max.i] - chain$hb)
-			rel.idx <- which(chain$imp[target,] > 0)
+			if(is.null(chain$hb))
+				rel.idx <- which(chain$imp[target,] > 0)
+			else
+				rel.idx <- which(chain$imp[target,] >= chain$imp[target, max.i] - chain$hb)
 			rel <- colnames(chain$imp)[rel.idx]
 
 			next.t <- node.id + 1
@@ -199,7 +201,7 @@ for(i in 1:length(bases)) {
 		t.cont <- 1
 
 		for(t in targets[[i]]) {
-				orc <- getChainingTree(timportance, t, hoeffdings.bound(nrow(x.train)), round(log(n.targets[i])))
+				orc <- getChainingTree(timportance, t, hoeffdings.bound(nrow(x.train)), round(log2(n.targets[i])))
 				predictions <- buildChainTree(orc, x.train, y.train, x.test, tech, targets)
 				
 				write.csv(data.frame(id=sample.names[train.idx], predictions$tr, check.names = F), paste0(output.dir.orc, "/raw_logs/",tech,"/raw_ORC_training_", bases[i], "_fold", formatC(k, width=2, flag="0"), "_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
