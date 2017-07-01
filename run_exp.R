@@ -30,7 +30,6 @@ if(showProgress){
   source("progress_exp.R")
 }
 
-
 #Max. PLS components to evaluate
 train.test$comp.limit <- 40
 
