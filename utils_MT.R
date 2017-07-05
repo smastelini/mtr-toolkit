@@ -88,7 +88,7 @@ train_ <- function(x, y, tech='svm', targets) {
 		filtered <- targets[which.are.targets]
 		if(length(filtered) > 0) {
 			tgts <- x[,filtered, with = FALSE]
-			x[, filtered := NULL]
+			x[, (filtered) := NULL]
 			x <- as.matrix(x)
 			train.test$pls.model <- plsr(y ~ x, ncomp = train.test$comp.limit, validation = "CV")
 			determination <- pls::R2(train.test$pls.model)$val[,1,-1]
@@ -96,15 +96,13 @@ train_ <- function(x, y, tech='svm', targets) {
 
 			x.extracted <- as.data.table(cbind(x %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,], tgts))
 			names(x.extracted)[1:train.test$max.comp] <- paste0("comp", 1:train.test$max.comp)
-
-
 		} else {
 			x <- as.matrix(x)
 			train.test$pls.model <- plsr(y ~ x, ncomp = train.test$comp.limit, validation = "CV")
 			determination <- pls::R2(train.test$pls.model)$val[,1,-1]
 			train.test$max.comp <- which.max(determination)
 
-			x.extracted <- as.data.table(x %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,])
+			x.extracted <- data.table(x %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,])
 			names(x.extracted) <- paste0("comp", 1:ncol(x.extracted))
 		}
 		x <- x.extracted
@@ -153,7 +151,8 @@ train_ <- function(x, y, tech='svm', targets) {
 			foreach(ntree = c(70,70,70,70,70,70,80), .combine = combine, .packages = "randomForest") %dopar% randomForest(x, y, ntree = ntree)
 		},
 		ranger={
-			set(x, NULL, "Ranger_Target", y)
+			# set(x, NULL, "Ranger_Target", y)
+			x[, Ranger_Target := y]
 		  ranger.form <- as.formula(paste0("Ranger_Target ~ ", paste(colnames(x)[-ncol(x)], collapse = " + ")))
 			reg <- ranger(ranger.form, data = x)
 			x[, Ranger_Target := NULL]
@@ -168,16 +167,16 @@ predict_ <- function(regressor, new.data, tech = 'svm', targets) {
 		which.are.targets <- targets %in% colnames(new.data)
 		filtered <- targets[which.are.targets]
 		if(length(filtered) > 0) {
-			tgts <- new.data[,filtered]
-			x_ <- new.data[, !(colnames(new.data) %in% filtered)]
+			tgts <- new.data[,filtered, with = FALSE]
+			x_ <- new.data[, !filtered, with = FALSE]
 			x_ <- as.matrix(x_)
-			x.extracted <- as.data.frame(cbind(x_ %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,], tgts))
-			colnames(x.extracted)[1:train.test$max.comp] <- paste0("comp", 1:train.test$max.comp)
+			x.extracted <- data.table(cbind(x_ %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,], tgts))
+			names(x.extracted)[1:train.test$max.comp] <- paste0("comp", 1:train.test$max.comp)
 
 		} else {
 			x_ <- as.matrix(new.data)
-			x.extracted <- as.data.frame(x_ %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,])
-			colnames(x.extracted) <- paste0("comp", 1:ncol(x.extracted))
+			x.extracted <- data.table(x_ %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,])
+			names(x.extracted) <- paste0("comp", 1:ncol(x.extracted))
 		}
 		new.data <- x.extracted
 	}
