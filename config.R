@@ -8,7 +8,7 @@ n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
 
 bases.teste <- NULL
 
-techs <- c("svm")
+techs <- c("cart")
 
 folds.num <- 10
 
@@ -16,7 +16,7 @@ folds.num <- 10
 datasets.folder <- "~/MEGA/MT_datasets"
 output.prefix <- "~/MEGA/Experimentos/exp_benchmarks_18dts"
 
-mt.techs <- c("ORC")
+mt.techs <- c("ERC")
 
 #Progress bar and remaining time exhibition
 showProgress <- FALSE

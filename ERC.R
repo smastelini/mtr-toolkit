@@ -13,28 +13,35 @@ for(i in 1:length(bases)) {
 	dataset <- dataset[sample(nrow(dataset)),]
 	sample.names <- rownames(dataset)
 
-	dataset <- as.data.frame(sapply(dataset, function(x) as.numeric(x)))
+	#Center and Scaling
+	dataset <- as.data.table(dataset)
+	invisible(dataset[, names(dataset) := lapply(.SD, as.numeric)])
 
-	maxs[[i]] <- apply(dataset, 2, max)
-	mins[[i]] <- apply(dataset, 2, min)
-	dataset <- as.data.frame(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
+	maxs[[i]] <- as.numeric(dataset[, lapply(.SD, max)])
+	names(maxs[[i]]) <- colnames(dataset)
+	mins[[i]] <- as.numeric(dataset[, lapply(.SD, min)])
+	names(mins[[i]]) <- colnames(dataset)
+
+	dataset <- as.data.table(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 
 	len.fold <- round(nrow(dataset)/folds.num)
 
 	######Use a testing set
 	if(length(bases.teste) > 0 && folds.num == 1) {
 		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
-		dataset.teste <- as.data.frame(sapply(dataset.teste, function(x) as.numeric(x)))
-		dataset.teste <- as.data.frame(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
+
+		invisible(dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)])
+
+		dataset.teste <- as.data.table(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 		init.bound <- nrow(dataset) + 1
-		dataset <- rbind(dataset, dataset.teste)
+
+		dataset <- rbindlist(list(dataset, dataset.teste))
 		sample.names <- c(sample.names, rownames(dataset.teste))
 	}
-	rownames(dataset) <- 1:nrow(dataset)
 	#######
 
-	x <- dataset[, 1:(ncol(dataset)-length(targets[[i]]))]
-	y <- dataset[, targets[[i]]]
+	x <- dataset[, !targets[[i]], with = FALSE]
+	y <- dataset[, targets[[i]], with = FALSE]
 
 	if(showProgress){pb$tick()}else{print(bases[i])}
 	#print(bases[i])
@@ -45,10 +52,8 @@ for(i in 1:length(bases)) {
 		col.names.targets <- c(col.names.targets, paste0(t, ".pred"))
 	}
 
-	# Chain combinations
-	nperm <- factorial(n.targets[i])
 	#Length filter
-	if(nperm > 10) {
+	if(n.targets[i] > 3) {
 		cbn <- shuffleSet(n.targets[i], 500, quietly = TRUE)
 		cbn <- rbind(cbn, c(1:ncol(y)))
 		cbn <- cbn[sample(nrow(cbn), 10),]
@@ -76,53 +81,53 @@ for(i in 1:length(bases)) {
 				train.idx <- 1:(init.bound-1)
 				test.idx <- init.bound:nrow(dataset)
 			} else {
-				test.idx <- as.numeric(rownames(dataset))
+				test.idx <- 1:nrow(dataset)
 				train.idx <- test.idx
 			}
 		} else {
-			test.idx <- as.numeric(rownames(dataset[((k-1)*len.fold + 1):(ifelse(k==folds.num, nrow(dataset), k*len.fold)),]))
-			train.idx <- as.numeric(rownames(dataset[-test.idx,]))
+			test.idx <- ((k-1)*len.fold + 1):(ifelse(k==folds.num, nrow(dataset), k*len.fold))
+			train.idx <- setdiff(1:nrow(dataset), test.idx)
 		}
 
-		x.train <- x[train.idx,]
-		y.train <- y[train.idx,]
+		x.train <- x[train.idx]
+		y.train <- y[train.idx]
 
-		x.test <- x[test.idx,]
-		y.test <- y[test.idx,]
-
+		x.test <- x[test.idx]
+		y.test <- y[test.idx]
 
 		models <- list()
 		for(j in 1:length(combinations)) {
-			xtrn <- x.train
-			xtst <- x.test
-
 			# Training and testing sets building
 			len.cbn <- length(combinations[[j]])
 			if(length(models[[paste(combinations[[j]][1:(len.cbn-1)], collapse="-")]]) != 0) {
 				for(l in 1:(len.cbn-1)) {
 					actual.model <- paste(combinations[[j]][1:l], collapse="-")
-					xtrn <- cbind(xtrn, models[[actual.model]]$pred.trn)
-					xtst <- cbind(xtst, models[[actual.model]]$pred.tst)
+					set(x.train, NULL, combinations[[j]][l], models[[actual.model]]$pred.trn)
+					set(x.test, NULL, combinations[[j]][l], models[[actual.model]]$pred.tst)
 				}
 			}
 
 			t <- combinations[[j]][len.cbn]
 			actual.model <- paste(combinations[[j]], collapse="-")
-			pred.train <- as.data.frame(setNames(replicate(1, numeric(nrow(x.train)), simplify=F), t))
-			pred.test <- as.data.frame(setNames(replicate(1, numeric(nrow(x.test)), simplify=F), t))
+			pred.train <- as.data.table(setNames(replicate(1, numeric(nrow(x.train)), simplify=F), t))
+			pred.test <- as.data.table(setNames(replicate(1, numeric(nrow(x.test)), simplify=F), t))
 
-			regressor <- train_(xtrn, y.train[,t], tech, targets[[i]])
+			regressor <- train_(x.train, y.train[[t]], tech, targets[[i]])
 
-
-			pred.train[,1] <- predict_(regressor, xtrn, tech, targets[[i]])
-			pred.test[,1] <- predict_(regressor, xtst, tech, targets[[i]])
-
+			pred.train[,1] <- predict_(regressor, x.train, tech, targets[[i]])
+			pred.test[,1] <- predict_(regressor, x.test, tech, targets[[i]])
+      
+			if(len.cbn > 1) {
+			  x.train[, combinations[[j]][1:(len.cbn-1)] := NULL]
+			  x.test[, combinations[[j]][1:(len.cbn-1)] := NULL]
+			}
+			
 			models[[actual.model]] <- list(pred.trn=pred.train, pred.tst=pred.test)
 			if(showProgress){pb$tick()}
 		}
 
 		#Prediction logs
-		prediction.log <- as.data.frame(setNames(replicate(length(col.names.targets),numeric(nrow(x.test)), simplify = F),
+		prediction.log <- as.data.table(setNames(replicate(length(col.names.targets),numeric(nrow(x.test)), simplify = F),
 															col.names.targets))
 
 		for(t in targets[[i]]) {
@@ -131,19 +136,19 @@ for(i in 1:length(bases)) {
 			})
 			idx <- which(idx)
 
-			pred <- models[[idx[1]]]$pred.tst
+			pred <- data.table(matrix(nrow=nrow(x.test), ncol=length(idx)))
 
-			for(j in 2:length(idx)) {
-				pred <- cbind(pred, models[[idx[j]]]$pred.tst)
+			for(j in 1:length(idx)) {
+				set(pred, NULL, as.integer(j), models[[idx[j]]]$pred.tst)
 			}
 
 			predictions <- rowMeans(pred)
 
-			prediction.log[,t] <- y.test[,t]
-			prediction.log[,paste0(t, ".pred")] <- predictions
+			prediction.log[[t]] <- y.test[[t]]
+			prediction.log[[paste0(t, ".pred")]] <- predictions
 		}
-		prediction.log <- cbind(sample.names[test.idx], prediction.log)
-		write.csv(prediction.log, paste0(output.dir.erc, "/prediction_logs/",tech,"/predictions_ERC_", bases[i], paste0("_fold", formatC(k, width=2, flag="0")), ".csv"), row.names = FALSE)
+
+		write.csv(data.frame(id=sample.names[test.idx], prediction.log, check.names = F), paste0(output.dir.erc, "/prediction_logs/",tech,"/predictions_ERC_", bases[i], paste0("_fold", formatC(k, width=2, flag="0")), ".csv"), row.names = FALSE)
 	}
 }
 
