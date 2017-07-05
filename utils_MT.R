@@ -84,18 +84,18 @@ train.test <- new.env()
 
 train_ <- function(x, y, tech='svm', targets) {
 	if(use.pls) {
-		which.are.targets <- targets %in% colnames(x)
+		which.are.targets <- targets %in% names(x)
 		filtered <- targets[which.are.targets]
 		if(length(filtered) > 0) {
-			tgts <- x[,filtered]
-			x <- x[, !(colnames(x) %in% filtered)]
+			tgts <- x[,filtered, with = FALSE]
+			x[, filtered := NULL]
 			x <- as.matrix(x)
 			train.test$pls.model <- plsr(y ~ x, ncomp = train.test$comp.limit, validation = "CV")
 			determination <- pls::R2(train.test$pls.model)$val[,1,-1]
 			train.test$max.comp <- which.max(determination)
 
-			x.extracted <- as.data.frame(cbind(x %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,], tgts))
-			colnames(x.extracted)[1:train.test$max.comp] <- paste0("comp", 1:train.test$max.comp)
+			x.extracted <- as.data.table(cbind(x %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,], tgts))
+			names(x.extracted)[1:train.test$max.comp] <- paste0("comp", 1:train.test$max.comp)
 
 
 		} else {
@@ -104,8 +104,8 @@ train_ <- function(x, y, tech='svm', targets) {
 			determination <- pls::R2(train.test$pls.model)$val[,1,-1]
 			train.test$max.comp <- which.max(determination)
 
-			x.extracted <- as.data.frame(x %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,])
-			colnames(x.extracted) <- paste0("comp", 1:ncol(x.extracted))
+			x.extracted <- as.data.table(x %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,])
+			names(x.extracted) <- paste0("comp", 1:ncol(x.extracted))
 		}
 		x <- x.extracted
 	}
