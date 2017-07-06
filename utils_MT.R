@@ -88,8 +88,8 @@ train_ <- function(x, y, tech='svm', targets) {
 		filtered <- targets[which.are.targets]
 		if(length(filtered) > 0) {
 			tgts <- x[,filtered, with = FALSE]
-			x[, (filtered) := NULL]
-			x <- as.matrix(x)
+			# x[, (filtered) := NULL]
+			x <- as.matrix(x[,!(filtered), with = FALSE])
 			train.test$pls.model <- plsr(y ~ x, ncomp = train.test$comp.limit, validation = "CV")
 			determination <- pls::R2(train.test$pls.model)$val[,1,-1]
 			train.test$max.comp <- which.max(determination)
@@ -172,7 +172,6 @@ predict_ <- function(regressor, new.data, tech = 'svm', targets) {
 			x_ <- as.matrix(x_)
 			x.extracted <- data.table(cbind(x_ %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,], tgts))
 			names(x.extracted)[1:train.test$max.comp] <- paste0("comp", 1:train.test$max.comp)
-
 		} else {
 			x_ <- as.matrix(new.data)
 			x.extracted <- data.table(x_ %*% coef(train.test$pls.model, 1:train.test$max.comp, intercept = F)[,1,])
