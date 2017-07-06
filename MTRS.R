@@ -95,8 +95,8 @@ for(i in 1:length(bases)) {
 		}
 
 		if(showProgress){}else{print("Level 2")}
-		set(x.train, NULL, targets[[i]], predictions.l1.train)
-		set(x.test, NULL, targets[[i]], predictions.l1.test)
+		x.train[, (targets[[i]]) := predictions.l1.train]
+		x.test[, (targets[[i]]) := predictions.l1.test]
 		for(t in targets[[i]]) {
 		  if(showProgress){pb$tick()}else{print(t)}
 			regressor <- train_(x.train, y.train[[t]], tech, targets[[i]])

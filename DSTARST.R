@@ -92,8 +92,8 @@ for(i in 1:length(bases)) {
 
 			for(t in targets[[i]]) {
 				regressor <- train_(modelling.set.x[training.idx], modelling.set.y[training.idx][[t]], tech, targets[[i]])
-				set(predictions.training[[k]], NULL, paste(0,t,sep="."), predict_(regressor, modelling.set.x[training.idx], tech, targets[[i]]))
-				set(predictions.validation[[k]], NULL, paste(0,t,sep="."), predict_(regressor, modelling.set.x[validation.idx], tech, targets[[i]]))
+				predictions.training[[k]][, (paste(0,t,sep=".")) := predict_(regressor, modelling.set.x[training.idx], tech, targets[[i]])]
+				predictions.validation[[k]][, (paste(0,t,sep=".")) := predict_(regressor, modelling.set.x[validation.idx], tech, targets[[i]])]
 			}
 
 			pimp[validation.idx] <- predictions.validation[[k]]
@@ -171,12 +171,12 @@ for(i in 1:length(bases)) {
 
 						chosen.t <- targets[[i]][rf.importance[[t]]]
 
-						set(tck.tra,NULL,chosen.t, predictions.training[[k]][,paste(convergence.layers[k,chosen.t, with = FALSE], chosen.t,sep="."), with = FALSE])
-						set(tck.val,NULL,chosen.t, predictions.validation[[k]][,paste(convergence.layers[k,chosen.t, , with = FALSE], chosen.t,sep="."), with = FALSE])
-						
+						tck.tra[,(chosen.t) := predictions.training[[k]][,paste(convergence.layers[k,chosen.t, with = FALSE], chosen.t,sep="."), with = FALSE]]
+						tck.val[,(chosen.t) := predictions.validation[[k]][,paste(convergence.layers[k,chosen.t, , with = FALSE], chosen.t,sep="."), with = FALSE]]
+
 						regressor <- train_(tck.tra, modelling.set.y[training.idx][[t]], tech, targets[[i]])
-						set(predictions.training[[k]], NULL, paste(rlayer,t,sep="."), predict_(regressor, tck.tra, tech, targets[[i]]))
-						set(predictions.validation[[k]], NULL, paste(rlayer,t,sep="."), predict_(regressor, tck.val, tech, targets[[i]]))
+						predictions.training[[k]][, (paste(rlayer,t,sep=".")) := predict_(regressor, tck.tra, tech, targets[[i]])]
+						predictions.validation[[k]][, (paste(rlayer,t,sep=".")) := predict_(regressor, tck.val, tech, targets[[i]])]
 
 						rmse.validation <- RMSE(predictions.validation[[k]][[t]], predictions.validation[[k]][[paste(rlayer,t,sep=".")]])
 						if(rmse.validation + dstars.delta > error.validation[t]) {
@@ -232,8 +232,8 @@ for(i in 1:length(bases)) {
 
 			for(t in targets[[i]]) {
 				regressor <- train_(modelling.set.x, modelling.set.y[[t]], tech, targets[[i]])
-				set(predictions.modelling, NULL, paste(0,t,sep="."), predict_(regressor, modelling.set.x, tech, targets[[i]]))
-				set(predictions.testing, NULL, paste(0,t,sep="."), predict_(regressor, testing.set.x, tech, targets[[i]]))
+				predictions.modelling[, (paste(0,t,sep=".")) := predict_(regressor, modelling.set.x, tech, targets[[i]])]
+				predictions.testing[, (paste(0,t,sep=".")) := predict_(regressor, testing.set.x, tech, targets[[i]])]
 
 				if(as.numeric(convergence.layers_[nrow(convergence.layers_),t, with = FALSE]) == 0) {
 					max.layers.reached[t] <- TRUE
@@ -252,12 +252,12 @@ for(i in 1:length(bases)) {
 						testing.set.x_ <- x[testing.idx]
 						chosen.t <- targets[[i]][rf.importance[[t]]]
 
-						set(modelling.set.x_, NULL, chosen.t, predictions.modelling[, paste(chosen.layers[chosen.t], chosen.t, sep="."), with = F])
-						set(testing.set.x_, NULL, chosen.t, predictions.testing[, paste(chosen.layers[chosen.t], chosen.t, sep="."), with = F])
-						
+						modelling.set.x_[,(chosen.t) := predictions.modelling[, paste(chosen.layers[chosen.t], chosen.t, sep="."), with = F]]
+						testing.set.x_[,(chosen.t) := predictions.testing[, paste(chosen.layers[chosen.t], chosen.t, sep="."), with = F]]
+
 						regressor <- train_(modelling.set.x_, modelling.set.y[[t]], tech, targets[[i]])
-						set(predictions.modelling, NULL, paste(rlayer,t,sep="."), predict_(regressor, modelling.set.x_, tech, targets[[i]]))
-						set(predictions.testing, NULL, paste(rlayer,t,sep="."), predict_(regressor, testing.set.x_, tech, targets[[i]]))
+						predictions.modelling[, (paste(rlayer,t,sep=".")) := predict_(regressor, modelling.set.x_, tech, targets[[i]])]
+						predictions.testing[, (paste(rlayer,t,sep=".")) := predict_(regressor, testing.set.x_, tech, targets[[i]])]
 					}
 
 					if(rlayer == as.numeric(convergence.layers_[nrow(convergence.layers_),t, with = F])) {
@@ -276,7 +276,7 @@ for(i in 1:length(bases)) {
 			write.csv(data.frame(id=testing.names, predictions.testing, check.names = F), paste0(output.dir.dstarst, "/output_logs/testing_raw_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_testing_predictions_fold", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
 
 			final.predictions <- testing.set.y
-			set(final.predictions, NULL, paste0(targets[[i]], ".pred"), predictions.testing[, paste(convergence.layers_[nrow(convergence.layers_),-1], targets[[i]],sep="."), with = F])
+			final.predictions[, (paste0(targets[[i]], ".pred")) := predictions.testing[, paste(convergence.layers_[nrow(convergence.layers_),-1], targets[[i]],sep="."), with = F]]
 
 			write.csv(data.frame(id=testing.names, final.predictions, check.names = F), paste0(output.dir.dstarst, "/output_logs/testing_final_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_testing_final_predictions_fold", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
 		}

@@ -102,8 +102,8 @@ for(i in 1:length(bases)) {
 			if(length(models[[paste(combinations[[j]][1:(len.cbn-1)], collapse="-")]]) != 0) {
 				for(l in 1:(len.cbn-1)) {
 					actual.model <- paste(combinations[[j]][1:l], collapse="-")
-					set(x.train, NULL, combinations[[j]][l], models[[actual.model]]$pred.trn)
-					set(x.test, NULL, combinations[[j]][l], models[[actual.model]]$pred.tst)
+					x.train[, (combinations[[j]][l]) := models[[actual.model]]$pred.trn]
+					x.test[, (combinations[[j]][l]) := models[[actual.model]]$pred.tst]
 				}
 			}
 
@@ -116,12 +116,12 @@ for(i in 1:length(bases)) {
 
 			pred.train[,1] <- predict_(regressor, x.train, tech, targets[[i]])
 			pred.test[,1] <- predict_(regressor, x.test, tech, targets[[i]])
-      
+
 			if(len.cbn > 1) {
 			  x.train[, combinations[[j]][1:(len.cbn-1)] := NULL]
 			  x.test[, combinations[[j]][1:(len.cbn-1)] := NULL]
 			}
-			
+
 			models[[actual.model]] <- list(pred.trn=pred.train, pred.tst=pred.test)
 			if(showProgress){pb$tick()}
 		}
