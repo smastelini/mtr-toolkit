@@ -38,19 +38,19 @@ for(mt in mt.techs) {
 	assign(paste0("output.dir.", tolower(mt)), paste0(output.prefix, "/", mt))
 }
 
-for(tech in techs) {
-	if(tech == "parrf") {
-		suppressMessages(library(foreach))
-		suppressMessages(library(doSNOW))
-		registerDoSNOW(makeCluster(7, type="SOCK"))
-	}
-  
-	#Make an experiment
-	for(mt in mt.techs) {
-		set.seed(5465)
-		source(paste0(mt, ".R"))
-	}
-}
+# for(tech in techs) {
+# 	if(tech == "parrf") {
+# 		suppressMessages(library(foreach))
+# 		suppressMessages(library(doSNOW))
+# 		registerDoSNOW(makeCluster(7, type="SOCK"))
+# 	}
+#
+# 	#Make an experiment
+# 	for(mt in mt.techs) {
+# 		set.seed(5465)
+# 		source(paste0(mt, ".R"))
+# 	}
+# }
 
 if(must.compare) {
 	# mt.techs <- gsub("DSTARST", "DSTARS", mt.techs)
@@ -86,9 +86,9 @@ if(generate.final.table) {
 		for(mt in mt.techs) {
 			tabela[nrow(tabela)+1,1] <- paste0("#",i," -> ",mt)
 			log <- read.csv(paste0(paste0(output.prefix, "/comparison_results"), "/performance_", mt, "_", i, ".csv"), stringsAsFactors = F)
-			rownames(log) <- log[,1]
+			rownames(log) <- techs
 			for(a in techs) {
-				tabela[nrow(tabela)+1,1] <- a
+				tabela[nrow(tabela)+1,1] <- log[a,1]
 				tabela[nrow(tabela),2:ncol(tabela)] <- c(log[a,2:6], mean(as.numeric(log[a,7:(6+n.targets[b])])))
 			}
 		}
