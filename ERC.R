@@ -29,7 +29,7 @@ for(i in 1:length(bases)) {
 	######Use a testing set
 	if(length(bases.teste) > 0 && folds.num == 1) {
 		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
-
+		dataset.teste <- as.data.table(dataset.teste)
 		invisible(dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)])
 
 		dataset.teste <- as.data.table(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
@@ -106,14 +106,14 @@ for(i in 1:length(bases)) {
 					x.test[, (combinations[[j]][l]) := models[[actual.model]]$pred.tst[[1]]]
 				}
 			}
-			
+
 			t <- combinations[[j]][len.cbn]
 			actual.model <- paste(combinations[[j]], collapse="-")
 			pred.train <- as.data.table(setNames(replicate(1, numeric(nrow(x.train)), simplify=F), t))
 			pred.test <- as.data.table(setNames(replicate(1, numeric(nrow(x.test)), simplify=F), t))
-      
+
 			regressor <- train_(x.train, y.train[[t]], tech, targets[[i]])
-      
+
 			pred.train[,1] <- predict_(regressor, x.train, tech, targets[[i]])
 			pred.test[,1] <- predict_(regressor, x.test, tech, targets[[i]])
 

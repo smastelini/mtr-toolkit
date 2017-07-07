@@ -29,7 +29,7 @@ for(i in 1:length(bases)) {
 	######Use a testing set
 	if(length(bases.teste) > 0 && folds.num == 1) {
 		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
-
+		dataset.teste <- as.data.table(dataset.teste)
 		invisible(dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)])
 
 		dataset.teste <- as.data.table(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))

@@ -38,19 +38,19 @@ for(mt in mt.techs) {
 	assign(paste0("output.dir.", tolower(mt)), paste0(output.prefix, "/", mt))
 }
 
-# for(tech in techs) {
-# 	if(tech == "parrf") {
-# 		suppressMessages(library(foreach))
-# 		suppressMessages(library(doSNOW))
-# 		registerDoSNOW(makeCluster(7, type="SOCK"))
-# 	}
-#
-# 	#Make an experiment
-# 	for(mt in mt.techs) {
-# 		set.seed(5465)
-# 		source(paste0(mt, ".R"))
-# 	}
-# }
+for(tech in techs) {
+	if(tech == "parrf") {
+		suppressMessages(library(foreach))
+		suppressMessages(library(doSNOW))
+		registerDoSNOW(makeCluster(7, type="SOCK"))
+	}
+
+	#Make an experiment
+	for(mt in mt.techs) {
+		set.seed(5465)
+		source(paste0(mt, ".R"))
+	}
+}
 
 if(must.compare) {
 	# mt.techs <- gsub("DSTARST", "DSTARS", mt.techs)
