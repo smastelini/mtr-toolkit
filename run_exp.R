@@ -47,7 +47,6 @@ for(tech in techs) {
 
 	#Make an experiment
 	for(mt in mt.techs) {
-		set.seed(5465)
 		source(paste0(mt, ".R"))
 	}
 }

@@ -153,7 +153,7 @@ train_ <- function(x, y, tech='svm', targets) {
 		ranger={
 			# set(x, NULL, "Ranger_Target", y)
 			x[, Ranger_Target := y]
-		  ranger.form <- as.formula(paste0("Ranger_Target ~ ", paste(colnames(x)[-ncol(x)], collapse = " + ")))
+		  ranger.form <- as.formula(paste0("Ranger_Target ~ ", paste(names(x)[-ncol(x)], collapse = " + ")))
 			reg <- ranger(ranger.form, data = x, verbose = F)
 			x[, Ranger_Target := NULL]
 			reg

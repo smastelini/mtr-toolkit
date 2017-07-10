@@ -5,6 +5,8 @@ maxs <- list()
 mins <- list()
 
 for(i in 1:length(bases)) {
+	set.seed(exp.seed)
+
 	dataset <- read.csv(paste0(datasets.folder, "/", bases[i], ".csv"))
 	dataset <- remove.unique(dataset)
 
