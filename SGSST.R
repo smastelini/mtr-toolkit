@@ -12,6 +12,7 @@ maxs <- list()
 mins <- list()
 
 for(i in 1:length(bases)) {
+	set.seed(exp.seed)
 	dataset <- read.csv(paste0(datasets.folder, "/", bases[i], ".csv"))
 	dataset <- remove.unique(dataset)
 
@@ -20,28 +21,35 @@ for(i in 1:length(bases)) {
 	dataset <- dataset[sample(nrow(dataset)),]
 	sample.names <- rownames(dataset)
 
-	dataset <- as.data.frame(sapply(dataset, function(x) as.numeric(x)))
+	#Center and Scaling
+	dataset <- as.data.table(dataset)
+	invisible(dataset[, names(dataset) := lapply(.SD, as.numeric)])
 
-	maxs[[i]] <- apply(dataset, 2, max)
-	mins[[i]] <- apply(dataset, 2, min)
-	dataset <- as.data.frame(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
+	maxs[[i]] <- as.numeric(dataset[, lapply(.SD, max)])
+	names(maxs[[i]]) <- colnames(dataset)
+	mins[[i]] <- as.numeric(dataset[, lapply(.SD, min)])
+	names(mins[[i]]) <- colnames(dataset)
+
+	dataset <- as.data.table(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 
 	len.fold <- round(nrow(dataset)/folds.num)
 
 	######Use a testing set
 	if(length(bases.teste) > 0 && folds.num == 1) {
 		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
-		dataset.teste <- as.data.frame(sapply(dataset.teste, function(x) as.numeric(x)))
-		dataset.teste <- as.data.frame(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
+		dataset.teste <- as.data.table(dataset.teste)
+		invisible(dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)])
+
+		dataset.teste <- as.data.table(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 		init.bound <- nrow(dataset) + 1
-		dataset <- rbind(dataset, dataset.teste)
+
+		dataset <- rbindlist(list(dataset, dataset.teste))
 		sample.names <- c(sample.names, rownames(dataset.teste))
 	}
-	rownames(dataset) <- 1:nrow(dataset)
 	#######
 
-	x <- dataset[, 1:(ncol(dataset)-length(targets[[i]]))]
-	y <- dataset[, targets[[i]]]
+	x <- dataset[, !targets[[i]], with = FALSE]
+	y <- dataset[, targets[[i]], with = FALSE]
 
 	if(showProgress){}else{print(bases[i])}
 	#print(bases[i])
@@ -65,15 +73,15 @@ for(i in 1:length(bases)) {
 				train.idx <- test.idx
 			}
 		} else {
-			test.idx <- as.numeric(rownames(dataset[((k-1)*len.fold + 1):(ifelse(k==folds.num, nrow(dataset), k*len.fold)),]))
-			train.idx <- as.numeric(rownames(dataset[-test.idx,]))
+			test.idx <- ((k-1)*len.fold + 1):(ifelse(k==folds.num, nrow(dataset), k*len.fold))
+			train.idx <- setdiff(1:nrow(dataset), test.idx)
 		}
 
-		x.train <- x[train.idx,]
-		y.train <- y[train.idx,]
+		x.train <- x[train.idx]
+		y.train <- y[train.idx]
 
-		x.test <- x[test.idx,]
-		y.test <- y[test.idx,]
+		x.test <- x[test.idx]
+		y.test <- y[test.idx]
 
 
 		############################ RF Importance calc ###################################
@@ -81,11 +89,9 @@ for(i in 1:length(bases)) {
 		timportance <- matrix(nrow = length(targets[[i]]), ncol = length(targets[[i]]))
 
 		for(t in 1:length(targets[[i]])) {
-			rf.aux <- randomForest(y.train, y.train[,t], importance = TRUE)
-			imp.aux <- importance(rf.aux, type = 1)
+			rf.aux <- randomForest::randomForest(y.train, y.train[,t], importance = TRUE)
+			imp.aux <- randomForest::importance(rf.aux, type = 1)
 			imp.aux[imp.aux < 0] <- 0
-
-			# imp.aux[imp.aux < imp.aux[t]/n.targets[i]] <- 0
 
 			rf.importance[[targets[[i]][t]]] <- as.logical(imp.aux > 0)
 			timportance[t,] <- imp.aux
@@ -99,14 +105,14 @@ for(i in 1:length(bases)) {
 
 		names.logs.sg <- apply(expand.grid(stacked.regressors, targets[[i]][which(!uncorrelated)]), 1, paste, collapse=".")
 		# Predictions trainining set => input to the second layer of regressors
-		predictions.l1.train <- as.data.frame(setNames(replicate(length(names.logs.sg),numeric(nrow(x.train)), simplify = F),
+		predictions.l1.train <- as.data.table(setNames(replicate(length(names.logs.sg),numeric(nrow(x.train)), simplify = F),
 																									names.logs.sg))
 		# Predictions testing set => input to the second layer of regressors
-		predictions.l1.test <- as.data.frame(setNames(replicate(length(names.logs.sg),numeric(nrow(x.test)), simplify = F),
+		predictions.l1.test <- as.data.table(setNames(replicate(length(names.logs.sg),numeric(nrow(x.test)), simplify = F),
 																									names.logs.sg))
 
 		# Final logs
-		prediction.log <- as.data.frame(setNames(replicate(length(col.names.targets),numeric(nrow(x.test)), simplify = F),
+		prediction.log <- as.data.table(setNames(replicate(length(col.names.targets),numeric(nrow(x.test)), simplify = F),
 																									col.names.targets))
 
 		if(showProgress){}else{print("Level 1")}
@@ -114,33 +120,34 @@ for(i in 1:length(bases)) {
 			if(showProgress){pb$tick()}else{print(t)}
 			if(!uncorrelated[t]) {
 				for(sgr in stacked.regressors) {
-					regressor <- train_(x.train, y.train[,t], sgr, targets[[i]])
-					predictions.l1.train[,paste(sgr,t,sep=".")] <- predict_(regressor, x.train, sgr, targets[[i]])
-					predictions.l1.test[,paste(sgr,t,sep=".")] <- predict_(regressor, x.test, sgr, targets[[i]])
+					regressor <- train_(x.train, y.train[[t]], sgr, targets[[i]])
+
+					set(predictions.l1.train, NULL, paste(sgr,t,sep="."), predict_(regressor, x.train, sgr, targets[[i]]))
+					set(predictions.l1.test, NULL, paste(sgr,t,sep="."), predict_(regressor, x.test, sgr, targets[[i]]))
 				}
 			}
 		}
 
+		# Avoid the PLS application in the stacked predictions
+		save.PLS.state <- use.pls
+		use.pls <- FALSE
+
 		if(showProgress){}else{print("Level 2")}
-		#print("Level 2")
 		for(t in targets[[i]]) {
 			chosen.t <- targets[[i]][rf.importance[[t]]]
 			names.t.l2 <- apply(expand.grid(stacked.regressors, chosen.t), 1, paste, collapse=".")
-			# TODO uncorrelated target
-			x.train.l2 <- cbind(x.train, predictions.l1.train[, names.t.l2])
 
 		  if(showProgress){pb$tick()}else{print(t)}
 
-			predictions <- rep(0, nrow(x.test))
-
-			regressor <- train_(x.train.l2, y.train[,t], tech, targets[[i]])
-			predictions <- predict_(regressor, cbind(x.test, predictions.l1.test[,names.t.l2]), tech, targets[[i]])
-			prediction.log[,t] <- y.test[,t]
-			prediction.log[,paste0(t, ".pred")] <- predictions
+			regressor <- train_(predictions.l1.train[, names.t.l2, with = FALSE], y.train[[t]], tech, targets[[i]])
+			set(prediction.log, NULL, t, y.test[[t]])
+			set(prediction.log, NULL, paste0(t, ".pred"), predict_(regressor, predictions.l1.test[,names.t.l2, with = FALSE], tech, targets[[i]]))
 		}
+		
+		# Recover PLS application settings
+		use.pls <- save.PLS.state
 
-		prediction.log <- cbind(sample.names[test.idx], prediction.log)
-		write.csv(prediction.log, paste0(output.dir.sgsst, "/prediction_logs/",tech, "/predictions_SGSST_", bases[i], paste0("_fold", formatC(k, width=2, flag="0")), ".csv"), row.names = FALSE)
+		write.csv(data.frame(id=sample.names[test.idx], prediction.log, check.names = FALSE), paste0(output.dir.sgsst, "/prediction_logs/",tech, "/predictions_SGSST_", bases[i], paste0("_fold", formatC(k, width=2, flag="0")), ".csv"), row.names = FALSE)
 	}
 }
 
