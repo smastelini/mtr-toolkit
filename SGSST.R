@@ -1,11 +1,7 @@
-library(foreach)
-library(doSNOW)
-registerDoSNOW(makeCluster(7, type="SOCK"))
-
 dir.create(paste0(output.dir.sgsst, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
 dir.create(paste0(output.dir.sgsst, "/out_imp_assessment/",tech), showWarnings = FALSE, recursive = TRUE)
 
-stacked.regressors <- c("parrf", "svm", "gbm", "lr", "mlp", "cart", "ridge")
+stacked.regressors <- c("ranger", "svm", "cart", "xgboost", "ridge")
 
 targets <- list()
 maxs <- list()
