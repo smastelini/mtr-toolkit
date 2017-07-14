@@ -89,7 +89,7 @@ for(i in 1:length(bases)) {
 		timportance <- matrix(nrow = length(targets[[i]]), ncol = length(targets[[i]]))
 
 		for(t in 1:length(targets[[i]])) {
-			rf.aux <- randomForest::randomForest(y.train, y.train[,t], importance = TRUE)
+			rf.aux <- randomForest::randomForest(y.train, y.train[[t]], importance = TRUE)
 			imp.aux <- randomForest::importance(rf.aux, type = 1)
 			imp.aux[imp.aux < 0] <- 0
 
@@ -143,7 +143,7 @@ for(i in 1:length(bases)) {
 			set(prediction.log, NULL, t, y.test[[t]])
 			set(prediction.log, NULL, paste0(t, ".pred"), predict_(regressor, predictions.l1.test[,names.t.l2, with = FALSE], tech, targets[[i]]))
 		}
-		
+
 		# Recover PLS application settings
 		use.pls <- save.PLS.state
 
