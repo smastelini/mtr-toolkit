@@ -18,26 +18,35 @@ for (i in 1:length(bases)) {
 	dataset <- dataset[sample(nrow(dataset)),] #shuffle
 	sample.names <- rownames(dataset)
 
-	dataset <- as.data.frame(sapply(dataset,function(x) as.numeric(x)))
-	maxs[[i]] <- apply(dataset, 2, max)
-	mins[[i]] <- apply(dataset, 2, min)
-	dataset <- as.data.frame(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
+  #Center and Scaling
+	dataset <- as.data.table(dataset)
+	invisible(dataset[, names(dataset) := lapply(.SD, as.numeric)])
+
+	maxs[[i]] <- as.numeric(dataset[, lapply(.SD, max)])
+	names(maxs[[i]]) <- colnames(dataset)
+	mins[[i]] <- as.numeric(dataset[, lapply(.SD, min)])
+	names(mins[[i]]) <- colnames(dataset)
+
+	dataset <- as.data.table(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 
 	l.folds <- round(nrow(dataset)/folds.num)
 
-	# Use a testing
+  ######Use a testing set
 	if(length(bases.teste) > 0 && folds.num == 1) {
 		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
-		dataset.teste <- as.data.frame(sapply(dataset.teste, function(x) as.numeric(x)))
-		dataset.teste <- as.data.frame(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
+		dataset.teste <- as.data.table(dataset.teste)
+		invisible(dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)])
+
+		dataset.teste <- as.data.table(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
 		init.bound <- nrow(dataset) + 1
-		dataset <- rbind(dataset, dataset.teste)
+
+		dataset <- rbindlist(list(dataset, dataset.teste))
 		sample.names <- c(sample.names, rownames(dataset.teste))
 	}
-	rownames(dataset) <- 1:nrow(dataset)
+	#######
 
-	X <- dataset[,1:(ncol(dataset)-n.targets[i])]
-	Y <- dataset[,targets[[i]]]
+  X <- dataset[, !targets[[i]], with = FALSE]
+	Y <- dataset[, targets[[i]], with = FALSE]
 
 	# Cross validation Evaluation
 	for(k in 1:folds.num) {
@@ -54,13 +63,13 @@ for (i in 1:length(bases)) {
 			}
 		} else {
 			testing.idx <- ((k-1)*l.folds + 1):(ifelse(k==folds.num, nrow(dataset), k*l.folds))
-			modelling.idx <- which(!(1:nrow(dataset) %in% testing.idx))
+			modelling.idx <- setdiff(1:nrow(dataset), testing.idx)
 		}
 
-		moX <- X[modelling.idx,]
-		moY <- Y[modelling.idx,]
-		teX <- X[testing.idx,]
-		teY <- Y[testing.idx,]
+		moX <- X[modelling.idx]
+		moY <- Y[modelling.idx]
+		teX <- X[testing.idx]
+		teY <- Y[testing.idx]
 
 		lt.folds <- round(nrow(moX)/n.folds.tracking)
 
@@ -82,33 +91,33 @@ for (i in 1:length(bases)) {
 					training.idx <- validation.idx
 				} else {
 					validation.idx <- ((m-1)*lt.folds + 1):(ifelse(m==n.folds.tracking, nrow(moX), m*lt.folds))
-					training.idx <- which(!(1:nrow(moX) %in% validation.idx))
+					training.idx <- setdiff(1:nrow(moX), validation.idx)
 				}
 
-				trX <- moX[training.idx,]
-				trY <- moY[training.idx,]
+				trX <- moX[training.idx]
+				trY <- moY[training.idx]
 
-				vaX <- moX[validation.idx,]
-				vaY <- moY[validation.idx,]
+				vaX <- moX[validation.idx]
+				vaY <- moY[validation.idx]
 
-				p.tr <- trY
-				p.va <- vaY
+				p.tr <- moY[training.idx]
+				p.va <- moY[validation.idx]
 
 				for(l in layers) {
 					for(t in targets2rank) {
 					  if(showProgress){pb$tick()}else{}
-						regressor <- train_(trX, trY[,t], tech, targets2rank)
+						regressor <- train_(trX, trY[[t]], tech, targets2rank)
 
-						p.tr[,paste(t, "pred", l, sep=".")] <- predict_(regressor, trX, tech, targets2rank)
-						p.va[,paste(t, "pred", l, sep=".")] <- predict_(regressor, vaX, tech, targets2rank)
+						p.tr[,(paste(t, "pred", l, sep=".")) := predict_(regressor, trX, tech, targets2rank)]
+						p.va[,(paste(t, "pred", l, sep=".")) := predict_(regressor, vaX, tech, targets2rank)]
 					}
 
-					trX[,paste(targets2rank, "pred", l, sep=".")] <- p.tr[,paste(targets2rank, "pred", l, sep=".")]
-					vaX[,paste(targets2rank, "pred", l, sep=".")] <- p.va[,paste(targets2rank, "pred", l, sep=".")]
+					trX[,(paste(targets2rank, "pred", l, sep=".")) := p.tr[,paste(targets2rank, "pred", l, sep="."), with = FALSE]]
+					vaX[,(paste(targets2rank, "pred", l, sep=".")) := p.va[,paste(targets2rank, "pred", l, sep="."), with = FALSE]]
 				}
 
-				write.csv(p.tr, paste0(output.dir.drs, "/output_logs/tracking_logs/raw_training_", bases[i], "_", tech, "_ef", formatC(k, width=2, flag="0"), "_T", r, "_tf", formatC(m, width=2, flag="0"), ".csv"))
-				write.csv(p.va, paste0(output.dir.drs, "/output_logs/tracking_logs/raw_validation_", bases[i], "_", tech, "_ef", formatC(k, width=2, flag="0"), "_T", r, "_tf", formatC(m, width=2, flag="0"), ".csv"))
+				write.csv(data.frame(id=sample.names[modelling.idx][training.idx], p.tr, check.names = F), paste0(output.dir.drs, "/output_logs/tracking_logs/raw_training_", bases[i], "_", tech, "_ef", formatC(k, width=2, flag="0"), "_T", r, "_tf", formatC(m, width=2, flag="0"), ".csv"), row.names = F)
+				write.csv(data.frame(id=sample.names[modelling.idx][validation.idx], p.va, check.names = F), paste0(output.dir.drs, "/output_logs/tracking_logs/raw_validation_", bases[i], "_", tech, "_ef", formatC(k, width=2, flag="0"), "_T", r, "_tf", formatC(m, width=2, flag="0"), ".csv"), row.names = F)
 
 				# Calculate for each folder the RMSE of each regression layer
 				tr.errors <- matrix(nrow=length(targets2rank), ncol=number.layers)
@@ -116,7 +125,7 @@ for (i in 1:length(bases)) {
 				colnames(tr.errors) <- paste0("l", layers)
 				for(t in targets2rank) {
 					tr.errors[t,] <- sapply(layers, function(l, preds, tar) {
-						RMSE(preds[,tar], preds[,paste(tar, "pred", l, sep=".")])
+						RMSE(preds[[tar]], preds[[paste(tar, "pred", l, sep=".")]])
 					}, preds = p.va, tar = t)
 				}
 
@@ -134,47 +143,44 @@ for (i in 1:length(bases)) {
 
 			# Deepening for the "easiest" target
 
-			iset.mo <- moX
-			iset.te <- teX
+			iset.mo <- X[modelling.idx]
+			iset.te <- X[testing.idx]
 
-			p.mo <- moY
-			p.te <- teY
+			p.mo <- Y[modelling.idx]
+			p.te <- Y[testing.idx]
 
 			# If it isn't a ST model
 			if(e.idxs[2] > 1) {
 				for(l in 1:(e.idxs[2]-1)) {
 					for(t in targets2rank) {
-						regressor <- train_(iset.mo, moY[,t], tech, targets2rank)
+						regressor <- train_(iset.mo, moY[[t]], tech, targets2rank)
 
-						p.mo[,paste(t, "pred", l, sep=".")] <- predict_(regressor, iset.mo, tech, targets2rank)
-						p.te[,paste(t, "pred", l, sep=".")] <- predict_(regressor, iset.te, tech, targets2rank)
+						p.mo[,(paste(t, "pred", l, sep=".")) := predict_(regressor, iset.mo, tech, targets2rank)]
+						p.te[,(paste(t, "pred", l, sep=".")) := predict_(regressor, iset.te, tech, targets2rank)]
 					}
-					iset.mo[,paste(targets2rank, "pred", l, sep=".")] <- p.mo[,paste(targets2rank, "pred", l, sep=".")]
-					iset.te[,paste(targets2rank, "pred", l, sep=".")] <- p.te[,paste(targets2rank, "pred", l, sep=".")]
+					iset.mo[,(paste(targets2rank, "pred", l, sep=".")) := p.mo[,paste(targets2rank, "pred", l, sep="."), with = F]]
+					iset.te[,(paste(targets2rank, "pred", l, sep=".")) := p.te[,paste(targets2rank, "pred", l, sep="."), with = F]]
 				}
 			}
 
-			regressor <- train_(iset.mo, moY[,targets2rank[e.idxs[1]]], tech, targets2rank)
-			p.mo[,paste(targets2rank[e.idxs[1]], "pred", l+1, sep=".")] <- predict_(regressor, iset.mo, tech, targets2rank)
-			p.te[,paste(targets2rank[e.idxs[1]], "pred", l+1, sep=".")] <- predict_(regressor, iset.te, tech, targets2rank)
+			regressor <- train_(iset.mo, moY[[targets2rank[e.idxs[1]]]], tech, targets2rank)
+			p.mo[,(paste(targets2rank[e.idxs[1]], "pred", l+1, sep=".")) := predict_(regressor, iset.mo, tech, targets2rank)]
+			p.te[,(paste(targets2rank[e.idxs[1]], "pred", l+1, sep=".")) := predict_(regressor, iset.te, tech, targets2rank)]
 
-			rownames(p.mo) <- sample.names[modelling.idx]
-			rownames(p.te) <- sample.names[testing.idx]
+			write.csv(data.frame(id=sample.names[modelling.idx], p.mo, check.names = F), paste0(output.dir.drs, "/output_logs/modelling_logs/raw_modelling_", bases[i], "_", tech, "_ef", formatC(k, width=2, flag="0"), "_T", r, ".csv"), row.names = F)
+			write.csv(data.frame(id=sample.names[testing.idx], p.te, check.names = F), paste0(output.dir.drs, "/output_logs/modelling_logs/raw_testing_", bases[i], "_", tech, "_ef", formatC(k, width=2, flag="0"), "_T", r, ".csv"), row.names = F)
 
-			write.csv(p.mo, paste0(output.dir.drs, "/output_logs/modelling_logs/raw_modelling_", bases[i], "_", tech, "_ef", formatC(k, width=2, flag="0"), "_T", r, ".csv"))
-			write.csv(p.te, paste0(output.dir.drs, "/output_logs/modelling_logs/raw_testing_", bases[i], "_", tech, "_ef", formatC(k, width=2, flag="0"), "_T", r, ".csv"))
+			p.mo <- p.mo[,c(targets2rank[e.idxs[1]], paste(targets2rank[e.idxs[1]], "pred", l+1, sep=".")), with = F]
+			p.te <- p.te[,c(targets2rank[e.idxs[1]], paste(targets2rank[e.idxs[1]], "pred", l+1, sep=".")), with = F]
 
-			p.mo <- p.mo[,c(targets2rank[e.idxs[1]], paste(targets2rank[e.idxs[1]], "pred", l+1, sep="."))]
-			p.te <- p.te[,c(targets2rank[e.idxs[1]], paste(targets2rank[e.idxs[1]], "pred", l+1, sep="."))]
+			names(p.mo) <- c(targets2rank[e.idxs[1]], paste0(targets2rank[e.idxs[1]], ".pred"))
+			names(p.te) <- c(targets2rank[e.idxs[1]], paste0(targets2rank[e.idxs[1]], ".pred"))
 
-			colnames(p.mo) <- c(targets2rank[e.idxs[1]], paste0(targets2rank[e.idxs[1]], ".pred"))
-			colnames(p.te) <- c(targets2rank[e.idxs[1]], paste0(targets2rank[e.idxs[1]], ".pred"))
+			write.csv(data.frame(id=sample.names[modelling.idx], p.mo, check.names = F), paste0(output.dir.drs, "/output_logs/testing_logs/predictions_", bases[i], "_", tech, "_ef", formatC(k, width=2, flag="0"), "_T", r, ".csv"), row.names = F)
+			write.csv(data.frame(id=sample.names[testing.idx], p.te, check.names = F), paste0(output.dir.drs, "/output_logs/testing_logs/predictions_", bases[i], "_", tech, "_ef", formatC(k, width=2, flag="0"), "_T", r, ".csv"), row.names = F)
 
-			write.csv(p.mo, paste0(output.dir.drs, "/output_logs/testing_logs/predictions_", bases[i], "_", tech, "_ef", formatC(k, width=2, flag="0"), "_T", r, ".csv"))
-			write.csv(p.te, paste0(output.dir.drs, "/output_logs/testing_logs/predictions_", bases[i], "_", tech, "_ef", formatC(k, width=2, flag="0"), "_T", r, ".csv"))
-
-			moX[,targets2rank[e.idxs[1]]] <- p.mo[,paste0(targets2rank[e.idxs[1]], ".pred")]
-			teX[,targets2rank[e.idxs[1]]] <- p.te[,paste0(targets2rank[e.idxs[1]], ".pred")]
+			moX[,(targets2rank[e.idxs[1]]) := p.mo[,paste0(targets2rank[e.idxs[1]], ".pred"), with = F]]
+			teX[,(targets2rank[e.idxs[1]]) := p.te[,paste0(targets2rank[e.idxs[1]], ".pred"), with = F]]
 
 			targets2rank <- targets2rank[-e.idxs[1]]
 		}
