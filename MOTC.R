@@ -1,6 +1,6 @@
-dir.create(paste0(output.dir.orc, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
-dir.create(paste0(output.dir.orc, "/out_imp_assessment/",tech), showWarnings = FALSE, recursive = TRUE)
-dir.create(paste0(output.dir.orc, "/raw_logs/",tech), showWarnings = FALSE, recursive = TRUE)
+dir.create(paste0(output.dir.motc, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
+dir.create(paste0(output.dir.motc, "/out_imp_assessment/",tech), showWarnings = FALSE, recursive = TRUE)
+dir.create(paste0(output.dir.motc, "/raw_logs/",tech), showWarnings = FALSE, recursive = TRUE)
 
 hoeffdings.bound <- function(observations, range = 100, confidence = 0.05) {
 	return(sqrt((range*log(1/confidence))/(2*observations)))
@@ -199,7 +199,7 @@ for(i in 1:length(bases)) {
 
 		########################################RF Importance calc#############################################
 		timportance <- getTargetImportance(y.train)
-		write.csv(timportance, paste0(output.dir.orc, "/out_imp_assessment/", tech, "/", bases[i], "_RF_importance_fold", formatC(k, width=2, flag="0"), ".csv"))
+		write.csv(timportance, paste0(output.dir.motc, "/out_imp_assessment/", tech, "/", bases[i], "_RF_importance_fold", formatC(k, width=2, flag="0"), ".csv"))
 		########################################################################################################
 
 		t.names <- c(targets[[i]], paste0(targets[[i]], ".pred"))
@@ -210,24 +210,24 @@ for(i in 1:length(bases)) {
 				orc <- getChainingTree(timportance, t, hoeffdings.bound(nrow(x.train)), round(log2(n.targets[i])))
 				predictions <- buildChainTree(orc, x.train, y.train, x.test, tech, targets)
 
-				write.csv(data.frame(id=sample.names[train.idx], predictions$tr, check.names = F), paste0(output.dir.orc, "/raw_logs/",tech,"/raw_ORC_training_", bases[i], "_fold", formatC(k, width=2, flag="0"), "_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
-				write.csv(data.frame(id=sample.names[test.idx], predictions$ts, check.names = F), paste0(output.dir.orc, "/raw_logs/",tech,"/raw_ORC_testing_", bases[i], "_fold", formatC(k, width=2, flag="0"), "_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
+				write.csv(data.frame(id=sample.names[train.idx], predictions$tr, check.names = F), paste0(output.dir.motc, "/raw_logs/",tech,"/raw_ORC_training_", bases[i], "_fold", formatC(k, width=2, flag="0"), "_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
+				write.csv(data.frame(id=sample.names[test.idx], predictions$ts, check.names = F), paste0(output.dir.motc, "/raw_logs/",tech,"/raw_ORC_testing_", bases[i], "_fold", formatC(k, width=2, flag="0"), "_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
 
 				set(prediction.log, NULL, t, y.test[[t]])
 				set(prediction.log, NULL, paste0(t, ".pred"), predictions$ts[[paste0("0.",t)]])
 
-				write.csv(getPrintableChainTree(orc), paste0(output.dir.orc, "/out_imp_assessment/",tech,"/", bases[i], "_chain_tree_fold", formatC(k, width=2, flag="0"), "_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
+				write.csv(getPrintableChainTree(orc), paste0(output.dir.motc, "/out_imp_assessment/",tech,"/", bases[i], "_chain_tree_fold", formatC(k, width=2, flag="0"), "_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
 
 			t.cont <- t.cont + 1
 			}
 
-		write.csv(data.frame(id=sample.names[test.idx], prediction.log, check.names = F), paste0(output.dir.orc, "/prediction_logs/",tech,"/predictions_ORC_", bases[i], paste0("_fold", formatC(k, width=2, flag="0")), ".csv"), row.names = FALSE)
+		write.csv(data.frame(id=sample.names[test.idx], prediction.log, check.names = F), paste0(output.dir.motc, "/prediction_logs/",tech,"/predictions_ORC_", bases[i], paste0("_fold", formatC(k, width=2, flag="0")), ".csv"), row.names = FALSE)
 	}
 }
 
 #Performance metrics
 actual.folder <- getwd()
-setwd(paste0(output.dir.orc, "/prediction_logs"))
+setwd(paste0(output.dir.motc, "/prediction_logs"))
 i <<- 1
 
 lapply(bases, function(b) {
