@@ -1,5 +1,5 @@
-dir.create(paste0(output.dir.sgsst, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
-dir.create(paste0(output.dir.sgsst, "/out_imp_assessment/",tech), showWarnings = FALSE, recursive = TRUE)
+dir.create(paste0(output.dir.mtas, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
+dir.create(paste0(output.dir.mtas, "/out_imp_assessment/",tech), showWarnings = FALSE, recursive = TRUE)
 
 stacked.regressors <- c("ranger", "svm", "cart", "xgboost", "ridge")
 
@@ -93,7 +93,7 @@ for(i in 1:length(bases)) {
 			timportance[t,] <- imp.aux
 		}
 
-		write.csv(timportance, paste0(output.dir.sgsst, "/out_imp_assessment/", tech, "/", bases[i], "_RF_importance_fold", formatC(k, width=2, flag="0"), ".csv"))
+		write.csv(timportance, paste0(output.dir.mtas, "/out_imp_assessment/", tech, "/", bases[i], "_RF_importance_fold", formatC(k, width=2, flag="0"), ".csv"))
 		diag(timportance) <- 0
 		uncorrelated <- as.logical(apply(timportance, 2, function(zeta) sum(zeta) == 0))
 		names(uncorrelated) <- targets[[i]]
@@ -143,13 +143,13 @@ for(i in 1:length(bases)) {
 		# Recover PLS application settings
 		use.pls <- save.PLS.state
 
-		write.csv(data.frame(id=sample.names[test.idx], prediction.log, check.names = FALSE), paste0(output.dir.sgsst, "/prediction_logs/",tech, "/predictions_SGSST_", bases[i], paste0("_fold", formatC(k, width=2, flag="0")), ".csv"), row.names = FALSE)
+		write.csv(data.frame(id=sample.names[test.idx], prediction.log, check.names = FALSE), paste0(output.dir.mtas, "/prediction_logs/",tech, "/predictions_SGSST_", bases[i], paste0("_fold", formatC(k, width=2, flag="0")), ".csv"), row.names = FALSE)
 	}
 }
 
 #Performance metrics
 actual.folder <- getwd()
-setwd(paste0(output.dir.sgsst, "/prediction_logs"))
+setwd(paste0(output.dir.mtas, "/prediction_logs"))
 i <<- 1
 
 lapply(bases, function(b) {
