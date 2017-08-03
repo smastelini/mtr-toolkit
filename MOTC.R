@@ -210,8 +210,8 @@ for(i in 1:length(bases)) {
 				orc <- getChainingTree(timportance, t, hoeffdings.bound(nrow(x.train)), round(log2(n.targets[i])))
 				predictions <- buildChainTree(orc, x.train, y.train, x.test, tech, targets)
 
-				write.csv(data.frame(id=sample.names[train.idx], predictions$tr, check.names = F), paste0(output.dir.motc, "/raw_logs/",tech,"/raw_ORC_training_", bases[i], "_fold", formatC(k, width=2, flag="0"), "_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
-				write.csv(data.frame(id=sample.names[test.idx], predictions$ts, check.names = F), paste0(output.dir.motc, "/raw_logs/",tech,"/raw_ORC_testing_", bases[i], "_fold", formatC(k, width=2, flag="0"), "_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
+				write.csv(data.frame(id=sample.names[train.idx], predictions$tr, check.names = F), paste0(output.dir.motc, "/raw_logs/",tech,"/raw_MOTC_training_", bases[i], "_fold", formatC(k, width=2, flag="0"), "_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
+				write.csv(data.frame(id=sample.names[test.idx], predictions$ts, check.names = F), paste0(output.dir.motc, "/raw_logs/",tech,"/raw_MOTC_testing_", bases[i], "_fold", formatC(k, width=2, flag="0"), "_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
 
 				set(prediction.log, NULL, t, y.test[[t]])
 				set(prediction.log, NULL, paste0(t, ".pred"), predictions$ts[[paste0("0.",t)]])
@@ -221,7 +221,7 @@ for(i in 1:length(bases)) {
 			t.cont <- t.cont + 1
 			}
 
-		write.csv(data.frame(id=sample.names[test.idx], prediction.log, check.names = F), paste0(output.dir.motc, "/prediction_logs/",tech,"/predictions_ORC_", bases[i], paste0("_fold", formatC(k, width=2, flag="0")), ".csv"), row.names = FALSE)
+		write.csv(data.frame(id=sample.names[test.idx], prediction.log, check.names = F), paste0(output.dir.motc, "/prediction_logs/",tech,"/predictions_MOTC_", bases[i], paste0("_fold", formatC(k, width=2, flag="0")), ".csv"), row.names = FALSE)
 	}
 }
 
@@ -238,7 +238,7 @@ lapply(bases, function(b) {
 	folds.log <<- as.data.frame(setNames(replicate(length(names.perf.log),numeric(0),
 										simplify = F), names.perf.log), stringsAsFactors = FALSE)
 	lapply(1:folds.num, function(k) {
-		log <- read.csv(paste0(getwd(),"/", tech, "/predictions_ORC_", b, paste0("_fold", formatC(k, width=2, flag="0")),".csv"), header=TRUE)
+		log <- read.csv(paste0(getwd(),"/", tech, "/predictions_MOTC_", b, paste0("_fold", formatC(k, width=2, flag="0")),".csv"), header=TRUE)
 		folds.log[nrow(folds.log)+1, "aCC"] <<- aCC(log, targets[[i]])
 		folds.log[nrow(folds.log), "ARE"] <<- ARE(log, targets[[i]])
 		folds.log[nrow(folds.log), "MSE"] <<- MSE(log, targets[[i]])
@@ -258,7 +258,7 @@ lapply(bases, function(b) {
 	performance.log[nrow(performance.log)+1, 1] <<- tech
 	performance.log[nrow(performance.log), -1] <<- colMeans(folds.log)
 
-	write.csv(performance.log, paste0("../performance_ORC_", tech, "_", b, ".csv"), row.names = FALSE)
+	write.csv(performance.log, paste0("../performance_MOTC_", tech, "_", b, ".csv"), row.names = FALSE)
 	i <<- i + 1
 })
 setwd(actual.folder)

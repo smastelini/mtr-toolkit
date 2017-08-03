@@ -1,5 +1,5 @@
-dir.create(paste0(output.dir.mtas, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
-dir.create(paste0(output.dir.mtas, "/out_imp_assessment/",tech), showWarnings = FALSE, recursive = TRUE)
+dir.create(paste0(output.dir.mtsg, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
+dir.create(paste0(output.dir.mtsg, "/out_imp_assessment/",tech), showWarnings = FALSE, recursive = TRUE)
 
 stacked.regressors <- c("ranger", "svm", "cart")
 
@@ -93,7 +93,7 @@ for(i in 1:length(bases)) {
 			timportance[t,] <- imp.aux
 		}
 
-		write.csv(timportance, paste0(output.dir.mtas, "/out_imp_assessment/", tech, "/", bases[i], "_RF_importance_fold", formatC(k, width=2, flag="0"), ".csv"))
+		write.csv(timportance, paste0(output.dir.mtsg, "/out_imp_assessment/", tech, "/", bases[i], "_RF_importance_fold", formatC(k, width=2, flag="0"), ".csv"))
 		diag(timportance) <- 0
 		uncorrelated <- as.logical(apply(timportance, 2, function(zeta) sum(zeta) == 0))
 		names(uncorrelated) <- targets[[i]]
@@ -124,6 +124,10 @@ for(i in 1:length(bases)) {
 			}
 		}
 
+		# Avoid the PLS application in the stacked predictions
+		save.PLS.state <- use.pls
+		use.pls <- FALSE
+
 		if(showProgress){}else{print("Level 2")}
 		for(t in targets[[i]]) {
 			chosen.t <- targets[[i]][rf.importance[[t]]]
@@ -131,24 +135,21 @@ for(i in 1:length(bases)) {
 
 		  if(showProgress){pb$tick()}else{print(t)}
 
-			x.train[, (names.t.l2) := predictions.l1.train[, names.t.l2, with = FALSE]]
-			x.test[, (names.t.l2) := predictions.l1.test[, names.t.l2, with = FALSE]]
-
-			regressor <- train_(x.train, y.train[[t]], tech, targets[[i]])
+			regressor <- train_(predictions.l1.train[, names.t.l2, with = FALSE], y.train[[t]], tech, targets[[i]])
 			set(prediction.log, NULL, t, y.test[[t]])
-			set(prediction.log, NULL, paste0(t, ".pred"), predict_(regressor, x.test, tech, targets[[i]]))
-
-			x.train[, (names.t.l2) := NULL]
-			x.test[, (names.t.l2) := NULL]
+			set(prediction.log, NULL, paste0(t, ".pred"), predict_(regressor, predictions.l1.test[,names.t.l2, with = FALSE], tech, targets[[i]]))
 		}
 
-		write.csv(data.frame(id=sample.names[test.idx], prediction.log, check.names = FALSE), paste0(output.dir.mtas, "/prediction_logs/",tech, "/predictions_MTAS_", bases[i], paste0("_fold", formatC(k, width=2, flag="0")), ".csv"), row.names = FALSE)
+		# Recover PLS application settings
+		use.pls <- save.PLS.state
+
+		write.csv(data.frame(id=sample.names[test.idx], prediction.log, check.names = FALSE), paste0(output.dir.mtsg, "/prediction_logs/",tech, "/predictions_MTSG_", bases[i], paste0("_fold", formatC(k, width=2, flag="0")), ".csv"), row.names = FALSE)
 	}
 }
 
 #Performance metrics
 actual.folder <- getwd()
-setwd(paste0(output.dir.mtas, "/prediction_logs"))
+setwd(paste0(output.dir.mtsg, "/prediction_logs"))
 i <<- 1
 
 lapply(bases, function(b) {
@@ -159,7 +160,7 @@ lapply(bases, function(b) {
 	folds.log <<- as.data.frame(setNames(replicate(length(names.perf.log),numeric(0),
 										simplify = F), names.perf.log), stringsAsFactors = FALSE)
 	lapply(1:folds.num, function(k) {
-		log <- read.csv(paste0(getwd(),"/", tech, "/predictions_MTAS_", b, paste0("_fold", formatC(k, width=2, flag="0")),".csv"), header=TRUE)
+		log <- read.csv(paste0(getwd(),"/", tech, "/predictions_MTSG_", b, paste0("_fold", formatC(k, width=2, flag="0")),".csv"), header=TRUE)
 		folds.log[nrow(folds.log)+1, "aCC"] <<- aCC(log, targets[[i]])
 		folds.log[nrow(folds.log), "ARE"] <<- ARE(log, targets[[i]])
 		folds.log[nrow(folds.log), "MSE"] <<- MSE(log, targets[[i]])
@@ -179,7 +180,7 @@ lapply(bases, function(b) {
 	performance.log[nrow(performance.log)+1, 1] <<- tech
 	performance.log[nrow(performance.log), -1] <<- colMeans(folds.log)
 
-	write.csv(performance.log, paste0("../performance_MTAS_", tech, "_", b, ".csv"), row.names = FALSE)
+	write.csv(performance.log, paste0("../performance_MTSG_", tech, "_", b, ".csv"), row.names = FALSE)
 	i <<- i + 1
 })
 setwd(actual.folder)
