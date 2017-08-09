@@ -36,7 +36,7 @@ KCLUS$train <- function(X, Y, k = 3, max.depth = 6, init.var.prop = 0.05, pred.t
     # Cluster inner elements range
     maxs <- as.numeric(X[, lapply(.SD, max)])
     mins <- as.numeric(X[, lapply(.SD, min)])
-  
+
     actual.centers.idx <- rep(0, k)
     # Random Centers creation
     for(i in 1:k) {
@@ -83,7 +83,10 @@ KCLUS$train <- function(X, Y, k = 3, max.depth = 6, init.var.prop = 0.05, pred.t
 
   clustree.b(X,Y)
 
-  return(list(tree = KCLUS$tree, centroids = KCLUS$centroids, predictors = KCLUS$predictors, targets = names(Y)))
+  retr <- list(tree = KCLUS$tree, centroids = KCLUS$centroids, predictors = KCLUS$predictors, targets = names(Y))
+
+  rm(tree, centroids, predictors, cidx, init.var, envir = KCLUS)
+  return(retr)
 }
 
 KCLUS$predict <- function(kclus, new.data) {
