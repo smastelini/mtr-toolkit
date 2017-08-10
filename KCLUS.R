@@ -6,11 +6,6 @@ KCLUS$train <- function(X, Y, k = 3, max.depth = 6, var.improvp = 0.5, pred.type
     sqrt(sum((a-b)^2))
   }
 
-  # Root-Mean-Squared Error
-  RMSE <- function(actual, predicted) {
-  	return(sqrt(mean((actual-predicted)^2)))
-  }
-
   KCLUS$cidx <- 0
   KCLUS$centroids <- list()
   KCLUS$tree <- data.table(orig = character(0), dest = character(0))
@@ -20,7 +15,8 @@ KCLUS$train <- function(X, Y, k = 3, max.depth = 6, var.improvp = 0.5, pred.type
     # Accounts the current inter cluster variance sum
     if(nrow(X) >= min.cluss) {
       mass.center <- colMeans(X)
-      current.svar <- var(apply(X, 1, function(j, mass.center) RMSE(j, mass.center), mass.center = mass.center))
+      current.svar <- var(apply(X, 1, function(j, mass.center) loss.func(j, mass.center), mass.center = mass.center))
+      # cat("Leaf instances: ", nrow(Y), "\tSV: ", sup.var, "\tAV: ", current.svar, "\tVI: ", (sup.var-current.svar), "\tVT: ", var.improvp*sup.var,"\n")
     }
 
     # Leaf node
