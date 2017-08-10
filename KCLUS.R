@@ -1,11 +1,11 @@
 KCLUS <- new.env()
 
-KCLUS$train <- function(X, Y, k = 3, max.depth = 6, var.improvp = 0.5, pred.type = "mean", min.cluss = NULL) {
-  # Loss function for clustering
-  loss.func <- function(a, b) {
-    sqrt(sum((a-b)^2))
-  }
+# Loss function for clustering
+KCLUS$loss.func <- function(a, b) {
+  sqrt(sum((a-b)^2))
+}
 
+KCLUS$train <- function(X, Y, k = 3, max.depth = 6, var.improvp = 0.5, pred.type = "mean", min.cluss = NULL) {
   KCLUS$cidx <- 0
   KCLUS$centroids <- list()
   KCLUS$tree <- data.table(orig = character(0), dest = character(0))
@@ -15,7 +15,7 @@ KCLUS$train <- function(X, Y, k = 3, max.depth = 6, var.improvp = 0.5, pred.type
     # Accounts the current inter cluster variance sum
     if(nrow(X) >= min.cluss) {
       mass.center <- colMeans(X)
-      current.svar <- var(apply(X, 1, function(j, mass.center) loss.func(j, mass.center), mass.center = mass.center))
+      current.svar <- var(apply(X, 1, function(j, mass.center) KCLUS$loss.func(j, mass.center), mass.center = mass.center))
       # cat("Leaf instances: ", nrow(Y), "\tSV: ", sup.var, "\tAV: ", current.svar, "\tVI: ", (sup.var-current.svar), "\tVT: ", var.improvp*sup.var,"\n")
     }
 
@@ -50,7 +50,7 @@ KCLUS$train <- function(X, Y, k = 3, max.depth = 6, var.improvp = 0.5, pred.type
     # Group points within defined centers
     distances <- matrix(nrow=k, ncol=nrow(X))
     for(i in seq(k)) {
-      distances[i,] <- apply(X, 1, loss.func, b = KCLUS$centroids[[as.character(actual.centers.idx[i])]])
+      distances[i,] <- apply(X, 1, KCLUS$loss.func, b = KCLUS$centroids[[as.character(actual.centers.idx[i])]])
     }
 
     clustered <- apply(distances, 2, which.min)
@@ -87,11 +87,6 @@ KCLUS$train <- function(X, Y, k = 3, max.depth = 6, var.improvp = 0.5, pred.type
 }
 
 KCLUS$predict <- function(kclus, new.data) {
-  # Loss function for clustering
-  loss.func <- function(a, b) {
-    sqrt(sum((a-b)^2))
-  }
-
   predictions <- matrix(nrow=nrow(new.data), ncol = length(kclus$targets))
   colnames(predictions) <- kclus$targets
 
@@ -105,7 +100,7 @@ KCLUS$predict <- function(kclus, new.data) {
         break
       }
 
-      distances <- sapply(descendants, function(j) loss.func(new.data[i,], kclus$centroids[[j]]))
+      distances <- sapply(descendants, function(j) KCLUS$loss.func(new.data[i,], kclus$centroids[[j]]))
       cluster <- which.min(distances)
       actual <- as.character(descendants[cluster])
     }
