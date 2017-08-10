@@ -34,8 +34,10 @@ x.test <- x[301:337]
 y.test <- y[301:337]
 
 source("KCLUS.R")
-kclus <- KCLUS$train(x.train,y.train,3,10)
+kclus <- KCLUS$train(x.train, y.train, k = , max.depth = 10, var.improvp = 0.2)
 
-# log <- copy(y.test)
-# log[, (paste0(colnames(y),".pred")) := as.data.table(KCLUS$predict(kclus, x.test))]
-# print(aRRMSE(as.data.frame(log), names(y)))
+print("OLA")
+
+log <- copy(y.test)
+log[, (paste0(colnames(y),".pred")) := as.data.table(KCLUS$predict(kclus, x.test))]
+print(aRRMSE(as.data.frame(log), names(y)))

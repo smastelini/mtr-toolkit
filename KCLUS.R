@@ -1,9 +1,14 @@
 KCLUS <- new.env()
 
-KCLUS$train <- function(X, Y, k = 3, max.depth = 6, init.var.prop = 0.05, pred.type = "mean") {
+KCLUS$train <- function(X, Y, k = 3, max.depth = 6, var.improvp = 0.5, pred.type = "mean", min.cluss = NULL) {
   # Loss function for clustering
   loss.func <- function(a, b) {
     sqrt(sum((a-b)^2))
+  }
+
+  # Root-Mean-Squared Error
+  RMSE <- function(actual, predicted) {
+  	return(sqrt(mean((actual-predicted)^2)))
   }
 
   KCLUS$cidx <- 0
@@ -11,55 +16,50 @@ KCLUS$train <- function(X, Y, k = 3, max.depth = 6, init.var.prop = 0.05, pred.t
   KCLUS$tree <- data.table(orig = character(0), dest = character(0))
   KCLUS$predictors <- list()
 
-  # Initial variance of data
-  KCLUS$init.var <- sum(as.numeric(X[,lapply(.SD, var)]), na.rm = TRUE)
-
-  clustree.b <- function(X, Y, level = 0, sup.id = 0) {
+  clustree.b <- function(X, Y, level = 0, sup.id = 0, sup.var) {
     # Accounts the current inter cluster variance sum
-    current.svar <- Inf
-    if(level > 0)
-      current.svar <- sum(as.numeric(X[,lapply(.SD, var)]))
+    if(nrow(X) >= min.cluss) {
+      mass.center <- colMeans(X)
+      current.svar <- var(apply(X, 1, function(j, mass.center) RMSE(j, mass.center), mass.center = mass.center))
+    }
 
     # Leaf node
-    if(level > max.depth || current.svar < init.var.prop*KCLUS$init.var) {
+    if(nrow(X) < min.cluss || level > max.depth || (sup.var >= current.svar && sup.var-current.svar < var.improvp*sup.var)) {
       KCLUS$tree <- rbindlist(list(KCLUS$tree, list(orig = sup.id, dest = NA)))
       switch(pred.type,
+        # Mean prediction
     		mean={
-    			KCLUS$predictors[[as.character(sup.id)]] <- sapply(Y, mean)
+    			KCLUS$predictors[[as.character(sup.id)]] <- as.numeric(Y[, lapply(.SD, mean)])
           NULL
     		}
       )
-      # KCLUS$cidx <- KCLUS$cidx + 1
       return(NULL)
     }
 
     # Cluster inner elements range
-    maxs <- as.numeric(X[, lapply(.SD, max)])
-    mins <- as.numeric(X[, lapply(.SD, min)])
+    maxmin <- rbindlist(list(X[, lapply(.SD, max)], X[, lapply(.SD, min)]))
+
+    gen.centroids <- maxmin[, lapply(.SD, function(j,k) runif(k, max = j[1], min = j[2]), k = k)]
 
     actual.centers.idx <- rep(0, k)
     # Random Centers creation
-    for(i in 1:k) {
+    for(i in seq(k)) {
       # Updates the global centroid hash/node id counter
       KCLUS$cidx <- KCLUS$cidx + 1
 
-      KCLUS$centroids[[as.character(KCLUS$cidx)]] <- sapply(1:length(maxs),
-        function(i, maxz, minz) {
-          runif(1, min = minz[i], max = maxz[i])
-        }, maxz = maxs, minz = mins
-      )
+      KCLUS$centroids[[as.character(KCLUS$cidx)]] <- unlist(gen.centroids[i])
       actual.centers.idx[i] <- KCLUS$cidx
     }
 
     # Group points within defined centers
     distances <- matrix(nrow=k, ncol=nrow(X))
-    for(i in 1:k) {
+    for(i in seq(k)) {
       distances[i,] <- apply(X, 1, loss.func, b = KCLUS$centroids[[as.character(actual.centers.idx[i])]])
     }
 
     clustered <- apply(distances, 2, which.min)
 
-    for(i in 1:k) {
+    for(i in seq(k)) {
       celements <- which(clustered == i)
 
       if(length(celements) == 0) {
@@ -73,19 +73,20 @@ KCLUS$train <- function(X, Y, k = 3, max.depth = 6, init.var.prop = 0.05, pred.t
 
       KCLUS$tree <- rbindlist(list(KCLUS$tree, list(orig = sup.id, dest = actual.centers.idx[i])))
 
-      if(length(celements) > 1)
-        clustree.b(X.f, Y.f, level + 1, actual.centers.idx[i])
-      else
-        clustree.b(X.f, Y.f, max.depth + 1, actual.centers.idx[i])
+      clustree.b(X.f, Y.f, level + 1, actual.centers.idx[i], current.svar)
+
     }
     return(NULL)
   }
 
-  clustree.b(X,Y)
+  if(is.null(min.cluss))
+    min.cluss <- 2*log2(nrow(X))
+
+  clustree.b(X,Y, sup.var = Inf)
 
   retr <- list(tree = KCLUS$tree, centroids = KCLUS$centroids, predictors = KCLUS$predictors, targets = names(Y))
 
-  rm(tree, centroids, predictors, cidx, init.var, envir = KCLUS)
+  rm(tree, centroids, predictors, cidx, envir = KCLUS)
   return(retr)
 }
 
