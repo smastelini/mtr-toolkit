@@ -78,7 +78,7 @@ KCLUS$train <- function(X, Y, k = 3, max.depth = 6, var.improvp = 0.5, pred.type
   if(is.null(min.cluss))
     min.cluss <- 2*log2(nrow(X))
 
-  clustree.b(X,Y, sup.var = Inf)
+  clustree.b(X, Y, sup.var = Inf)
 
   retr <- list(tree = KCLUS$tree, centroids = KCLUS$centroids, predictors = KCLUS$predictors, targets = names(Y))
 
@@ -87,25 +87,25 @@ KCLUS$train <- function(X, Y, k = 3, max.depth = 6, var.improvp = 0.5, pred.type
 }
 
 KCLUS$predict <- function(kclus, new.data) {
-  predictions <- matrix(nrow=nrow(new.data), ncol = length(kclus$targets))
-  colnames(predictions) <- kclus$targets
-
+  predictions <- list()
   i <- 1
-  apply(new.data, 1, function(dat) {
+  apply(new.data, 1, function(dat, predictions) {
     actual <- "0"
     while(TRUE) {
       descendants <- as.character(kclus$tree[orig == actual, dest])
       if(length(descendants) == 1 && is.na(descendants)) {
-        predictions[i,] <<- kclus$predictors[[actual]]
+        predictions[[i]] <<- kclus$predictors[[actual]]
         break
       }
 
-      distances <- sapply(descendants, function(j) KCLUS$loss.func(new.data[i,], kclus$centroids[[j]]))
+      distances <- sapply(descendants, function(j) KCLUS$loss.func(dat, kclus$centroids[[j]]))
       cluster <- which.min(distances)
       actual <- as.character(descendants[cluster])
     }
     i <<- i + 1
-  })
+  }, predictions = predictions)
 
+  predictions <- as.data.table(matrix(unlist(predictions), ncol = length(targets), byrow = FALSE))
+  names(predictions) <- kclus$targets
   return(predictions)
 }

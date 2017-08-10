@@ -34,10 +34,24 @@ x.test <- x[301:337]
 y.test <- y[301:337]
 
 source("KCLUS.R")
-kclus <- KCLUS$train(x.train, y.train, k = , max.depth = 10, var.improvp = 0.2)
 
-print("OLA")
+n.trees <- 10
+
+preds <- list()
+
+for(i in seq(n.trees)) {
+  idxs <- sample(nrow(x), replace = T)
+  x.boost <- x[idxs]
+  y.boost <- y[idxs]
+  
+  
+  kclus <- KCLUS$train(x.train, y.train, k = 3, max.depth = 10, var.improvp = 0.1)
+  preds[[i]] <- KCLUS$predict(kclus, x.test)
+  
+}
+
+predictions <- as.data.frame(apply(simplify2array(lapply(preds, as.matrix)),1:2, mean, na.rm = TRUE))
 
 log <- copy(y.test)
-log[, (paste0(colnames(y),".pred")) := as.data.table(KCLUS$predict(kclus, x.test))]
-print(aRRMSE(as.data.frame(log), names(y)))
+log[, (paste0(colnames(y),".pred")) := predictions]
+print(aRMSE(as.data.frame(log), names(y)))
