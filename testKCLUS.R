@@ -3,7 +3,7 @@ rm(list = ls())
 
 source("utils_MT.R")
 
-dataset <- read.csv("~/MEGA/MT_datasets/atp1d.csv")
+dataset <- read.csv("~/MEGA/MT_datasets/andro.csv")
 dataset <- remove.unique(dataset)
 
 dataset <- dataset[sample(nrow(dataset)),]
@@ -28,15 +28,15 @@ dataset <- as.data.table(scale(dataset, center = mins, scale = maxs - mins))
 x <- dataset[, !targets, with = FALSE]
 y <- dataset[, targets, with = FALSE]
 
-x.train <- x[1:300]
-y.train <- y[1:300]
+x.train <- x[1:40]
+y.train <- y[1:40]
 
-x.test <- x[301:337]
-y.test <- y[301:337]
+x.test <- x[41:49]
+y.test <- y[41:49]
 
 source("KCLUS.R")
 
-n.trees <- 10
+n.trees <- 100
 
 preds <- list()
 

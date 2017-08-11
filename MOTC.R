@@ -1,4 +1,4 @@
-motc.importance.tech <- "rf_imp"
+motc.importance.tech <- "pearson"
 
 dir.create(paste0(output.dir.motc, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
 dir.create(paste0(output.dir.motc, "/out_imp_assessment/",tech), showWarnings = FALSE, recursive = TRUE)
@@ -209,7 +209,8 @@ for(i in 1:length(bases)) {
 		t.cont <- 1
 
 		for(t in targets[[i]]) {
-				orc <- getChainingTree(timportance, t, hoeffdings.bound(nrow(x.train)), round(log2(n.targets[i])))
+				orc <- getChainingTree(timportance, t, hoeffdings.bound(nrow(x.train), range =
+							ifelse(motc.importance.tech == "rf_im", 100, 1)), round(2*log2(n.targets[i])))
 				predictions <- buildChainTree(orc, x.train, y.train, x.test, tech, targets)
 
 				write.csv(data.frame(id=sample.names[train.idx], predictions$tr, check.names = F), paste0(output.dir.motc, "/raw_logs/",tech,"/raw_MOTC_training_", bases[i], "_fold", formatC(k, width=2, flag="0"), "_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)

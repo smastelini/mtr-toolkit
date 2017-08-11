@@ -15,7 +15,7 @@ KCLUS$train <- function(X, Y, k = 3, max.depth = 6, var.improvp = 0.5, pred.type
     # Accounts the current inter cluster variance sum
     if(nrow(X) >= min.cluss) {
       mass.center <- colMeans(X)
-      current.svar <- var(apply(X, 1, function(j, mass.center) KCLUS$loss.func(j, mass.center), mass.center = mass.center))
+      current.svar <- var(apply(X, 1, function(j, mass.center) KCLUS$loss.func(j, mass.center), mass.center = mass.center), na.rm = T)
       # cat("Leaf instances: ", nrow(Y), "\tSV: ", sup.var, "\tAV: ", current.svar, "\tVI: ", (sup.var-current.svar), "\tVT: ", var.improvp*sup.var,"\n")
     }
 
@@ -32,7 +32,7 @@ KCLUS$train <- function(X, Y, k = 3, max.depth = 6, var.improvp = 0.5, pred.type
       return(NULL)
     }
 
-    # Cluster inner elements range
+    # Cluster's inner elements range
     maxmin <- rbindlist(list(X[, lapply(.SD, max)], X[, lapply(.SD, min)]))
 
     gen.centroids <- maxmin[, lapply(.SD, function(j,k) runif(k, max = j[1], min = j[2]), k = k)]
@@ -93,6 +93,7 @@ KCLUS$predict <- function(kclus, new.data) {
     actual <- "0"
     while(TRUE) {
       descendants <- as.character(kclus$tree[orig == actual, dest])
+
       if(length(descendants) == 1 && is.na(descendants)) {
         predictions[[i]] <<- kclus$predictors[[actual]]
         break
@@ -105,7 +106,7 @@ KCLUS$predict <- function(kclus, new.data) {
     i <<- i + 1
   }, predictions = predictions)
 
-  predictions <- as.data.table(matrix(unlist(predictions), ncol = length(targets), byrow = FALSE))
+  predictions <- as.data.table(matrix(unlist(predictions), ncol = length(targets), byrow = TRUE))
   names(predictions) <- kclus$targets
   return(predictions)
 }
