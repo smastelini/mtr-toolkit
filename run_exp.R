@@ -38,18 +38,18 @@ for(mt in mt.techs) {
 	assign(paste0("output.dir.", tolower(mt)), paste0(output.prefix, "/", mt))
 }
 
-for(tech in techs) {
-	if(tech == "parrf") {
-		suppressMessages(library(foreach))
-		suppressMessages(library(doSNOW))
-		registerDoSNOW(makeCluster(7, type="SOCK"))
-	}
-
-	#Make an experiment
-	for(mt in mt.techs) {
-		source(paste0(mt, ".R"))
-	}
-}
+# for(tech in techs) {
+# 	if(tech == "parrf") {
+# 		suppressMessages(library(foreach))
+# 		suppressMessages(library(doSNOW))
+# 		registerDoSNOW(makeCluster(7, type="SOCK"))
+# 	}
+#
+# 	#Make an experiment
+# 	for(mt in mt.techs) {
+# 		source(paste0(mt, ".R"))
+# 	}
+# }
 
 if(must.compare) {
 	# mt.techs <- gsub("DSTARST", "DSTARS", mt.techs)
@@ -95,4 +95,22 @@ if(generate.final.table) {
 		tabela[nrow(tabela)+1,1] <- ""
 	}
 	write.csv(tabela, paste0(output.prefix, "/final_table.csv"), na = "", row.names = F)
+}
+
+if(generate.nemenyi.frame) {
+  nemenyi.cols <- apply(expand.grid(mt.techs, techs), 1, paste, collapse=".")
+  nemenyi <- data.frame(matrix(nrow=length(bases), ncol = length(nemenyi.cols)))
+  colnames(nemenyi) <- nemenyi.cols
+  rownames(nemenyi) <- bases
+
+  for(b in seq(length(bases))) {
+    for(mt in mt.techs) {
+      log <- read.csv(paste0(paste0(output.prefix, "/comparison_results"), "/performance_", mt, "_", bases[b], ".csv"), stringsAsFactors = F)
+
+      for(i in seq(length(techs))) {
+        nemenyi[b, paste(mt, techs[i], sep = ".")] <- log[i, "aRRMSE"]
+      }
+    }
+  }
+  write.csv(nemenyi, paste0(output.prefix, "/nemenyi_comparison.csv"), row.names = T)
 }

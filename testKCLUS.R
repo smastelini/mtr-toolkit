@@ -6,6 +6,7 @@ source("utils_MT.R")
 dataset <- read.csv("~/MEGA/MT_datasets/atp1d.csv")
 dataset <- remove.unique(dataset)
 
+dataset <- dataset[sample(nrow(dataset)),]
 
 i <- 1
 
@@ -54,4 +55,4 @@ predictions <- as.data.frame(apply(simplify2array(lapply(preds, as.matrix)),1:2,
 
 log <- copy(y.test)
 log[, (paste0(colnames(y),".pred")) := predictions]
-print(aRMSE(as.data.frame(log), names(y)))
+print(aRMSE(as.data.frame(log), targets))

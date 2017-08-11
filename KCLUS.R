@@ -11,7 +11,7 @@ KCLUS$train <- function(X, Y, k = 3, max.depth = 6, var.improvp = 0.5, pred.type
   KCLUS$tree <- data.table(orig = character(0), dest = character(0))
   KCLUS$predictors <- list()
 
-  clustree.b <- function(X, Y, level = 0, sup.id = 0, sup.var) {
+  clustree.b <- function(X, Y, level = 0, sup.id = 0, sup.var = Inf) {
     # Accounts the current inter cluster variance sum
     if(nrow(X) >= min.cluss) {
       mass.center <- colMeans(X)
@@ -69,7 +69,7 @@ KCLUS$train <- function(X, Y, k = 3, max.depth = 6, var.improvp = 0.5, pred.type
 
       KCLUS$tree <- rbindlist(list(KCLUS$tree, list(orig = sup.id, dest = actual.centers.idx[i])))
 
-      clustree.b(X.f, Y.f, level + 1, actual.centers.idx[i], current.svar)
+      clustree.b(X.f, Y.f, level = level + 1, sup.id = actual.centers.idx[i], sup.var = current.svar)
 
     }
     return(NULL)
@@ -78,7 +78,7 @@ KCLUS$train <- function(X, Y, k = 3, max.depth = 6, var.improvp = 0.5, pred.type
   if(is.null(min.cluss))
     min.cluss <- 2*log2(nrow(X))
 
-  clustree.b(X, Y, sup.var = Inf)
+  clustree.b(X, Y)
 
   retr <- list(tree = KCLUS$tree, centroids = KCLUS$centroids, predictors = KCLUS$predictors, targets = names(Y))
 
