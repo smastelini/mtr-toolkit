@@ -227,12 +227,16 @@ remove.unique <- function(dataset) {
 }
 
 getTargetImportance <- function(targets, method = "rf_imp") {
-	timportance <- matrix(nrow = ncol(targets), ncol = ncol(targets))
-	for(t in 1:ncol(targets)) {
-		rf.aux <- randomForest::randomForest(targets, targets[[t]], importance = TRUE)
-		imp.aux <- randomForest::importance(rf.aux, type = 1)
-		imp.aux[imp.aux < 0] <- 0
-		timportance[t,] <- imp.aux
+	if(method == "rf_imp") {
+		timportance <- matrix(nrow = ncol(targets), ncol = ncol(targets))
+		for(t in 1:ncol(targets)) {
+			rf.aux <- randomForest::randomForest(targets, targets[[t]], importance = TRUE)
+			imp.aux <- randomForest::importance(rf.aux, type = 1)
+			imp.aux[imp.aux < 0] <- 0
+			timportance[t,] <- imp.aux
+		}
+	} else {
+		timportance <- abs(cor(targets, method = "pearson"))
 	}
 
 	diag(timportance) <- 0

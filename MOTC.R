@@ -1,3 +1,5 @@
+motc.importance.tech <- "rf_imp"
+
 dir.create(paste0(output.dir.motc, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
 dir.create(paste0(output.dir.motc, "/out_imp_assessment/",tech), showWarnings = FALSE, recursive = TRUE)
 dir.create(paste0(output.dir.motc, "/raw_logs/",tech), showWarnings = FALSE, recursive = TRUE)
@@ -197,9 +199,9 @@ for(i in 1:length(bases)) {
 		x.test <- x[test.idx]
 		y.test <- y[test.idx]
 
-		########################################RF Importance calc#############################################
-		timportance <- getTargetImportance(y.train)
-		write.csv(timportance, paste0(output.dir.motc, "/out_imp_assessment/", tech, "/", bases[i], "_RF_importance_fold", formatC(k, width=2, flag="0"), ".csv"))
+		###########################################Importance calc##############################################
+		timportance <- getTargetImportance(y.train, motc.importance.tech)
+		write.csv(timportance, paste0(output.dir.motc, "/out_imp_assessment/", tech, "/", bases[i], "_importance_fold", formatC(k, width=2, flag="0"), ".csv"))
 		########################################################################################################
 
 		t.names <- c(targets[[i]], paste0(targets[[i]], ".pred"))
