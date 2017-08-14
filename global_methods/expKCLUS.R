@@ -44,11 +44,11 @@ for(i in seq(n.trees)) {
   idxs <- sample(nrow(x), replace = T)
   x.boost <- x[idxs]
   y.boost <- y[idxs]
-  
-  
+
+
   kclus <- KCLUS$train(x.train, y.train, k = 3, max.depth = 10, var.improvp = 0.1)
   preds[[i]] <- KCLUS$predict(kclus, x.test)
-  
+
 }
 
 predictions <- as.data.frame(apply(simplify2array(lapply(preds, as.matrix)),1:2, mean, na.rm = TRUE))
