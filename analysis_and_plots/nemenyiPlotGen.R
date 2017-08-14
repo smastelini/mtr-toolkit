@@ -6,6 +6,10 @@ nemenyi <- nemenyi[,-1]
 
 colnames(nemenyi) <- c("ST-RF", "MTRS-RF", "ERC-RF", "MOTC-RF", "ST-SVM", "MTRS-SVM", "ERC-SVM", "MOTC-SVM", "ST-XGBoost",
                         "MTRS-XGBoost", "ERC-XGBoost", "MOTC-XGBoost", "ST-CART", "MTRS-CART", "ERC-CART", "MOTC-CART")
+
+pdf("~/Desktop/nemenyi18dts.pdf", width = 10, height = 5)
 plotCD(nemenyi, cex = 0.5, decreasing = F)
+dev.off()
+
 friedmanTest(nemenyi)
 nemenyiTest(nemenyi)

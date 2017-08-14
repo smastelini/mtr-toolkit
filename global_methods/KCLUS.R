@@ -5,7 +5,7 @@ KCLUS$loss.func <- function(a, b) {
   sqrt(sum((a-b)^2))
 }
 
-KCLUS$train <- function(X, Y, k = 3, max.depth = 6, var.improvp = 0.5, pred.type = "mean", min.cluss = NULL) {
+KCLUS$train <- function(X, Y, k = 2, max.depth = 6, var.improvp = 0.5, pred.type = "mean", min.cluss = NULL) {
   KCLUS$cidx <- 0
   KCLUS$centroids <- list()
   KCLUS$tree <- data.table(orig = character(0), dest = character(0))

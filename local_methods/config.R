@@ -10,7 +10,8 @@ n.targets <- c(6,6,16,16,2,3,3,3,14,2,3,6,12,3)
 
 bases.teste <- NULL
 
-techs <- c("ranger", "svm", "xgboost","cart")
+# techs <- c("ranger", "svm", "xgboost","cart")
+techs <- c("svm", "xgboost","cart")
 
 folds.num <- 10
 

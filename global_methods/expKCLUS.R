@@ -1,57 +1,86 @@
-library(data.table)
 rm(list = ls())
+library(data.table)
 
-source("../utils_and_includes/utils_MT.R")
+n.folds <- 10
 
-dataset <- read.csv("~/MEGA/MT_datasets/andro.csv")
-dataset <- remove.unique(dataset)
+datasets.folder <- "~/MEGA/K-fold_Split"
+output.prefix <- "~/MEGA/Experimentos/exp_KCLUS"
+output.sufix <- "results_k=2_1t.csv"
 
-dataset <- dataset[sample(nrow(dataset)),]
+# bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
+# n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
 
-i <- 1
+bases <- c("atp1d")
+n.targets <- c(6)
 
-targets <- colnames(dataset)[(ncol(dataset)-5):ncol(dataset)]
-
-#Center and Scaling
-dataset <- as.data.table(dataset)
-invisible(dataset[, names(dataset) := lapply(.SD, as.numeric)])
-
-maxs <- as.numeric(dataset[, lapply(.SD, max)])
-names(maxs) <- colnames(dataset)
-mins <- as.numeric(dataset[, lapply(.SD, min)])
-names(mins) <- colnames(dataset)
-
-dataset <- as.data.table(scale(dataset, center = mins, scale = maxs - mins))
-
-
-x <- dataset[, !targets, with = FALSE]
-y <- dataset[, targets, with = FALSE]
-
-x.train <- x[1:40]
-y.train <- y[1:40]
-
-x.test <- x[41:49]
-y.test <- y[41:49]
-
-source("KCLUS.R")
 # Ensemble
-n.trees <- 100
+n.trees <- 50
 
-preds <- list()
+#kClus config
+ramification.factor = 2
+max.depth = Inf
+var.improvp = 0.05
+min.kclus.size <- NULL
 
-for(i in seq(n.trees)) {
-  idxs <- sample(nrow(x), replace = T)
-  x.boost <- x[idxs]
-  y.boost <- y[idxs]
+# Beggining of the Experiment
+source("../utils_and_includes/utils_MT.R")
+source("../global_methods/KCLUS.R")
 
+dir.create(output.prefix, showWarnings = FALSE, recursive = TRUE)
 
-  kclus <- KCLUS$train(x.train, y.train, k = 3, max.depth = 10, var.improvp = 0.1)
-  preds[[i]] <- KCLUS$predict(kclus, x.test)
+log <- data.frame(
+          dataset = rep(bases, n.targets+1),
+          target_index = unlist(sapply(n.targets, function(j) rep(seq(from = 0, to = j)))),
+          target_name = character(sum(n.targets+1)),
+          as.data.frame(setNames(replicate(n.folds+1, numeric(sum(n.targets+1)), simplify = F),
+               c(paste0("fold", formatC(seq(n.folds), width=2, flag="0")), "mean")
+          ))
+       )
 
+init <- 1
+for(i in seq_along(bases)) {
+  print(bases[i])
+  for(k in seq(n.folds)) {
+    print(paste("Fold", formatC(k, width=2, flag="0")))
+    train <- read.csv(paste0(datasets.folder, "/", bases[i], "_fold", formatC(k, width=2, flag="0"), "_train.csv"))
+    test <- read.csv(paste0(datasets.folder, "/", bases[i], "_fold", formatC(k, width=2, flag="0"), "_test.csv"))
+
+    targets <- colnames(test)[(ncol(test)-n.targets[i]+1):ncol(test)]
+
+    train <- as.data.table(train)
+    test <- as.data.table(test)
+
+    x.train <- train[, !targets, with = FALSE]
+    y.train <- train[, targets, with = FALSE]
+
+    x.test <- test[, !targets, with = FALSE]
+    y.test <- test[, targets, with = FALSE]
+
+    mtry <- max(floor(log2(ncol(x.train) + 1)), 1)
+    #######################################################
+    preds <- list()
+
+    for(trs in seq(n.trees)) {
+      idxs <- sample(nrow(x.train), replace = T)
+      x.boost <- x.train[idxs]
+      y.boost <- y.train[idxs]
+
+      sampled.cols <- sample(ncol(x.train), mtry)
+
+      kclus <- KCLUS$train(x.boost[, sampled.cols, with = F], y.boost, ramification.factor, max.depth, var.improvp, min.cluss = min.kclus.size)
+      preds[[trs]] <- KCLUS$predict(kclus, x.test[, sampled.cols, with = F])
+
+    }
+
+    predictions <- as.data.table(apply(simplify2array(lapply(preds, as.matrix)), 1:2, mean, na.rm = TRUE))
+
+    errors <- sapply(seq(n.targets[i]), function(j, y, y.pred) RRMSE(y[[j]], y.pred[[j]]), y = y.test, y.pred = predictions)
+
+    set(log, init:(init + n.targets[i]), paste0("fold", formatC(k, width=2, flag="0")), c(mean(errors), errors))
+  }
+  set(log, init:(init + n.targets[i]), "target_name", c("all", targets))
+  init <- n.targets[i] + 2
 }
 
-predictions <- as.data.frame(apply(simplify2array(lapply(preds, as.matrix)),1:2, mean, na.rm = TRUE))
-
-log <- copy(y.test)
-log[, (paste0(colnames(y),".pred")) := predictions]
-print(aRMSE(as.data.frame(log), targets))
+log[["mean"]] <- rowMeans(log[, 4:(ncol(log)-1)])
+write.csv(log, paste0(output.prefix, "/", output.sufix, ".csv"), row.names = F)
