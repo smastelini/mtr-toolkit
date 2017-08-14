@@ -1,7 +1,7 @@
 library(data.table)
 rm(list = ls())
 
-source("utils_MT.R")
+source("../utils_and_includes/utils_MT.R")
 
 dataset <- read.csv("~/MEGA/MT_datasets/andro.csv")
 dataset <- remove.unique(dataset)
@@ -24,7 +24,6 @@ names(mins) <- colnames(dataset)
 dataset <- as.data.table(scale(dataset, center = mins, scale = maxs - mins))
 
 
-
 x <- dataset[, !targets, with = FALSE]
 y <- dataset[, targets, with = FALSE]
 
@@ -35,7 +34,7 @@ x.test <- x[41:49]
 y.test <- y[41:49]
 
 source("KCLUS.R")
-
+# Ensemble
 n.trees <- 100
 
 preds <- list()
