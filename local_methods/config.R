@@ -10,13 +10,12 @@ n.targets <- c(6,6,16,16,2,3,3,3,14,2,3,6,12,3)
 
 bases.teste <- NULL
 
-# techs <- c("ranger", "svm", "xgboost","cart")
-techs <- c("svm", "xgboost","cart")
+techs <- c("ranger", "svm", "xgboost","cart")
 
 folds.num <- 10
 
 datasets.folder <- "~/MEGA/MT_datasets"
-output.prefix <- "~/Desktop/MOTC/PEARSON"
+output.prefix <- "~/Desktop/MOTC/RF_DEPTH_INC"
 
 # mt.techs <- c("DSTARST")
 # mt.techs <- c("ST", "MTRS", "ERC", "MOTC")
@@ -25,7 +24,7 @@ mt.techs <- c("MOTC")
 #Progress bar and remaining time exhibition
 showProgress <- FALSE
 
-must.compare <- FALSE
+must.compare <- TRUE
 generate.final.table <- FALSE
 generate.nemenyi.frame <- FALSE
 ###############################################################################
