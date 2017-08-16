@@ -11,16 +11,18 @@ KCLUS$train <- function(X, Y, k = 2, max.depth = 6, var.improvp = 0.5, pred.type
   KCLUS$tree <- data.table(orig = character(0), dest = character(0))
   KCLUS$predictors <- list()
 
+  if(is.null(min.cluss))
+    min.cluss <- log2(nrow(X))
+
   clustree.b <- function(X, Y, level = 0, sup.id = 0, sup.var = Inf) {
     # Accounts the current inter cluster variance sum
     if(nrow(X) >= min.cluss) {
-      mass.center <- colMeans(X)
-      current.svar <- var(apply(X, 1, function(j, mass.center) KCLUS$loss.func(j, mass.center), mass.center = mass.center), na.rm = T)
+      current.svar <- sum(apply(Y, 2, sd))
       # cat("Leaf instances: ", nrow(Y), "\tSV: ", sup.var, "\tAV: ", current.svar, "\tVI: ", (sup.var-current.svar), "\tVT: ", var.improvp*sup.var,"\n")
     }
 
     # Leaf node
-    if(nrow(X) < min.cluss || level > max.depth || (sup.var >= current.svar && sup.var-current.svar < var.improvp*sup.var)) {
+    if(nrow(X) < min.cluss || level > max.depth || (sup.var >= current.svar && sup.var-current.svar < var.improvp*sup.var) || current.svar == 0) {
       KCLUS$tree <- rbindlist(list(KCLUS$tree, list(orig = sup.id, dest = NA)))
       switch(pred.type,
         # Mean prediction
@@ -74,9 +76,6 @@ KCLUS$train <- function(X, Y, k = 2, max.depth = 6, var.improvp = 0.5, pred.type
     }
     return(NULL)
   }
-
-  if(is.null(min.cluss))
-    min.cluss <- 2*log2(nrow(X))
 
   clustree.b(X, Y)
 

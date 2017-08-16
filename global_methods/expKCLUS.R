@@ -5,21 +5,21 @@ n.folds <- 10
 
 datasets.folder <- "~/MEGA/K-fold_Split"
 output.prefix <- "~/MEGA/Experimentos/exp_KCLUS"
-output.sufix <- "results_k=2_1t.csv"
+output.sufix <- "results_14datasets_50trees_0.01_improvement_k3_noprune"
 
 # bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
 # n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
 
-bases <- c("atp1d")
-n.targets <- c(6)
+bases <- c("atp1d","atp7d","oes97","oes10","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
+n.targets <- c(6,6,16,16,2,3,3,3,14,2,3,6,12,3)
 
 # Ensemble
 n.trees <- 50
 
 #kClus config
-ramification.factor = 2
+ramification.factor = 3
 max.depth = Inf
-var.improvp = 0.05
+var.improvp = 0.01
 min.kclus.size <- NULL
 
 # Beggining of the Experiment
@@ -67,9 +67,8 @@ for(i in seq_along(bases)) {
 
       sampled.cols <- sample(ncol(x.train), mtry)
 
-      kclus <- KCLUS$train(x.boost[, sampled.cols, with = F], y.boost, ramification.factor, max.depth, var.improvp, min.cluss = min.kclus.size)
+      kclus <- KCLUS$train(x.boost[, sampled.cols, with = F], y.boost, ramification.factor, max.depth, var.improvp, "mean", min.kclus.size)
       preds[[trs]] <- KCLUS$predict(kclus, x.test[, sampled.cols, with = F])
-
     }
 
     predictions <- as.data.table(apply(simplify2array(lapply(preds, as.matrix)), 1:2, mean, na.rm = TRUE))
