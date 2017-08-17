@@ -17,7 +17,7 @@ KCLUS$train <- function(X, Y, k = 2, max.depth = 6, var.improvp = 0.5, pred.type
   clustree.b <- function(X, Y, level = 0, sup.id = 0, sup.var = Inf) {
     # Accounts the current inter cluster variance sum
     if(nrow(X) >= min.cluss) {
-      current.svar <- sum(apply(Y, 2, sd))
+      current.svar <- sum(apply(X, 2, sd))
       # cat("Leaf instances: ", nrow(Y), "\tSV: ", sup.var, "\tAV: ", current.svar, "\tVI: ", (sup.var-current.svar), "\tVT: ", var.improvp*sup.var,"\n")
     }
 
@@ -29,7 +29,15 @@ KCLUS$train <- function(X, Y, k = 2, max.depth = 6, var.improvp = 0.5, pred.type
     		mean={
     			KCLUS$predictors[[as.character(sup.id)]] <- as.numeric(Y[, lapply(.SD, mean)])
           NULL
-    		}
+    		},
+        lr={
+          KCLUS$predictors[[as.character(sup.id)]] <- lapply(seq(ncol(Y)), function(j, w, v) {
+            z = v[[j]]
+            form <- as.formula(colnames(w) ~ z)
+            lm(w ~ z)
+          }, w=as.matrix(X), v=Y)
+          NULL
+        }
       )
       return(NULL)
     }
@@ -79,7 +87,7 @@ KCLUS$train <- function(X, Y, k = 2, max.depth = 6, var.improvp = 0.5, pred.type
 
   clustree.b(X, Y)
 
-  retr <- list(tree = KCLUS$tree, centroids = KCLUS$centroids, predictors = KCLUS$predictors, targets = names(Y))
+  retr <- list(tree = KCLUS$tree, centroids = KCLUS$centroids, predictors = KCLUS$predictors, targets = names(Y), pred.type = pred.type)
 
   rm(tree, centroids, predictors, cidx, envir = KCLUS)
   return(retr)
@@ -94,7 +102,18 @@ KCLUS$predict <- function(kclus, new.data) {
       descendants <- as.character(kclus$tree[orig == actual, dest])
 
       if(length(descendants) == 1 && is.na(descendants)) {
-        predictions[[i]] <<- kclus$predictors[[actual]]
+        predictions[[i]] <<- switch(kclus$pred.type,
+          # Mean prediction
+      		mean={
+      			kclus$predictors[[actual]]
+      		},
+          lr={
+            sapply(kclus$predictors[[actual]], function(mod, dt) {
+              predict(mod, dt)
+
+            }, dt = dat)
+          }
+        )
         break
       }
 

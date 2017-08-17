@@ -211,7 +211,7 @@ for(i in 1:length(bases)) {
 		for(t in targets[[i]]) {
 				orc <- getChainingTree(timportance, t, hoeffdings.bound(nrow(x.train), range =
 							ifelse(motc.importance.tech == "rf_imp", 100, 1)), round(2*log2(n.targets[i])))
-				predictions <- buildChainTree(orc, x.train, y.train, x.test, tech, targets)
+				predictions <- buildChainTree(orc, x.train, y.train, x.test, tech, targets[[i]])
 
 				write.csv(data.frame(id=sample.names[train.idx], predictions$tr, check.names = F), paste0(output.dir.motc, "/raw_logs/",tech,"/raw_MOTC_training_", bases[i], "_fold", formatC(k, width=2, flag="0"), "_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
 				write.csv(data.frame(id=sample.names[test.idx], predictions$ts, check.names = F), paste0(output.dir.motc, "/raw_logs/",tech,"/raw_MOTC_testing_", bases[i], "_fold", formatC(k, width=2, flag="0"), "_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)

@@ -78,8 +78,8 @@ for(i in seq_along(bases)) {
     set(log, init:(init + n.targets[i]), paste0("fold", formatC(k, width=2, flag="0")), c(mean(errors), errors))
   }
   set(log, init:(init + n.targets[i]), "target_name", c("all", targets))
-  init <- n.targets[i] + 2
+  init <- init + n.targets[i] + 1
 }
 
-log[["mean"]] <- rowMeans(log[, 4:(ncol(log)-1)])
+log[["mean"]] <- rowMeans(log[, 5:(ncol(log)-1)])
 write.csv(log, paste0(output.prefix, "/", output.sufix, ".csv"), row.names = F)
