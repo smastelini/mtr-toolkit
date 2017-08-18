@@ -3,15 +3,17 @@ library(data.table)
 
 n.folds <- 10
 
+set.seed(23423)
+
 datasets.folder <- "~/MEGA/K-fold_Split"
 output.prefix <- "~/MEGA/Experimentos/exp_KCLUS"
-output.sufix <- "results_14datasets_50trees_0.01_improvement_k3_noprune"
+output.sufix <- "results_mean_W"
 
 # bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
 # n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
 
-bases <- c("atp1d","atp7d","oes97","oes10","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
-n.targets <- c(6,6,16,16,2,3,3,3,14,2,3,6,12,3)
+# bases <- c("atp1d","atp7d","oes97","oes10","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
+# n.targets <- c(6,6,16,16,2,3,3,3,14,2,3,6,12,3)
 
 # Ensemble
 n.trees <- 50
@@ -21,6 +23,8 @@ ramification.factor = 3
 max.depth = Inf
 var.improvp = 0.01
 min.kclus.size <- NULL
+pred.type <- "weighted_mean"
+# pred.type <- "mean"
 
 # Beggining of the Experiment
 source("../utils_and_includes/utils_MT.R")
@@ -59,6 +63,7 @@ for(i in seq_along(bases)) {
     mtry <- max(floor(log2(ncol(x.train) + 1)), 1)
     #######################################################
     preds <- list()
+    wgts <- list()
 
     for(trs in seq(n.trees)) {
       idxs <- sample(nrow(x.train), replace = T)
@@ -67,11 +72,37 @@ for(i in seq_along(bases)) {
 
       sampled.cols <- sample(ncol(x.train), mtry)
 
-      kclus <- KCLUS$train(x.boost[, sampled.cols, with = F], y.boost, ramification.factor, max.depth, var.improvp, "mean", min.kclus.size)
-      preds[[trs]] <- KCLUS$predict(kclus, x.test[, sampled.cols, with = F])
+      kclus <- KCLUS$train(x.boost[, sampled.cols, with = F], y.boost, ramification.factor, max.depth, var.improvp, pred.type, min.kclus.size)
+
+      outcomes <- KCLUS$predict(kclus, x.test[, sampled.cols, with = F])
+
+      if(pred.type == "mean")
+        preds[[trs]] <- outcomes
+      else {
+        preds[[trs]] <- outcomes$predictions
+        wgts[[trs]] <- outcomes$weights
+      }
     }
 
-    predictions <- as.data.table(apply(simplify2array(lapply(preds, as.matrix)), 1:2, mean, na.rm = TRUE))
+    if(pred.type == "mean")
+      predictions <- as.data.table(apply(simplify2array(lapply(preds, as.matrix)), 1:2, mean, na.rm = TRUE))
+    else {
+      sum.wgts <- apply(simplify2array(lapply(wgts, as.matrix)), 1:2, sum, na.rm = TRUE)
+      sum.wgts <- 1/sum.wgts
+      
+      wgts <- lapply(wgts, function(w, sum.w) w * sum.w, sum.w = sum.wgts)
+      
+      predictions <- as.data.table(
+        apply(
+          simplify2array(
+            lapply(
+              lapply(seq(n.trees), function(j, p, w) p[[j]] * w[[j]], p = preds, w = wgts), 
+              as.matrix
+            )
+          ), 
+          1:2, sum, na.rm = TRUE)
+      )
+    }
 
     errors <- sapply(seq(n.targets[i]), function(j, y, y.pred) RRMSE(y[[j]], y.pred[[j]]), y = y.test, y.pred = predictions)
 

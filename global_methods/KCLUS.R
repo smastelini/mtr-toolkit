@@ -10,6 +10,7 @@ KCLUS$train <- function(X, Y, k = 2, max.depth = 6, var.improvp = 0.5, pred.type
   KCLUS$centroids <- list()
   KCLUS$tree <- data.table(orig = character(0), dest = character(0))
   KCLUS$predictors <- list()
+  KCLUS$leaf.weights <- list()
 
   if(is.null(min.cluss))
     min.cluss <- log2(nrow(X))
@@ -30,12 +31,15 @@ KCLUS$train <- function(X, Y, k = 2, max.depth = 6, var.improvp = 0.5, pred.type
     			KCLUS$predictors[[as.character(sup.id)]] <- as.numeric(Y[, lapply(.SD, mean)])
           NULL
     		},
-        lr={
-          KCLUS$predictors[[as.character(sup.id)]] <- lapply(seq(ncol(Y)), function(j, w, v) {
-            z = v[[j]]
-            form <- as.formula(colnames(w) ~ z)
-            lm(w ~ z)
-          }, w=as.matrix(X), v=Y)
+        weighted_mean={
+          KCLUS$predictors[[as.character(sup.id)]] <- as.numeric(Y[, lapply(.SD, mean)])
+          stds <- as.numeric(Y[, lapply(.SD, sd)])
+
+          if(nrow(X) > 1)
+            aux <- nrow(X)/(stds + 0.000001)
+          else
+            aux <- rep(1, ncol(Y))
+          KCLUS$leaf.weights[[as.character(sup.id)]] <- aux
           NULL
         }
       )
@@ -87,7 +91,7 @@ KCLUS$train <- function(X, Y, k = 2, max.depth = 6, var.improvp = 0.5, pred.type
 
   clustree.b(X, Y)
 
-  retr <- list(tree = KCLUS$tree, centroids = KCLUS$centroids, predictors = KCLUS$predictors, targets = names(Y), pred.type = pred.type)
+  retr <- list(tree = KCLUS$tree, centroids = KCLUS$centroids, predictors = KCLUS$predictors, targets = names(Y), pred.type = pred.type, leaf.weights = KCLUS$leaf.weights)
 
   rm(tree, centroids, predictors, cidx, envir = KCLUS)
   return(retr)
@@ -95,6 +99,8 @@ KCLUS$train <- function(X, Y, k = 2, max.depth = 6, var.improvp = 0.5, pred.type
 
 KCLUS$predict <- function(kclus, new.data) {
   predictions <- list()
+  weights <- list()
+
   i <- 1
   apply(new.data, 1, function(dat, predictions) {
     actual <- "0"
@@ -107,11 +113,9 @@ KCLUS$predict <- function(kclus, new.data) {
       		mean={
       			kclus$predictors[[actual]]
       		},
-          lr={
-            sapply(kclus$predictors[[actual]], function(mod, dt) {
-              predict(mod, dt)
-
-            }, dt = dat)
+          weighted_mean={
+            weights[[i]] <<- kclus$leaf.weights[[actual]]
+            kclus$predictors[[actual]]
           }
         )
         break
@@ -126,5 +130,13 @@ KCLUS$predict <- function(kclus, new.data) {
 
   predictions <- as.data.table(matrix(unlist(predictions), ncol = length(targets), byrow = TRUE))
   names(predictions) <- kclus$targets
-  return(predictions)
+
+  if(kclus$pred.type == "mean")
+    return(predictions)
+  else {
+    weights <- as.data.table(matrix(unlist(weights), ncol = length(targets), byrow = TRUE))
+    names(weights) <- kclus$targets
+
+    return(list(predictions = predictions, weights = weights))
+  }
 }
