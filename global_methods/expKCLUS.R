@@ -12,8 +12,8 @@ output.sufix <- "results_mean_W"
 # bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
 # n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
 
-# bases <- c("atp1d","atp7d","oes97","oes10","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
-# n.targets <- c(6,6,16,16,2,3,3,3,14,2,3,6,12,3)
+bases <- c("atp1d","atp7d","oes97","oes10","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
+n.targets <- c(6,6,16,16,2,3,3,3,14,2,3,6,12,3)
 
 # Ensemble
 n.trees <- 50
@@ -89,17 +89,17 @@ for(i in seq_along(bases)) {
     else {
       sum.wgts <- apply(simplify2array(lapply(wgts, as.matrix)), 1:2, sum, na.rm = TRUE)
       sum.wgts <- 1/sum.wgts
-      
+
       wgts <- lapply(wgts, function(w, sum.w) w * sum.w, sum.w = sum.wgts)
-      
+
       predictions <- as.data.table(
         apply(
           simplify2array(
             lapply(
-              lapply(seq(n.trees), function(j, p, w) p[[j]] * w[[j]], p = preds, w = wgts), 
+              lapply(seq(n.trees), function(j, p, w) p[[j]] * w[[j]], p = preds, w = wgts),
               as.matrix
             )
-          ), 
+          ),
           1:2, sum, na.rm = TRUE)
       )
     }
