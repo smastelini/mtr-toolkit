@@ -1,7 +1,7 @@
 dir.create(paste0(output.dir.mtsg, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
 dir.create(paste0(output.dir.mtsg, "/out_imp_assessment/",tech), showWarnings = FALSE, recursive = TRUE)
 
-stacked.regressors <- c("ranger", "svm", "cart")
+stacked.regressors <- techs
 
 targets <- list()
 maxs <- list()
