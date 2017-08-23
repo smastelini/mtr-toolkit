@@ -26,6 +26,7 @@ number.layers <- 10
 source("config.R")
 
 exp.random.seeds <- sample(99999, length(bases))
+# exp.random.seeds <- rep(5465, length(bases))
 
 print("Generated random seeds:")
 print(exp.random.seeds)

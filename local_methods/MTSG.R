@@ -79,7 +79,6 @@ for(i in 1:length(bases)) {
 		x.test <- x[test.idx]
 		y.test <- y[test.idx]
 
-
 		############################ RF Importance calc ###################################
 		rf.importance <- list()
 		timportance <- matrix(nrow = length(targets[[i]]), ncol = length(targets[[i]]))
@@ -93,13 +92,15 @@ for(i in 1:length(bases)) {
 			timportance[t,] <- imp.aux
 		}
 
+		colnames(timportance) <- rownames(timportance) <- targets[[i]]
+
 		write.csv(timportance, paste0(output.dir.mtsg, "/out_imp_assessment/", tech, "/", bases[i], "_RF_importance_fold", formatC(k, width=2, flag="0"), ".csv"))
 		diag(timportance) <- 0
-		uncorrelated <- as.logical(apply(timportance, 2, function(zeta) sum(zeta) == 0))
+		uncorrelated <- as.logical(apply(timportance, 1, function(zeta) sum(zeta) == 0))
 		names(uncorrelated) <- targets[[i]]
 		###################################################################################
 
-		names.logs.sg <- apply(expand.grid(stacked.regressors, targets[[i]][which(!uncorrelated)]), 1, paste, collapse=".")
+		names.logs.sg <- apply(expand.grid(stacked.regressors, targets[[i]]), 1, paste, collapse=".")
 		# Predictions trainining set => input to the second layer of regressors
 		predictions.l1.train <- as.data.table(setNames(replicate(length(names.logs.sg),numeric(nrow(x.train)), simplify = F),
 																									names.logs.sg))
@@ -114,13 +115,11 @@ for(i in 1:length(bases)) {
 		if(showProgress){}else{print("Level 1")}
 		for(t in targets[[i]]) {
 			if(showProgress){pb$tick()}else{print(t)}
-			if(!uncorrelated[t]) {
-				for(sgr in stacked.regressors) {
-					regressor <- train_(x.train, y.train[[t]], sgr, targets[[i]])
+			for(sgr in stacked.regressors) {
+				regressor <- train_(x.train, y.train[[t]], sgr, targets[[i]])
 
-					set(predictions.l1.train, NULL, paste(sgr,t,sep="."), predict_(regressor, x.train, sgr, targets[[i]]))
-					set(predictions.l1.test, NULL, paste(sgr,t,sep="."), predict_(regressor, x.test, sgr, targets[[i]]))
-				}
+				set(predictions.l1.train, NULL, paste(sgr,t,sep="."), predict_(regressor, x.train, sgr, targets[[i]]))
+				set(predictions.l1.test, NULL, paste(sgr,t,sep="."), predict_(regressor, x.test, sgr, targets[[i]]))
 			}
 		}
 
