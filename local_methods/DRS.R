@@ -9,6 +9,7 @@ maxs <- list()
 mins <- list()
 
 for (i in 1:length(bases)) {
+  set.seed(exp.random.seeds[i])
   if(showProgress){}else{print(bases[i])}
   #print(bases[i])
 	dataset <- read.csv(paste0(datasets.folder, "/", bases[i], ".csv"))

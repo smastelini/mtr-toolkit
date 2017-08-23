@@ -25,6 +25,11 @@ number.layers <- 10
 #Loads configuration file
 source("config.R")
 
+exp.random.seeds <- sample(99999, length(bases))
+
+print("Generated random seeds:")
+print(exp.random.seeds)
+
 #ProgressBar creation
 if(showProgress){
   source("progress_exp.R")
