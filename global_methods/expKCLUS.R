@@ -7,7 +7,7 @@ set.seed(23423)
 
 datasets.folder <- "~/MEGA/K-fold_Split"
 output.prefix <- "~/MEGA/Experimentos/exp_KCLUS/all"
-output.sufix <- "results_k=7"
+output.sufix <- "results_k=6"
 
 bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
 n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
@@ -19,7 +19,7 @@ n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
 n.trees <- 100
 
 #kClus config
-ramification.factor = 7
+ramification.factor = 6
 max.depth = Inf
 var.improvp = 0.01
 min.kclus.size <- NULL
