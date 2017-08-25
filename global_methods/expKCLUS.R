@@ -16,9 +16,8 @@ n.trees <- 100
 #kClus config
 ramification.factor = 5
 max.depth = Inf
-var.improvp = 0.01
+std.improvp = 0.01
 min.kclus.size <- NULL
-pred.type <- "mean"
 
 # Beggining of the Experiment
 source("../utils_and_includes/utils_MT.R")
@@ -36,7 +35,7 @@ log <- data.frame(
                paste0("RRMSE.fold", formatC(seq(n.folds), width=2, flag="0"))
           )),
           as.data.frame(setNames(replicate(n.folds, numeric(sum(n.targets+1)), simplify = F),
-               paste0("R2.fold", formatC(seq(n.folds), width=2, flag="0"))
+              paste0("R2.fold", formatC(seq(n.folds), width=2, flag="0"))
           ))
        )
 
@@ -62,7 +61,6 @@ for(i in seq_along(bases)) {
     mtry <- max(floor(log2(ncol(x.train) + 1)), 1)
     #######################################################
     preds <- list()
-    wgts <- list()
 
     for(trs in seq(n.trees)) {
       idxs <- sample(nrow(x.train), replace = T)
@@ -71,38 +69,14 @@ for(i in seq_along(bases)) {
 
       sampled.cols <- sample(ncol(x.train), mtry)
 
-      kclus <- KCLUS$train(x.boost[, sampled.cols, with = F], y.boost, ramification.factor, max.depth, var.improvp, pred.type, min.kclus.size)
-
+      kclus <- KCLUS$train(x.boost[, sampled.cols, with = F], y.boost, ramification.factor, max.depth, std.improvp, min.kclus.size)
+      
       outcomes <- KCLUS$predict(kclus, x.test[, sampled.cols, with = F])
 
-      if(pred.type == "mean")
-        preds[[trs]] <- outcomes
-      else {
-        preds[[trs]] <- outcomes$predictions
-        wgts[[trs]] <- outcomes$weights
-      }
+      preds[[trs]] <- outcomes
     }
 
-    if(pred.type == "mean")
-      predictions <- as.data.table(apply(simplify2array(lapply(preds, as.matrix)), 1:2, mean, na.rm = TRUE))
-    else {
-      sum.wgts <- apply(simplify2array(lapply(wgts, as.matrix)), 1:2, sum, na.rm = TRUE)
-      sum.wgts <- 1/sum.wgts
-
-      wgts <- lapply(wgts, function(w, sum.w) w * sum.w, sum.w = sum.wgts)
-
-      predictions <- as.data.table(
-        apply(
-          simplify2array(
-            lapply(
-              lapply(seq(n.trees), function(j, p, w) p[[j]] * w[[j]], p = preds, w = wgts),
-              as.matrix
-            )
-          ),
-          1:2, sum, na.rm = TRUE)
-      )
-    }
-
+    predictions <- as.data.table(apply(simplify2array(lapply(preds, as.matrix)), 1:2, mean, na.rm = TRUE))
     errors <- sapply(seq(n.targets[i]), function(j, y, y.pred) RRMSE(y[[j]], y.pred[[j]]), y = y.test, y.pred = predictions)
     set(log, init:(init + n.targets[i]), paste0("RRMSE.fold", formatC(k, width=2, flag="0")), c(mean(errors), errors))
 
