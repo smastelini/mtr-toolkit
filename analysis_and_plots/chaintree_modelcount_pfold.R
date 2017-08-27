@@ -26,7 +26,7 @@ for(mt in compared.mt.techs) {
         nemenyi[indx, mt] <- 2*n.targets[b]
       else if(mt == "ERC") {
         if(n.targets[b] <= 3)
-          nemenyi[indx, mt] <- factorial(n.targets[b])
+          nemenyi[indx, mt] <- factorial(n.targets[b])*n.targets[b]
         else
           nemenyi[indx, mt] <- 10*n.targets[b]
       }
