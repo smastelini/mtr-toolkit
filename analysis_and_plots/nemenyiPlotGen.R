@@ -1,6 +1,6 @@
 library(scmamp)
 
-nemenyi <- read.csv("~/MEGA/Experimentos/exp_benchmarks_18dts/nemenyimem_perfold.csv")
+nemenyi <- read.csv("~/MEGA/Experimentos/exp_benchmarks_18dts/nemenyimemperfold.csv")
 # rownames(nemenyi) <- nemenyi[,1]
 # nemenyi <- nemenyi[,-1]
 
