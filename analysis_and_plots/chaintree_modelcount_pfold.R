@@ -53,7 +53,7 @@ for(tch in techs) {
         leaf.cont <- leaf.cont + length(which(grepl('leaf.', colnames(log))))
       }
       nemenyi[indx, paste("MOTC",tch,sep=".")] <- target.count - leaf.cont + n.targets[b]
-      
+
       indx <- indx + 1
     }
   }
