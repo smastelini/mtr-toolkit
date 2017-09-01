@@ -232,14 +232,14 @@ getTargetImportance <- function(targets, method = "rf_imp") {
 		for(t in 1:ncol(targets)) {
 			rf.aux <- randomForest::randomForest(targets, targets[[t]], importance = TRUE)
 			imp.aux <- randomForest::importance(rf.aux, type = 1)
-			imp.aux[imp.aux < 0] <- 0
+			imp.aux[imp.aux <= 0] <- -Inf
 			timportance[t,] <- imp.aux
 		}
 	} else {
 		timportance <- abs(cor(targets, method = "pearson"))
 	}
 
-	diag(timportance) <- 0
+	diag(timportance) <- -Inf
   rownames(timportance) <- colnames(timportance) <- colnames(targets)
 
   return(timportance)
