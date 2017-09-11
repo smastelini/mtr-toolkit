@@ -6,7 +6,7 @@ n.folds <- 10
 set.seed(23423)
 
 datasets.folder <- "~/MEGA/K-fold_Split"
-output.prefix <- "~/MEGA/Experimentos/exp_KCLUS/all"
+output.prefix <- "~/MEGA/Experimentos/exp_MORF/all"
 output.sufix <- "morf"
 
 # bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
@@ -20,12 +20,10 @@ n.targets <- c(6)
 # Ensemble
 n.trees <- 100
 
-#kClus config
-ramification.factor = 6
+ftest.signf = 0.05
+min.size = 5
 max.depth = Inf
-var.improvp = 0.01
-min.kclus.size <- NULL
-pred.type <- "mean"
+
 
 # Beggining of the Experiment
 source("../utils_and_includes/utils_MT.R")
@@ -37,8 +35,13 @@ log <- data.frame(
           dataset = rep(bases, n.targets+1),
           target_index = unlist(sapply(n.targets, function(j) rep(seq(from = 0, to = j)))),
           target_name = character(sum(n.targets+1)),
-          as.data.frame(setNames(replicate(n.folds+1, numeric(sum(n.targets+1)), simplify = F),
-               c(paste0("fold", formatC(seq(n.folds), width=2, flag="0")), "mean")
+          aRRMSE = numeric(sum(n.targets+1)),
+          mean_R2 = numeric(sum(n.targets+1)),
+          as.data.frame(setNames(replicate(n.folds, numeric(sum(n.targets+1)), simplify = F),
+               paste0("RRMSE.fold", formatC(seq(n.folds), width=2, flag="0"))
+          )),
+          as.data.frame(setNames(replicate(n.folds, numeric(sum(n.targets+1)), simplify = F),
+              paste0("R2.fold", formatC(seq(n.folds), width=2, flag="0"))
           ))
        )
 
@@ -61,59 +64,37 @@ for(i in seq_along(bases)) {
     x.test <- test[, !targets, with = FALSE]
     y.test <- test[, targets, with = FALSE]
 
-    MTRT$train(x.train, y.train)
+    mtry <- max(floor(log2(ncol(x.train) + 1)), 1)
+    #######################################################
+    preds <- list()
+    length(preds) <- n.trees
 
-  #   mtry <- max(floor(log2(ncol(x.train) + 1)), 1)
-  #   #######################################################
-  #   preds <- list()
-  #   wgts <- list()
-  #
-  #   for(trs in seq(n.trees)) {
-  #     idxs <- sample(nrow(x.train), replace = T)
-  #     x.boost <- x.train[idxs]
-  #     y.boost <- y.train[idxs]
-  #
-  #     sampled.cols <- sample(ncol(x.train), mtry)
-  #
-  #     kclus <- KCLUS$train(x.boost[, sampled.cols, with = F], y.boost, ramification.factor, max.depth, var.improvp, pred.type, min.kclus.size)
-  #
-  #     outcomes <- KCLUS$predict(kclus, x.test[, sampled.cols, with = F])
-  #
-  #     if(pred.type == "mean")
-  #       preds[[trs]] <- outcomes
-  #     else {
-  #       preds[[trs]] <- outcomes$predictions
-  #       wgts[[trs]] <- outcomes$weights
-  #     }
-  #   }
-  #
-  #   if(pred.type == "mean")
-  #     predictions <- as.data.table(apply(simplify2array(lapply(preds, as.matrix)), 1:2, mean, na.rm = TRUE))
-  #   else {
-  #     sum.wgts <- apply(simplify2array(lapply(wgts, as.matrix)), 1:2, sum, na.rm = TRUE)
-  #     sum.wgts <- 1/sum.wgts
-  #
-  #     wgts <- lapply(wgts, function(w, sum.w) w * sum.w, sum.w = sum.wgts)
-  #
-  #     predictions <- as.data.table(
-  #       apply(
-  #         simplify2array(
-  #           lapply(
-  #             lapply(seq(n.trees), function(j, p, w) p[[j]] * w[[j]], p = preds, w = wgts),
-  #             as.matrix
-  #           )
-  #         ),
-  #         1:2, sum, na.rm = TRUE)
-  #     )
-  #   }
-  #
-  #   errors <- sapply(seq(n.targets[i]), function(j, y, y.pred) RRMSE(y[[j]], y.pred[[j]]), y = y.test, y.pred = predictions)
-  #
-  #   set(log, init:(init + n.targets[i]), paste0("fold", formatC(k, width=2, flag="0")), c(mean(errors), errors))
+    for(trs in seq(n.trees)) {
+      idxs <- sample(nrow(x.train), replace = T)
+      x.bootstrap <- x.train[idxs]
+      y.bootstrap <- y.train[idxs]
+
+      sampled.cols <- sample(ncol(x.train), mtry)
+            
+      mtrt <- MTRT$train(x.bootstrap[, sampled.cols, with = F], y.bootstrap, ftest.signf, min.size, max.depth)
+      outcomes <- MTRT$predict(mtrt, x.test[, sampled.cols, with = F])
+
+      preds[[trs]] <- outcomes
+    }
+		
+    browser()
+    
+    predictions <- as.data.table(apply(simplify2array(lapply(preds, as.matrix)), 1:2, mean, na.rm = TRUE))
+    errors <- sapply(seq(n.targets[i]), function(j, y, y.pred) RRMSE(y[[j]], y.pred[[j]]), y = y.test, y.pred = predictions)
+    set(log, init:(init + n.targets[i]), paste0("RRMSE.fold", formatC(k, width=2, flag="0")), c(mean(errors), errors))
+
+    rsquareds <- sapply(seq(n.targets[i]), function(j, y, y.pred) summary(lm(y[[j]] ~ y.pred[[j]]))$r.squared, y = y.test, y.pred = predictions)
+    set(log, init:(init + n.targets[i]), paste0("R2.fold", formatC(k, width=2, flag="0")), c(mean(rsquareds), rsquareds))
   }
-  # set(log, init:(init + n.targets[i]), "target_name", c("all", targets))
+  set(log, init:(init + n.targets[i]), "target_name", c("all", targets))
   init <- init + n.targets[i] + 1
 }
 
-# log[["mean"]] <- rowMeans(log[, 5:(ncol(log)-1)])
-# write.csv(log, paste0(output.prefix, "/", output.sufix, ".csv"), row.names = F)
+log[["aRRMSE"]] <- rowMeans(log[,6:15])
+log[["mean_R2"]] <- rowMeans(log[, 16:25])
+write.csv(log, paste0(output.prefix, "/", output.sufix, ".csv"), row.names = F)

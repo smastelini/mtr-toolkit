@@ -60,6 +60,7 @@ KCLUS$train <- function(X, Y, k = 2, max.depth = Inf, std.improvp = 0.01, min.cl
 		root$eval <- factory(f.centroids)
 
 		root$descendants <- list()
+		length(root$descendants) <- length(successful.c)
 
 		for(i in seq(successful.c)) {
 			celements <- which(clustered == successful.c[i])
@@ -80,6 +81,7 @@ KCLUS$train <- function(X, Y, k = 2, max.depth = Inf, std.improvp = 0.01, min.cl
 
 KCLUS$predict <- function(kclus, new.data) {
 	predictions <- list()
+	length(predictions) <- nrow(new.data)
 
 	i <- 1
 	apply(new.data, 1, function(dat, predictions) {

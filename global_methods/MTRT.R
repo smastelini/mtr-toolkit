@@ -11,29 +11,22 @@ MTRT$normalize <- function(data) {
   return(data)
 }
 
+# Get node's mean target values
+MTRT$prototype <- function(Y) {
+  unlist(Y[, lapply(.SD, mean)])
+}
+
+MTRT$variance <- function(Y) {
+  sum(Y[, lapply(.SD, var)])
+}
+
+MTRT$homogeneity <- function(Y) {
+  c.mean <- MTRT$prototype(Y)
+  sum(Y[, sum((.SD - c.mean)^2)])
+}
+
 # Builds a MTRT model
-MTRT$train <- function(X, Y, ftest.signf = 0.05, min.size = NULL, max.depth = Inf) {
-  # Get node's mean target values
-  prototype <- function(Y) {
-    unlist(Y[, lapply(.SD, mean)])
-  }
-
-  variance <- function(Y) {
-    sum(Y[, lapply(.SD, var)])
-  }
-
-  homogeneity <- function(Y) {
-    c.mean <- prototype(Y)
-
-    MTRT$aux <- rep(0, nrow(Y))
-    MTRT$i <- 1
-    apply(Y, 1, function(i) {
-      MTRT$aux[MTRT$i] <- sum((i - c.mean)^2)
-      MTRT$i <- MTRT$i + 1
-    })
-    return(sum(MTRT$aux))
-  }
-
+MTRT$train <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
   # TODO deal with factors && Try to improve performance
   best.split <- function(attr, Y, actual.var, actual.ss) {
     to.eval <- unique(sort(attr))
@@ -48,8 +41,8 @@ MTRT$train <- function(X, Y, ftest.signf = 0.05, min.size = NULL, max.depth = In
     sapply(to.eval[-length(to.eval)], function(split.p) {
       part <- attr <= split.p
 
-      var.p1 <- max(variance(Y[part]), 0, na.rm = T)
-      var.p2 <- max(variance(Y[!part]), 0, na.rm = T)
+      var.p1 <- max(MTRT$variance(Y[part]), 0, na.rm = T)
+      var.p2 <- max(MTRT$variance(Y[!part]), 0, na.rm = T)
 
       # Heuristic calculation
       h <- actual.var - (nrow(Y[part])/nrow(Y)*var.p1 + nrow(Y[!part])/nrow(Y)*var.p2)
@@ -62,8 +55,8 @@ MTRT$train <- function(X, Y, ftest.signf = 0.05, min.size = NULL, max.depth = In
 
     # Perform F Test once
     part <- attr <= MTRT$best.s
-    p1.ss <- homogeneity(Y[part])
-    p2.ss <- homogeneity(Y[!part])
+    p1.ss <- MTRT$homogeneity(Y[part])
+    p2.ss <- MTRT$homogeneity(Y[!part])
 
     # F-test to decide whether attr best split is significantly better
     f.test <- (actual.ss/(nrow(Y)-1))/((p1.ss+p2.ss)/(nrow(Y)-2))
@@ -75,34 +68,99 @@ MTRT$train <- function(X, Y, ftest.signf = 0.05, min.size = NULL, max.depth = In
     return(return.l)
   }
 
-  build <- function(X, Y, root = list()) {
-    this.var <- variance(Y)
-    this.ss <- homogeneity(Y)
-
-    # TODO stopping criterion
+  build <- function(X, Y, root = list(), level = 0) {
+    # Naive stopping criterion
+    if(nrow(Y) < min.size || level > max.depth) {
+      root$descendants <- NULL
+      l.pred <- unlist(Y[, lapply(.SD, mean)])
+      l.factory <- function(l.mean) {
+        force(l.mean)
+        function() {
+          return(l.mean)
+        }
+      }
+      root$eval <- l.factory(l.pred)
+      return(root)
+    }
+    
+  	print(Y)
+    
+    this.var <- MTRT$variance(Y)
+    this.ss <- MTRT$homogeneity(Y)
+		
+    browser()
 
     bests <- X[, lapply(.SD, function(attr, Y, acvar, acss) best.split(attr, Y, acvar, acss), Y = Y, acvar = this.var, acss = this.ss)]
     zabest <- which.max(unlist(bests[2]))
 
-    root$split.name <- names(bests)[zabest]
-    root$split.val <- bests[1, zabest, with = F]
-    root$eval <- function(new, threshold = root$split.val) {
-      # Returns the corresponding child's index
-      as.numeric(new <= threshold) + 1
+    # Second stopping criteria
+    if(is.na(bests[1, zabest, with = F])) {      
+      root$descendants <- NULL
+      l.pred <- unlist(Y[, lapply(.SD, mean)])
+      l.factory <- function(l.mean) {
+        force(l.mean)
+        function() {
+          return(l.mean)
+        }
+      }
+      root$eval <- l.factory(l.pred)
+      return(root)
     }
+
+    root$split.name <- names(bests)[zabest]
+    root$split.index <- zabest
+    root$split.val <- unlist(bests[1, zabest, with = F])
+
+    n.factory <- function(threshold) {
+      force(threshold)
+      function(new) {
+        # Returns the corresponding child's index
+        as.numeric(new <= threshold) + 1
+      }
+    }
+
+    root$eval <- n.factory(root$split.val)
     root$descendants <- list()
+    # TODO categorical features
+    length(root$descendants) <- 2
 
     # Induced data partition
-    part <- X[, zabest, with = F] <= root$split.val
+    part <- unlist(X[, zabest, with = F]) <= root$split.val
 
     # Left node
-    root$descendants[[1]] <- build(X[part], Y[part])
+    root$descendants[[1]] <- build(X[part], Y[part], level = level + 1)
     # Right node
-    root$descendants[[2]] <- build(X[!part], Y[!part])
+    root$descendants[[2]] <- build(X[!part], Y[!part], level = level + 1)
 
     return(root)
   }
 
   tree <- build(X, Y)
 
+  retr <- list(tree = tree, targets = names(Y))
+  return(retr)
+}
+
+MTRT$predict <- function(mtrt, new.data) {
+  predictions <- list()
+  length(predictions) <- nrow(new.data)
+
+  i <- 1
+  apply(new.data, 1, function(dat, predictions) {
+    root <- mtrt$tree
+    while(TRUE) {
+      if(length(root$descendants) == 0) {
+        predictions[[i]] <<- root$eval()
+        break
+      } else {
+        next.n <- root$eval(dat[root$split.index])
+        root <- root$descendants[[next.n]]
+      }
+    }
+    i <<- i + 1
+  }, predictions = predictions)
+
+  predictions <- as.data.table(matrix(unlist(predictions), ncol = length(targets), byrow = TRUE))
+  names(predictions) <- mtrt$targets
+  return(predictions)
 }
