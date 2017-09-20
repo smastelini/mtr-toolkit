@@ -52,34 +52,29 @@ MTRT$train <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) 
         MTRT$best.s <- split.p
       }
     })
-    
+
     # Gains weren't observed
     if(MTRT$best.h == 0)
       return(list(split = NA, heur = 0))
 
     # Perform F Test once
     part <- attr <= MTRT$best.s
-    
-    # F-test to decide whether attr best split is significantly better
-    # f.test <- (actual.ss/(nrow(Y)-1))/((p1.ss+p2.ss)/(nrow(Y)-2))
-    # f.test <- floor((nrow(Y)-2+0.5))*(actual.ss-sum.ss)/sum.ss
 
     sum.ss <- MTRT$homogeneity(Y[part]) + MTRT$homogeneity(Y[!part])
 		f.test <- (nrow(Y)-2)*(actual.ss-sum.ss)/sum.ss
-		
+
     # It have passed the F-test
     if(f.test > qf(1 - ftest.signf, 1, nrow(Y)-2))
       return(list(split = MTRT$best.s, heur = MTRT$best.h))
     else # It didn't make through this
       return(list(split = NA, heur = 0))
-
   }
 
   build <- function(X, Y, root = list(), level = 0) {
     # Naive stopping criterion
     if(nrow(Y) < min.size || level > max.depth) {
       root$descendants <- NULL
-      l.pred <- unlist(Y[, lapply(.SD, mean)])
+      l.pred <- MTRT$prototype(Y)
       l.factory <- function(l.mean) {
         force(l.mean)
         function() {
@@ -89,16 +84,16 @@ MTRT$train <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) 
       root$eval <- l.factory(l.pred)
       return(root)
     }
-        
+
     this.var <- MTRT$variance(Y)
     this.ss <- MTRT$homogeneity(Y)
-    
+
     bests <- X[, lapply(.SD, function(attr, Y, acvar, acss) best.split(attr, Y, acvar, acss), Y = Y, acvar = this.var, acss = this.ss)]
-		
+
     # Second stopping criteria
-    if(all(is.na(bests[1]))) {      
+    if(all(is.na(bests[1]))) {
       root$descendants <- NULL
-      l.pred <- unlist(Y[, lapply(.SD, mean)])
+      l.pred <- MTRT$prototype(Y)
       l.factory <- function(l.mean) {
         force(l.mean)
         function() {
@@ -151,7 +146,7 @@ MTRT$predict <- function(mtrt, new.data) {
   i <- 1
   apply(new.data, 1, function(dat, predictions) {
     root <- mtrt$tree
-    
+
     while(TRUE) {
       if(length(root$descendants) == 0) {
         predictions[[i]] <<- root$eval()
@@ -163,7 +158,7 @@ MTRT$predict <- function(mtrt, new.data) {
     }
     i <<- i + 1
   }, predictions = predictions)
-  
+
   predictions <- as.data.table(matrix(unlist(predictions), ncol = length(targets), byrow = TRUE))
   names(predictions) <- mtrt$targets
   return(predictions)
