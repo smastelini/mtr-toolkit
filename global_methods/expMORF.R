@@ -18,7 +18,7 @@ n.targets <- c(6)
 # n.targets <- c(6,6,16,16,2,3,3,3,14,2,3,6,12,3)
 
 # Ensemble
-n.trees <- 100
+n.trees <- 10
 
 ftest.signf = 0.05
 min.size = 5
@@ -75,15 +75,14 @@ for(i in seq_along(bases)) {
       y.bootstrap <- y.train[idxs]
 
       sampled.cols <- sample(ncol(x.train), mtry)
-            
+      
+      print(paste("Tree", trs))      
       mtrt <- MTRT$train(x.bootstrap[, sampled.cols, with = F], y.bootstrap, ftest.signf, min.size, max.depth)
       outcomes <- MTRT$predict(mtrt, x.test[, sampled.cols, with = F])
 
       preds[[trs]] <- outcomes
     }
 		
-    browser()
-    
     predictions <- as.data.table(apply(simplify2array(lapply(preds, as.matrix)), 1:2, mean, na.rm = TRUE))
     errors <- sapply(seq(n.targets[i]), function(j, y, y.pred) RRMSE(y[[j]], y.pred[[j]]), y = y.test, y.pred = predictions)
     set(log, init:(init + n.targets[i]), paste0("RRMSE.fold", formatC(k, width=2, flag="0")), c(mean(errors), errors))
