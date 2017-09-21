@@ -1,5 +1,31 @@
 MTRT <- new.env()
 
+ssd.code <-
+"#include <Rcpp.h>
+
+using namespace Rcpp;
+
+double euclDist(NumericVector x, NumericVector y){
+    double d = sum(pow(x - y, 2));
+    return d;
+}
+
+// [[Rcpp::export]]
+double calcSumSquaredDist(NumericMatrix x, NumericVector center){
+    int out_length = x.nrow();
+    NumericVector out(out_length);
+
+    double summed = 0.0;
+    for (int i = 0 ; i < out_length; i++){
+        NumericVector v1 = x.row(i);
+        summed += euclDist(v1, center);
+    }
+
+    return summed;
+}"
+
+Rcpp::sourceCpp(code = ssd.code, env = MTRT)
+
 # Normalize data in the [0,1] range
 MTRT$normalize <- function(data) {
   invisible(data[, names(data) := lapply(.SD, as.numeric)])
@@ -17,12 +43,12 @@ MTRT$prototype <- function(Y) {
 }
 
 MTRT$variance <- function(Y) {
-  sum(Y[, lapply(.SD, var)])
+	sum(colVars(as.matrix(Y)))
 }
 
 MTRT$homogeneity <- function(Y) {
   c.mean <- MTRT$prototype(Y)
-  sum(colSums(sweep(Y, 2, c.mean)^2))
+  MTRT$calcSumSquaredDist(as.matrix(Y), c.mean)
 }
 
 # Builds a MTRT model
@@ -38,7 +64,7 @@ MTRT$train <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) 
     MTRT$best.h <- 0
     MTRT$best.s <- NA
 
-    sapply(to.eval[-length(to.eval)], function(split.p) {
+    lapply(to.eval[-length(to.eval)], function(split.p) {
       part <- attr <= split.p
 
       var.p1 <- max(MTRT$variance(Y[part]), 0, na.rm = TRUE)
@@ -123,7 +149,7 @@ MTRT$train <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) 
     length(root$descendants) <- 2
 
     # Induced data partition
-    part <- unlist(X[, zabest, with = F]) <= root$split.val
+    part <- X[[zabest]] <= root$split.val
 
     # Left node
     root$descendants[[1]] <- build(X[part], Y[part], level = level + 1)
@@ -159,7 +185,7 @@ MTRT$predict <- function(mtrt, new.data) {
     i <<- i + 1
   }, predictions = predictions)
 
-  predictions <- as.data.table(matrix(unlist(predictions), ncol = length(targets), byrow = TRUE))
+  predictions <- as.data.table(matrix(unlist(predictions), ncol = length(mtrt$targets), byrow = TRUE))
   names(predictions) <- mtrt$targets
   return(predictions)
 }
