@@ -1,53 +1,4 @@
-sumSquaredDist.code <-
-"#include <Rcpp.h>
-
-using namespace Rcpp;
-
-double squaredDiff(NumericVector x, NumericVector y){
-	double d = sum(pow(x - y, 2));
-	return d;
-}
-
-// [[Rcpp::export]]
-double calcSumSquaredDist(NumericMatrix x, NumericVector center){
-	int out_length = x.nrow();
-
-	double summed = 0.0;
-	for (int i = 0 ; i < out_length; i++){
-			NumericVector v1 = x.row(i);
-			summed += squaredDiff(v1, center);
-	}
-
-	return summed;
-}"
-
-Rcpp::sourceCpp(code = sumSquaredDist.code)
-
-euclideanDist.code <-
-"#include <Rcpp.h>
-
-using namespace Rcpp;
-
-// [[Rcpp::export]]
-double euclideanDist(NumericVector x, NumericVector y){
-	double d = sqrt(sum(pow(x - y, 2)));
-	return d;
-}
-
-// [[Rcpp::export]]
-numericVector calcEuclideanDist(NumericMatrix x, NumericVector centroid){
-	int out_length = x.nrow();
-	NumericVector out(out_length);
-
-	for (int i = 0 ; i < out_length; i++){
-			NumericVector v1 = x.row(i);
-			out[i] = euclideanDist(v1, centroid);
-	}
-
-	return out;
-}"
-
-Rcpp::sourceCpp(code = euclideanDist.code)
+# Rcpp::sourceCpp("Rcpp_resources.cpp")
 
 # Normalize data in the [0,1] range
 normalize <- function(data) {
@@ -60,20 +11,6 @@ normalize <- function(data) {
 	return(data)
 }
 
-# Get node's mean target values
-prototype <- function(Y) {
-	colMeans(Y)
-}
-
-variance <- function(Y) {
-	sum(colVars(as.matrix(Y)))
-}
-
-homogeneity <- function(Y) {
-	c.mean <- prototype(Y)
-	calcSumSquaredDist(as.matrix(Y), c.mean)
-}
-
 predict <- function(model, new.data, parallel = FALSE) {
 	switch(model$type,
 		MTRT = {
@@ -83,10 +20,50 @@ predict <- function(model, new.data, parallel = FALSE) {
 			predictKCRT(model, new.data)
 		},
 		MORF = {
+			predictions <- list()
+			length(predictions) <- length(model$forest)
 
+			if(!parallel) {
+				predictions <- lapply(model$forest, function(tree) {
+					predictMTRT(tree, new.data)
+				})
+			} else {
+				# Parallel predictions
+				n.cores <- detectCores()
+				cl <- makeCluster(n.cores, type="SOCK")
+
+				clusterExport(cl, varlist=c("new.data"), envir = environment())
+
+				predictions <- parLapply(cl, model$forest, function(tree) {
+					require(data.table)
+					predictMTRT(model$forest[[tr]], new.data)
+				})
+				stopCluster(cl)
+			}
+			as.data.table(apply(simplify2array(lapply(predictions, as.matrix)), 1:2, mean, na.rm = TRUE))
 		},
 		KCRTRF = {
-			
+			predictions <- list()
+			length(predictions) <- length(model$forest)
+
+			if(!parallel) {
+				predictions <- lapply(model$forest, function(tree) {
+					predictKCRT(tree, new.data)
+				})
+			} else {
+				# Parallel predictions
+				n.cores <- detectCores()
+				cl <- makeCluster(n.cores, type="SOCK")
+
+				clusterExport(cl, varlist=c("new.data"), envir = environment())
+
+				predictions <- parLapply(cl, model$forest, function(tree) {
+					require(data.table)
+					predictKCRT(model$forest[[tr]], new.data)
+				})
+				stopCluster(cl)
+			}
+			as.data.table(apply(simplify2array(lapply(predictions, as.matrix)), 1:2, mean, na.rm = TRUE))
 		}
 	)
 }

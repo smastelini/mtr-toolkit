@@ -1,9 +1,8 @@
-
 KCRT <- function(X, Y, k = 2, max.depth = Inf, var.improvp = 0.01, min.kcrts = NULL) {
 	kcrtree.b <- function(X, Y, root = list(), level = 0, sup.var = Inf) {
 		# Accounts the current inter cluster std sum
 		if(nrow(X) >= min.kcrts) {
-			current.var <- colVars(Y)
+			current.var <- col_vars(Y)
 		}
 
 		# Leaf node
@@ -60,18 +59,20 @@ KCRT <- function(X, Y, k = 2, max.depth = Inf, var.improvp = 0.01, min.kcrts = N
 			celements <- which(clustered == successful.c[i])
 
 			X.f <- X[celements]
-			Y.f <- Y[celements]
+			Y.f <- Y[celements,]
 
 			root$descendants[[i]] <- kcrtree.b(X.f, Y.f, list(), level + 1, current.var)
 		}
 		return(root)
 	}
-	
+
 	if(is.null(min.kcrts))
 		min.kcrts <- log2(nrow(X))
 
+	Y <- as.matrix(Y)
+
 	root <- kcrtree.b(X, Y)
-	retr <- list(tree = root, targets = names(Y), type = "KCRT")
+	retr <- list(tree = root, targets = colnames(Y), type = "KCRT")
 	return(retr)
 }
 

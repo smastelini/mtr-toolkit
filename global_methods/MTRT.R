@@ -1,59 +1,18 @@
-# TODO deal with factors && Try to improve performance
-best.split <- function(attr, Y, actual.var, actual.ss) {
-  to.eval <- unique(sort(attr))
-
-  # None split could brings some improvement => Homogeneous data
-  if(length(to.eval) == 1)
-    return(list(split = NA, heur = 0))
-  mtrt <- new.env()
-
-  mtrt$best.h <- 0
-  mtrt$best.s <- NA
-
-  lapply(to.eval[-length(to.eval)], function(split.p) {
-    part <- attr <= split.p
-
-    var.p1 <- max(variance(Y[part]), 0, na.rm = TRUE)
-    var.p2 <- max(variance(Y[!part]), 0, na.rm = TRUE)
-
-    # Heuristic calculation
-    h <- actual.var - (length(which(part))/nrow(Y)*var.p1 + length(which(!part))/nrow(Y)*var.p2)
-
-    if(h > mtrt$best.h) {
-      mtrt$best.h <- h
-      mtrt$best.s <- split.p
-    }
-  })
-
-  best.h <- mtrt$best.h
-  best.s <- mtrt$best.s
-
-  rm(mtrt)
-
-  # Gains weren't observed
-  if(best.h == 0)
-    return(list(split = NA, heur = 0))
-
-  # Perform F Test once
-  part <- attr <= best.s
-
-  sum.ss <- homogeneity(Y[part]) + homogeneity(Y[!part])
-  f.test <- (nrow(Y)-2)*(actual.ss-sum.ss)/sum.ss
-
-  # It have passed the F-test
-  if(f.test > qf(1 - ftest.signf, 1, nrow(Y)-2))
-    return(list(split = best.s, heur = best.h))
-  else # It didn't make through this
-    return(list(split = NA, heur = 0))
-}
-
 # Builds a MTRT model
 MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
   build.MTRT <- function(X, Y, root = list(), level = 0) {
+    size.part <- nrow(Y)
+    # Column vector case
+    if(is.null(size.part))
+      size.part <- 0
+
     # Naive stopping criterion
-    if(nrow(Y) < min.size || level > max.depth) {
+    if(size.part < min.size || level > max.depth) {
       root$descendants <- NULL
-      l.pred <- prototype(Y)
+      if(size.part == 0)
+        l.pred <- Y
+      else
+        l.pred <- prototype(Y)
       l.factory <- function(l.mean) {
         force(l.mean)
         function() {
@@ -67,7 +26,7 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
     this.var <- variance(Y)
     this.ss <- homogeneity(Y)
 
-    bests <- X[, lapply(.SD, function(attr, Y, acvar, acss) best.split(attr, Y, acvar, acss), Y = Y, acvar = this.var, acss = this.ss)]
+    bests <- X[, lapply(.SD, function(attr, Y, acvar, acss) best_split(attr, Y, acvar, acss), Y = Y, acvar = this.var, acss = this.ss)]
 
     # Second stopping criteria
     if(all(is.na(bests[1]))) {
@@ -105,17 +64,17 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
     part <- X[[zabest]] <= root$split.val
 
     # Left node
-    root$descendants[[1]] <- build(X[part], Y[part], level = level + 1)
+    root$descendants[[1]] <- build.MTRT(X[part], Y[part,], level = level + 1)
     # Right node
-    root$descendants[[2]] <- build(X[!part], Y[!part], level = level + 1)
+    root$descendants[[2]] <- build.MTRT(X[!part], Y[!part,], level = level + 1)
 
     return(root)
   }
 
-  
+  Y <- as.matrix(Y)
   tree <- build.MTRT(X, Y)
 
-  retr <- list(tree = tree, targets = names(Y), type = "MTRT")
+  retr <- list(tree = tree, targets = colnames(Y), type = "MTRT")
   return(retr)
 }
 

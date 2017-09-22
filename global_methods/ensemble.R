@@ -5,16 +5,14 @@ MORF <- function(x, y, n.trees = 100, mtry = NULL, ftest.signf = 0.05, min.size 
 	forest <- list()
 	length(forest) <- n.trees
 	for(tr in seq(n.trees)) {
-		idxs <- sample(nrow(x.train), replace = TRUE)
+		idxs <- sample(nrow(x), replace = TRUE)
 		sampled.cols <- sample(ncol(x), mtry)
 
 		x.bootstrap <- x[idxs, sampled.cols, with = FALSE]
 		y.bootstrap <- y[idxs]
 
-
 		forest[[tr]] <- MTRT(x.bootstrap, y.bootstrap, ftest.signf, min.size, max.depth)
 	}
-
 	list(forest = forest, type = "MORF")
 }
 
@@ -26,10 +24,9 @@ parMORF <- function(x, y, n.trees = 100, mtry = NULL, ftest.signf = 0.05, min.si
 	n.cores <- detectCores()
 	cl <- makeCluster(n.cores, type="SOCK")
 
-	clusterExport(cl, varlist=c("x", "y", "mtry", "ftest.signf", "min.size", "max.depth"))
+	clusterExport(cl, varlist=c("x", "y", "mtry", "ftest.signf", "min.size", "max.depth"), envir = environment())
 
 	forest <- parLapply(cl, seq(n.trees), function(tr) {
-		require(matrixStats)
 		require(data.table)
 
 		idxs <- sample(nrow(x), replace = TRUE)
@@ -37,7 +34,6 @@ parMORF <- function(x, y, n.trees = 100, mtry = NULL, ftest.signf = 0.05, min.si
 
 		x.bootstrap <- x[idxs, sampled.cols, with = FALSE]
 		y.bootstrap <- y[idxs]
-
 
 		MTRT(x.bootstrap, y.bootstrap, ftest.signf, min.size, max.depth)
 	})
@@ -50,7 +46,7 @@ KCRTRF <- function(x, y, n.trees = 100, mtry = NULL, k = 2, max.depth = Inf, var
 	forest <- list()
 	length(forest) <- n.trees
 	for(tr in seq(n.trees)) {
-		idxs <- sample(nrow(x.train), replace = TRUE)
+		idxs <- sample(nrow(x), replace = TRUE)
 		sampled.cols <- sample(ncol(x), mtry)
 
 		x.bootstrap <- x[idxs, sampled.cols, with = FALSE]
@@ -59,7 +55,6 @@ KCRTRF <- function(x, y, n.trees = 100, mtry = NULL, k = 2, max.depth = Inf, var
 
 		forest[[tr]] <- KCRT(x.bootstrap, y.bootstrap, k, max.depth, var.improvp, min.kcrts)
 	}
-
 	list(forest = forest, type = "KCRTRF")
 }
 
@@ -71,7 +66,7 @@ parKCRTRF <- function(x, y, n.trees = 100, mtry = NULL, k = 2, max.depth = Inf, 
 	n.cores <- detectCores()
 	cl <- makeCluster(n.cores, type="SOCK")
 
-	clusterExport(cl, varlist=c("x", "y", "mtry", "k", "max.depth", "var.improvp", "min.kcrts"))
+	clusterExport(cl, varlist=c("x", "y", "mtry", "k", "max.depth", "var.improvp", "min.kcrts"), envir = environment())
 
 	forest <- parLapply(cl, seq(n.trees), function(tr) {
 		require(data.table)
@@ -87,6 +82,6 @@ parKCRTRF <- function(x, y, n.trees = 100, mtry = NULL, k = 2, max.depth = Inf, 
 	})
 
 	stopCluster(cl)
-	
+
 	list(forest = forest, type = "KCRTRF")
 }

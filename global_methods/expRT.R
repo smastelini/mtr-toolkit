@@ -1,5 +1,4 @@
-rm(list = ls())
-library(matrixStats)
+# rm(list = ls())
 library(data.table)
 library(Rcpp)
 library(parallel)
@@ -31,8 +30,8 @@ max.depth = Inf
 # Beggining of the Experiment
 source("../utils_and_includes/utils_MT.R")
 source("../global_methods/MTRT.R")
-
-
+source("../global_methods/ensemble.R")
+source("../global_methods/utilities.R")
 
 dir.create(output.prefix, showWarnings = FALSE, recursive = TRUE)
 
@@ -70,28 +69,9 @@ for(i in seq_along(bases)) {
 		x.test <- test[, !targets, with = FALSE]
 		y.test <- test[, targets, with = FALSE]
 
-		#######################################################
-		preds <- list()
-		length(preds) <- n.trees
+		mtrt <- parMORF(x.train, y.train)
+		predictions <- predict(mtrt, x.test)
 
-		clusterExport(cl, varlist=c("x.train", "y.train", "x.test", "mtry", "ftest.signf", "min.size", "max.depth", "MTRT"))
-
-		preds <- parLapply(cl, seq(n.trees), function(tr) {
-			require(matrixStats)
-			require(data.table)
-
-			idxs <- sample(nrow(x.train), replace = T)
-			x.bootstrap <- x.train[idxs]
-			y.bootstrap <- y.train[idxs]
-
-			sampled.cols <- sample(ncol(x.train), mtry)
-
-			# print(paste("Tree", tr))
-			mtrt <- MTRT$train(x.bootstrap[, sampled.cols, with = F], y.bootstrap, ftest.signf, min.size, max.depth)
-			MTRT$predict(mtrt, x.test[, sampled.cols, with = F])
-		})
-
-		predictions <- as.data.table(apply(simplify2array(lapply(preds, as.matrix)), 1:2, mean, na.rm = TRUE))
 		errors <- sapply(seq(n.targets[i]), function(j, y, y.pred) RRMSE(y[[j]], y.pred[[j]]), y = y.test, y.pred = predictions)
 		set(log, init:(init + n.targets[i]), paste0("RRMSE.fold", formatC(k, width=2, flag="0")), c(mean(errors), errors))
 
@@ -105,5 +85,3 @@ for(i in seq_along(bases)) {
 log[["aRRMSE"]] <- rowMeans(log[,6:15])
 log[["mean_R2"]] <- rowMeans(log[, 16:25])
 write.csv(log, paste0(output.prefix, "/", output.sufix, ".csv"), row.names = F)
-
-
