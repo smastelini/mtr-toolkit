@@ -1,24 +1,15 @@
-KCLUS <- new.env()
 
-# Loss function for clustering
-KCLUS$loss.func <- function(a, b) {
-	sqrt(sum((a-b)^2))
-}
-
-KCLUS$train <- function(X, Y, k = 2, max.depth = Inf, std.improvp = 0.01, min.cluss = NULL) {
-	if(is.null(min.cluss))
-		min.cluss <- log2(nrow(X))
-
-	clustree.b <- function(X, Y, root = list(), level = 0, sup.std = Inf) {
+KCRT <- function(X, Y, k = 2, max.depth = Inf, var.improvp = 0.01, min.kcrts = NULL) {
+	kcrtree.b <- function(X, Y, root = list(), level = 0, sup.var = Inf) {
 		# Accounts the current inter cluster std sum
-		if(nrow(X) >= min.cluss) {
-			current.std <- unlist(X[, lapply(.SD, sd)])
+		if(nrow(X) >= min.kcrts) {
+			current.var <- colVars(Y)
 		}
 
 		# Leaf node
-		if(nrow(X) < min.cluss || level > max.depth || (sup.std >= current.std && sup.std-current.std < std.improvp*sup.std) || current.std == 0) {
+		if(nrow(X) < min.kcrts || level > max.depth || (sup.var >= current.var && sup.var-current.var < var.improvp*sup.var) || current.var == 0) {
 			root$descendants <- NULL
-			l.pred <- unlist(Y[, lapply(.SD, mean)])
+			l.pred <- prototype(Y)
 			factory.l <- function(l.mean) {
 				force(l.mean)
 				function() {
@@ -37,9 +28,12 @@ KCLUS$train <- function(X, Y, k = 2, max.depth = Inf, std.improvp = 0.01, min.cl
 
 		# Group points within defined centers
 		distances <- matrix(nrow=k, ncol=nrow(X))
+		auxX <- as.matrix(X)
 		for(i in seq(k)) {
-			distances[i,] <- apply(X, 1, KCLUS$loss.func, b = unlist(gen.centroids[i]))
+			distances[i,] <- calcEuclideanDist(auxX, unlist(gen.centroids[i]))
 		}
+
+		#sapply?
 		clustered <- apply(distances, 2, which.min)
 
 		# Get non-empty clusters
@@ -51,7 +45,7 @@ KCLUS$train <- function(X, Y, k = 2, max.depth = Inf, std.improvp = 0.01, min.cl
 		factory <- function(centers) {
 			force(centers)
 			function(new) {
-				distances <- sapply(centers, function(c, nw) KCLUS$loss.func(nw, c), nw = new)
+				distances <- sapply(centers, function(c, nw) euclideanDist(nw, c), nw = new)
 				return(which.min(distances))
 			}
 		}
@@ -68,18 +62,20 @@ KCLUS$train <- function(X, Y, k = 2, max.depth = Inf, std.improvp = 0.01, min.cl
 			X.f <- X[celements]
 			Y.f <- Y[celements]
 
-			root$descendants[[i]] <- clustree.b(X.f, Y.f, list(), level + 1, current.std)
+			root$descendants[[i]] <- kcrtree.b(X.f, Y.f, list(), level + 1, current.var)
 		}
 		return(root)
 	}
+	
+	if(is.null(min.kcrts))
+		min.kcrts <- log2(nrow(X))
 
-	root <- clustree.b(X, Y)
-
-	retr <- list(tree = root, targets = names(Y))
+	root <- kcrtree.b(X, Y)
+	retr <- list(tree = root, targets = names(Y), type = "KCRT")
 	return(retr)
 }
 
-KCLUS$predict <- function(kclus, new.data) {
+predictKCRT <- function(kclus, new.data) {
 	predictions <- list()
 	length(predictions) <- nrow(new.data)
 
