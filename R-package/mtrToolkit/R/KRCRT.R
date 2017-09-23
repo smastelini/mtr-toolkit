@@ -1,12 +1,21 @@
-KCRT <- function(X, Y, k = 2, max.depth = Inf, var.improvp = 0.01, min.kcrts = NULL) {
-	kcrtree.b <- function(X, Y, root = list(), level = 0, sup.var = Inf) {
+#' Creates a k-Random Clusters Regression Trees (k-RCRTRF) model.
+#'
+#' @param X, Y The input features and target variables respectively
+#' @param k The number of random clusters to be generated at each split (Default = 3)
+#' @param max.depth Maximum depth for generated trees (Default = Inf, split will are made while it is possible)
+#' @param var.improvp Minimum variance decrease percentual when comparing a child to its parent needed to continue splitting (Default = 0.01)
+#' @param min.size Minimum size of generated clusteres (Default = 5, as in CLUS)
+#' @return A k-RCRT model
+#' @export
+KRCRT <- function(X, Y, k = 2, max.depth = Inf, var.improvp = 0.01, min.size = NULL) {
+	krcrtree.b <- function(X, Y, root = list(), level = 0, sup.var = Inf) {
 		# Accounts the current inter cluster std sum
-		if(nrow(X) >= min.kcrts) {
+		if(nrow(X) >= min.size) {
 			current.var <- col_vars(Y)
 		}
 
 		# Leaf node
-		if(nrow(X) < min.kcrts || level > max.depth || (sup.var >= current.var && sup.var-current.var < var.improvp*sup.var) || current.var == 0) {
+		if(nrow(X) < min.size || level > max.depth || (sup.var >= current.var && sup.var-current.var < var.improvp*sup.var) || current.var == 0) {
 			root$descendants <- NULL
 			l.pred <- prototype(Y)
 			factory.l <- function(l.mean) {
@@ -61,22 +70,22 @@ KCRT <- function(X, Y, k = 2, max.depth = Inf, var.improvp = 0.01, min.kcrts = N
 			X.f <- X[celements]
 			Y.f <- Y[celements,]
 
-			root$descendants[[i]] <- kcrtree.b(X.f, Y.f, list(), level + 1, current.var)
+			root$descendants[[i]] <- krcrtree.b(X.f, Y.f, list(), level + 1, current.var)
 		}
 		return(root)
 	}
 
-	if(is.null(min.kcrts))
-		min.kcrts <- log2(nrow(X))
+	if(is.null(min.size))
+		min.size <- log2(nrow(X))
 
 	Y <- as.matrix(Y)
 
-	root <- kcrtree.b(X, Y)
-	retr <- list(tree = root, targets = colnames(Y), type = "KCRT")
+	root <- krcrtree.b(X, Y)
+	retr <- list(tree = root, targets = colnames(Y), type = "KRCRT")
 	return(retr)
 }
 
-predictKCRT <- function(kclus, new.data) {
+predictKRCRT <- function(kclus, new.data) {
 	predictions <- list()
 	length(predictions) <- nrow(new.data)
 

@@ -1,0 +1,15 @@
+Package: mtrToolkit
+Type: Package
+Title: A R Toolkit for multi-target regression methods
+Version: 0.1.0
+Author: Saulo Martiello Mastelini
+Maintainer: Saulo Martiello Mastelini <saulomastelini@gmail.com>
+Description: This packages currently implements Multi-target Regression Trees and Ensables thereof, as in the Clus framework. Besides that, a novel method called k-Random Clusters Regression Tree (KRCRT) is presented. As its name indicates, KRCRT creates random clusters for partitioning data and building multi-target regression trees. KRCRT is intended for use in ensembles.
+    In a next future the following local-based methods will be added to the Toolkit: Single-target (ST), Multi-target Regressor Stacking (MTRS), Ensemble of Regressor Chains (ERC), Deep Stacking for Tracking Asyncronous Regressor Stacking (DSTARS), Multi-output Tree Chaining (MOTC), Multi-Target Augmented Stacking (MTAS), Multi-target Stacked Generalizator (MTSG), and Deep Regressor Stacking (DRS).
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Imports: Rcpp (>= 0.12.12), parallel
+Depends: data.table
+LinkingTo: Rcpp
+RoxygenNote: 6.0.1

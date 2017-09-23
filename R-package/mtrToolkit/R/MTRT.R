@@ -1,4 +1,11 @@
-# Builds a MTRT model
+#' Creates Multi-target Regression Trees (MTRT), as in CLUS
+#'
+#' @param X, Y The input features and target variables respectively
+#' @param ftest.signf The signficance level for F-test's stopping criteria (Default = 0.05)
+#' @param min.size Minimum size of generated clusteres (Default = 5, as in CLUS)
+#' @param max.depth Maximum depth for generated trees (Default = Inf, split are made while it is possible)
+#' @return A MTRT model
+#' @export
 MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
   build.MTRT <- function(X, Y, root = list(), level = 0) {
     size.part <- nrow(Y)
