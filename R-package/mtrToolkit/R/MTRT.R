@@ -8,15 +8,11 @@
 #' @export
 MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
   build.MTRT <- function(X, Y, root = list(), level = 0) {
-    size.part <- nrow(Y)
-    # Column vector case
-    if(is.null(size.part))
-      size.part <- 0
 
     # Naive stopping criterion
-    if(size.part < min.size || level > max.depth) {
+    if(nrow(X) <= min.size || level > max.depth) {
       root$descendants <- NULL
-      if(size.part == 0)
+      if(is.null(nrow(Y)))
         l.pred <- Y
       else
         l.pred <- prototype(Y)
@@ -98,7 +94,7 @@ predictMTRT <- function(mtrt, new.data) {
         predictions[[i]] <<- root$eval()
         break
       } else {
-        next.n <- root$eval(dat[root$split.index])
+        next.n <- root$eval(dat[root$split.name])
         root <- root$descendants[[next.n]]
       }
     }

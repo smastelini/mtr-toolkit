@@ -38,16 +38,14 @@ predict <- function(model, new.data, parallel = FALSE) {
 			} else {
 				# Parallel predictions
 				n.cores <- parallel::detectCores()
-				cl <- parallel::makeCluster(n.cores, type="SOCK")
-
-				parallel::clusterExport(cl, varlist=c("new.data"), envir = environment())
+				cl <- parallel::makeCluster(n.cores, type="FORK")
 
 				predictions <- parallel::parLapply(cl, model$forest, function(tree) {
-					predictMTRT(model$forest[[tr]], new.data)
+					predictMTRT(tree, new.data)
 				})
 				parallel::stopCluster(cl)
 			}
-			as.data.table(apply(simplify2array(lapply(predictions, as.matrix)), 1:2, mean, na.rm = TRUE))
+			as.data.table(Reduce("+", lapply(predictions, as.matrix))/length(predictions))
 		},
 		KRCRTRF = {
 			predictions <- list()
@@ -60,16 +58,14 @@ predict <- function(model, new.data, parallel = FALSE) {
 			} else {
 				# Parallel predictions
 				n.cores <- parallel::detectCores()
-				cl <- parallel::makeCluster(n.cores, type="SOCK")
-
-				parallel::clusterExport(cl, varlist=c("new.data"), envir = environment())
+				cl <- parallel::makeCluster(n.cores, type="FORK")
 
 				predictions <- parallel::parLapply(cl, model$forest, function(tree) {
-					predictKRCRT(model$forest[[tr]], new.data)
+					predictKRCRT(tree, new.data)
 				})
 				parallel::stopCluster(cl)
 			}
-			as.data.table(apply(simplify2array(lapply(predictions, as.matrix)), 1:2, mean, na.rm = TRUE))
+			as.data.table(Reduce("+", lapply(predictions, as.matrix))/length(predictions))
 		}
 	)
 }

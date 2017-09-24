@@ -2,30 +2,30 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 prototype <- function(X) {
-    .Call(`_mtrToolkit_prototype`, X)
+    .Call('_mtrToolkit_prototype', PACKAGE = 'mtrToolkit', X)
 }
 
 variance <- function(X) {
-    .Call(`_mtrToolkit_variance`, X)
+    .Call('_mtrToolkit_variance', PACKAGE = 'mtrToolkit', X)
 }
 
 homogeneity <- function(X) {
-    .Call(`_mtrToolkit_homogeneity`, X)
+    .Call('_mtrToolkit_homogeneity', PACKAGE = 'mtrToolkit', X)
 }
 
 euclideanDist <- function(x, y) {
-    .Call(`_mtrToolkit_euclideanDist`, x, y)
+    .Call('_mtrToolkit_euclideanDist', PACKAGE = 'mtrToolkit', x, y)
 }
 
 calcEuclideanDist <- function(x, centroid) {
-    .Call(`_mtrToolkit_calcEuclideanDist`, x, centroid)
+    .Call('_mtrToolkit_calcEuclideanDist', PACKAGE = 'mtrToolkit', x, centroid)
 }
 
 col_vars <- function(X) {
-    .Call(`_mtrToolkit_col_vars`, X)
+    .Call('_mtrToolkit_col_vars', PACKAGE = 'mtrToolkit', X)
 }
 
 best_split <- function(attr, Y, actual_var, actual_ss, ftest_signf = 0.05) {
-    .Call(`_mtrToolkit_best_split`, attr, Y, actual_var, actual_ss, ftest_signf)
+    .Call('_mtrToolkit_best_split', PACKAGE = 'mtrToolkit', attr, Y, actual_var, actual_ss, ftest_signf)
 }
 

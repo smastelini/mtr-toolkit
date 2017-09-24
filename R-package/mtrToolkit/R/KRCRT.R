@@ -17,7 +17,11 @@ KRCRT <- function(X, Y, k = 2, max.depth = Inf, var.improvp = 0.01, min.size = N
 		# Leaf node
 		if(nrow(X) < min.size || level > max.depth || (sup.var >= current.var && sup.var-current.var < var.improvp*sup.var) || current.var == 0) {
 			root$descendants <- NULL
-			l.pred <- prototype(Y)
+
+			if(is.null(nrow(Y)))
+				l.pred <- Y
+			else
+				l.pred <- prototype(Y)
 			factory.l <- function(l.mean) {
 				force(l.mean)
 				function() {
@@ -81,11 +85,12 @@ KRCRT <- function(X, Y, k = 2, max.depth = Inf, var.improvp = 0.01, min.size = N
 	Y <- as.matrix(Y)
 
 	root <- krcrtree.b(X, Y)
-	retr <- list(tree = root, targets = colnames(Y), type = "KRCRT")
+	retr <- list(tree = root, targets = colnames(Y), type = "KRCRT", names = names(X))
 	return(retr)
 }
 
 predictKRCRT <- function(kclus, new.data) {
+	new.data <- new.data[, kclus$names, with = FALSE]
 	predictions <- list()
 	length(predictions) <- nrow(new.data)
 

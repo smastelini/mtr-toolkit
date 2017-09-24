@@ -1,7 +1,6 @@
 # rm(list = ls())
 library(data.table)
-library(Rcpp)
-library(parallel)
+library(mtrToolkit)
 
 n.folds <- 10
 
@@ -28,10 +27,8 @@ max.depth = Inf
 
 
 # Beggining of the Experiment
-source("../utils_and_includes/utils_MT.R")
-source("../global_methods/MTRT.R")
-source("../global_methods/ensemble.R")
-source("../global_methods/utilities.R")
+# source("../utils_and_includes/utils_MT.R")
+source("~/mtr-toolkit/utils_and_includes/utils_MT.R")
 
 dir.create(output.prefix, showWarnings = FALSE, recursive = TRUE)
 
@@ -69,8 +66,8 @@ for(i in seq_along(bases)) {
 		x.test <- test[, !targets, with = FALSE]
 		y.test <- test[, targets, with = FALSE]
 
-		mtrt <- parMORF(x.train, y.train)
-		predictions <- predict(mtrt, x.test)
+		mtrt <- MORF(x.train, y.train, parallel = T)
+		predictions <- predict(mtrt, x.test, parallel = T)
 
 		errors <- sapply(seq(n.targets[i]), function(j, y, y.pred) RRMSE(y[[j]], y.pred[[j]]), y = y.test, y.pred = predictions)
 		set(log, init:(init + n.targets[i]), paste0("RRMSE.fold", formatC(k, width=2, flag="0")), c(mean(errors), errors))

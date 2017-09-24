@@ -28,9 +28,7 @@ MORF <- function(x, y, n.trees = 100, mtry = NULL, ftest.signf = 0.05, min.size 
 	} else {
 		# Parallel Tree building
 		n.cores <- parallel::detectCores()
-		cl <- parallel::makeCluster(n.cores, type="SOCK")
-
-		parallel::clusterExport(cl, varlist=c("x", "y", "mtry", "ftest.signf", "min.size", "max.depth"), envir = environment())
+		cl <- parallel::makeCluster(n.cores, type="FORK")
 
 		forest <- parallel::parLapply(cl, seq(n.trees), function(tr) {
 			idxs <- sample(nrow(x), replace = TRUE)
@@ -79,10 +77,8 @@ KRCRTRF <- function(x, y, n.trees = 100, mtry = NULL, k = 3, max.depth = Inf, va
 		}
 	} else {
 		# Parallel Tree building
-		n.cores <- detectCores()
-		cl <- parallel::makeCluster(n.cores, type="SOCK")
-
-		parallel::clusterExport(cl, varlist=c("x", "y", "mtry", "k", "max.depth", "var.improvp", "min.size"), envir = environment())
+		n.cores <- parallel::detectCores()
+		cl <- parallel::makeCluster(n.cores, type="FORK")
 
 		forest <- parallel::parLapply(cl, seq(n.trees), function(tr) {
 			idxs <- sample(nrow(x), replace = TRUE)
