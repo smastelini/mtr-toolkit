@@ -47,7 +47,6 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 
     zabest <- which.max(unlist(bests[2]))
     root$split.name <- names(bests)[zabest]
-    root$split.index <- zabest
     root$split.val <- unlist(bests[1, zabest, with = F])
 
     n.factory <- function(threshold) {
