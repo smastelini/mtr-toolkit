@@ -12,8 +12,8 @@ output.sufix <- "morf"
 
 # bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
 # n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
-bases <- c("andro")
-n.targets <- c(6)
+bases <- c("atp1d","atp7d","oes97","oes10","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
+n.targets <- c(6,6,16,16,2,3,3,3,14,2,3,6,12,3)
 
 # bases <- c("atp1d","atp7d","oes97","oes10","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
 # n.targets <- c(6,6,16,16,2,3,3,3,14,2,3,6,12,3)
@@ -52,8 +52,8 @@ for(i in seq_along(bases)) {
 	print(bases[i])
 	for(k in seq(n.folds)) {
 		print(paste("Fold", formatC(k, width=2, flag="0")))
-		train <- read.csv(paste0(datasets.folder, "/", bases[i], "_fold", formatC(k, width=2, flag="0"), "_train.csv"))
-		test <- read.csv(paste0(datasets.folder, "/", bases[i], "_fold", formatC(k, width=2, flag="0"), "_test.csv"))
+		train <- fread(paste0(datasets.folder, "/", bases[i], "_fold", formatC(k, width=2, flag="0"), "_train.csv"))
+		test <- fread(paste0(datasets.folder, "/", bases[i], "_fold", formatC(k, width=2, flag="0"), "_test.csv"))
 
 		targets <- colnames(test)[(ncol(test)-n.targets[i]+1):ncol(test)]
 
@@ -67,13 +67,18 @@ for(i in seq_along(bases)) {
 		y.test <- test[, targets, with = FALSE]
 
 		mtrt <- MORF(x.train, y.train, parallel = T)
-		predictions <- predict(mtrt, x.test, parallel = T)
+		predictions <- predict(mtrt, x.test, parallel = F)
 
 		errors <- sapply(seq(n.targets[i]), function(j, y, y.pred) RRMSE(y[[j]], y.pred[[j]]), y = y.test, y.pred = predictions)
 		set(log, init:(init + n.targets[i]), paste0("RRMSE.fold", formatC(k, width=2, flag="0")), c(mean(errors), errors))
 
 		rsquareds <- sapply(seq(n.targets[i]), function(j, y, y.pred) summary(lm(y[[j]] ~ y.pred[[j]]))$r.squared, y = y.test, y.pred = predictions)
 		set(log, init:(init + n.targets[i]), paste0("R2.fold", formatC(k, width=2, flag="0")), c(mean(rsquareds), rsquareds))
+
+		# Making free memory
+		rm(mtrt, train, test, x.train, y.train, x.test, y.test, predictions)
+		# Calling the garbage collector
+		# gc()
 	}
 	set(log, init:(init + n.targets[i]), "target_name", c("all", targets))
 	init <- init + n.targets[i] + 1

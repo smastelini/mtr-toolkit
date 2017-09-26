@@ -45,7 +45,11 @@ predict <- function(model, new.data, parallel = FALSE) {
 				})
 				parallel::stopCluster(cl)
 			}
-			as.data.table(Reduce("+", lapply(predictions, as.matrix))/length(predictions))
+			backup <- predictions
+			retr <- as.data.table(Reduce("+", lapply(predictions, as.matrix))/length(predictions))
+			rm(backup)
+			gc()
+			retr
 		},
 		KRCRTRF = {
 			predictions <- list()

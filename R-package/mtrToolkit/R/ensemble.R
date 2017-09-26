@@ -12,7 +12,8 @@
 MORF <- function(x, y, n.trees = 100, mtry = NULL, ftest.signf = 0.05, min.size = 5, max.depth = Inf, parallel = FALSE) {
 	if(is.null(mtry))
 		mtry <- max(floor(log2(ncol(x) + 1)), 1)
-
+	# Call garbage collector
+	# gc()
 	if(!parallel) {
 		forest <- list()
 		length(forest) <- n.trees
@@ -37,7 +38,10 @@ MORF <- function(x, y, n.trees = 100, mtry = NULL, ftest.signf = 0.05, min.size 
 			x.bootstrap <- x[idxs, sampled.cols, with = FALSE]
 			y.bootstrap <- y[idxs]
 
-			MTRT(x.bootstrap, y.bootstrap, ftest.signf, min.size, max.depth)
+			mtrt <- MTRT(x.bootstrap, y.bootstrap, ftest.signf, min.size, max.depth)
+			rm(x.bootstrap, y.bootstrap, idxs, sampled.cols)
+			# gc()
+			mtrt
 		})
 		parallel::stopCluster(cl)
 	}

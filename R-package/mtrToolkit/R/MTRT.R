@@ -7,7 +7,7 @@
 #' @return A MTRT model
 #' @export
 MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
-  build.MTRT <- function(X, Y, root = list(), level = 0) {
+  build.MTRT <- function(X, Y, root = new.env(), level = 0) {
 
     # Naive stopping criterion
     if(nrow(X) <= min.size || level > max.depth) {
@@ -65,10 +65,19 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
     # Induced data partition
     part <- X[[zabest]] <= root$split.val
 
+    X.part1 <- X[part]
+    Y.part1 <- Y[part,]
+
+    X.part2 <- X[!part]
+    Y.part2 <- Y[!part,]
+
+    # Avoid memory waste
+    rm(X,Y,bests)
+
     # Left node
-    root$descendants[[1]] <- build.MTRT(X[part], Y[part,], level = level + 1)
+    root$descendants[[1]] <- build.MTRT(X.part1, Y.part1, level = level + 1)
     # Right node
-    root$descendants[[2]] <- build.MTRT(X[!part], Y[!part,], level = level + 1)
+    root$descendants[[2]] <- build.MTRT(X.part2, Y.part2, level = level + 1)
 
     return(root)
   }
@@ -100,7 +109,11 @@ predictMTRT <- function(mtrt, new.data) {
     i <<- i + 1
   }, predictions = predictions)
 
+  backup <- predictions
   predictions <- as.data.table(matrix(unlist(predictions), ncol = length(mtrt$targets), byrow = TRUE))
   names(predictions) <- mtrt$targets
+  # Make some memory free
+  rm(backup)
+  gc()
   return(predictions)
 }
