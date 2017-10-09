@@ -29,7 +29,7 @@ MORF <- function(x, y, n.trees = 100, mtry = NULL, ftest.signf = 0.05, min.size 
 	} else {
 		# Parallel Tree building
 		n.cores <- parallel::detectCores()
-		cl <- parallel::makeCluster(n.cores, type="FORK")
+		cl <- parallel::makeCluster(n.cores, type="FORK", outfile = "")
 
 		forest <- parallel::parLapply(cl, seq(n.trees), function(tr) {
 			idxs <- sample(nrow(x), replace = TRUE)
@@ -40,7 +40,6 @@ MORF <- function(x, y, n.trees = 100, mtry = NULL, ftest.signf = 0.05, min.size 
 
 			mtrt <- MTRT(x.bootstrap, y.bootstrap, ftest.signf, min.size, max.depth)
 			rm(x.bootstrap, y.bootstrap, idxs, sampled.cols)
-			# gc()
 			mtrt
 		})
 		parallel::stopCluster(cl)

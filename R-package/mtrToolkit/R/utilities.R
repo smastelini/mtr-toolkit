@@ -48,7 +48,6 @@ predict <- function(model, new.data, parallel = FALSE) {
 			backup <- predictions
 			retr <- as.data.table(Reduce("+", lapply(predictions, as.matrix))/length(predictions))
 			rm(backup)
-			gc()
 			retr
 		},
 		KRCRTRF = {

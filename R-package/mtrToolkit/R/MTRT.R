@@ -23,6 +23,7 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
         }
       }
       root$eval <- l.factory(l.pred)
+      rm(X,Y)
       return(root)
     }
 
@@ -42,6 +43,7 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
         }
       }
       root$eval <- l.factory(l.pred)
+      rm(X,Y,bests)
       return(root)
     }
 
@@ -85,6 +87,7 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
   Y <- as.matrix(Y)
   tree <- build.MTRT(X, Y)
 
+  print("Tree")
   retr <- list(tree = tree, targets = colnames(Y), type = "MTRT")
   return(retr)
 }
@@ -114,6 +117,5 @@ predictMTRT <- function(mtrt, new.data) {
   names(predictions) <- mtrt$targets
   # Make some memory free
   rm(backup)
-  gc()
   return(predictions)
 }
