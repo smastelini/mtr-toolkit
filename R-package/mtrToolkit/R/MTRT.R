@@ -47,9 +47,11 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
       return(root)
     }
 
-    zabest <- which.max(unlist(bests[2]))
+    zabest <- which.max(unlist(bests[2], use.names = F))
     root$split.name <- names(bests)[zabest]
-    root$split.val <- unlist(bests[1, zabest, with = F])
+    root$split.val <- unlist(bests[1, zabest, with = F], use.names = F)
+
+    browser()
 
     n.factory <- function(threshold) {
       force(threshold)
@@ -80,14 +82,14 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
     root$descendants[[1]] <- build.MTRT(X.part1, Y.part1, level = level + 1)
     # Right node
     root$descendants[[2]] <- build.MTRT(X.part2, Y.part2, level = level + 1)
-
+		
+    rm(X.part1,X.part2,Y.part1,Y.part2)
     return(root)
   }
-
+  
   Y <- as.matrix(Y)
   tree <- build.MTRT(X, Y)
 
-  print("Tree")
   retr <- list(tree = tree, targets = colnames(Y), type = "MTRT")
   return(retr)
 }
@@ -113,7 +115,7 @@ predictMTRT <- function(mtrt, new.data) {
   }, predictions = predictions)
 
   backup <- predictions
-  predictions <- as.data.table(matrix(unlist(predictions), ncol = length(mtrt$targets), byrow = TRUE))
+  predictions <- as.data.table(matrix(unlist(predictions, use.names = F), ncol = length(mtrt$targets), byrow = TRUE))
   names(predictions) <- mtrt$targets
   # Make some memory free
   rm(backup)

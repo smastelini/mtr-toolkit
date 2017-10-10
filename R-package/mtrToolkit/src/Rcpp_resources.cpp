@@ -93,30 +93,19 @@ NumericVector col_vars(NumericMatrix X) {
 	return result;
 }
 
-NumericVector whichRcpp(LogicalVector x) {
-    List idxs;
-    int counter = 0;
+std::list<int> whichRcpp(LogicalVector x) {
+    std::list<int> idxs;
     for(int i = 0; i < x.size(); i++) {
         if(x[i] == TRUE) {
             idxs.push_back(i);
-            counter++;
         }
     }
 
-    NumericVector retr;
-
-    if(counter > 0) {
-      NumericVector converted(counter);
-      for(int i = 0; i < counter; i++) {
-        converted[i] = idxs[i];
-      }
-      retr = converted;
-    }
-    return retr;
+		return idxs;
 }
 
-NumericMatrix subset_matrix(NumericMatrix X, NumericVector idxs) {
-  int n_elem = idxs.length();
+NumericMatrix subset_matrix(NumericMatrix X, std::list<int> idxs) {
+  int n_elem = idxs.size();
   if(n_elem == 0) {
     NumericMatrix emptyM(0,0);
     return emptyM;
@@ -124,8 +113,10 @@ NumericMatrix subset_matrix(NumericMatrix X, NumericVector idxs) {
 
   NumericMatrix out = no_init(n_elem, X.ncol());
 
-  for(int i = 0; i < idxs.length(); i++) {
-    out(i,_) = X(idxs(i),_);
+	int i = 0;
+	for (std::list<int>::iterator it = idxs.begin(); it != idxs.end(); it++) {
+    out(i,_) = X(*it,_);
+		i++;
   }
 
   return out;
@@ -148,10 +139,9 @@ List best_split(NumericVector attr, NumericMatrix Y, double actual_var, double a
   double best_h = 0;
   double best_s = NumericVector::get_na();
   double split_p, h, var_p1, var_p2, sum_ss, f_test;
-  NumericVector part1, part2;
+  std::list<int> part1, part2;
 
   NumericMatrix sub_part1, sub_part2;
-
 
   for(int p = 0; p < to_eval.length() - 1; p++) {
 
@@ -166,8 +156,8 @@ List best_split(NumericVector attr, NumericMatrix Y, double actual_var, double a
     var_p1 = variance(sub_part1);
     var_p2 = variance(sub_part2);
 
-    double branch1 = var_p1 == 0.0 ? 0.0 : ((double) part1.length())/n_row*var_p1;
-    double branch2 = var_p2 == 0.0 ? 0.0 : ((double) part2.length())/n_row*var_p2;
+    double branch1 = var_p1 == 0.0 ? 0.0 : ((double) part1.size())/n_row*var_p1;
+    double branch2 = var_p2 == 0.0 ? 0.0 : ((double) part2.size())/n_row*var_p2;
 
     // Heuristic calculation
     h = actual_var - (branch1 + branch2);

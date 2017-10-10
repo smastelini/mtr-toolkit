@@ -8,12 +8,15 @@ set.seed(23423)
 
 datasets.folder <- "~/MEGA/K-fold_Split"
 output.prefix <- "~/MEGA/Experimentos/exp_MORF/all"
-output.sufix <- "morf_bigdatasets"
+output.sufix <- "morf_rf1"
 
 # bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
 # n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
-bases <- c("rf1","rf2","scm1d","scm20d")
-n.targets <- c(8,8,16,16)
+# bases <- c("rf1","rf2","scm1d","scm20d")
+# n.targets <- c(8,8,16,16)
+bases <- c("rf1")
+n.targets <- c(8)
+
 
 # bases <- c("atp1d","atp7d","oes97","oes10","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
 # n.targets <- c(6,6,16,16,2,3,3,3,14,2,3,6,12,3)
@@ -66,7 +69,7 @@ for(i in seq_along(bases)) {
 		x.test <- test[, !targets, with = FALSE]
 		y.test <- test[, targets, with = FALSE]
 
-		mtrt <- MORF(x.train, y.train, parallel = F)
+		mtrt <- MORF(x.train, y.train, parallel = T)
 		predictions <- predict(mtrt, x.test, parallel = F)
 
 		errors <- sapply(seq(n.targets[i]), function(j, y, y.pred) RRMSE(y[[j]], y.pred[[j]]), y = y.test, y.pred = predictions)
