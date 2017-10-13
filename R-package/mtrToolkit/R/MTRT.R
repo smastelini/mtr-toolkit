@@ -102,8 +102,11 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 	# Revisar
 	addNode2Visit <- function(item, id, parent, pos, level) {
 		if(nodes$counter == nodes$size) {
-			length(nodes$tovisit) <- length(nodes$ids) <- nodes$size <- nodes$size * 2
+			length(nodes$tovisit) <- length(nodes$ids) <- nodes$size <- 2 * nodes$size
 		}
+
+		if(nodes$size == 0)
+			nodes$size <- 1
 
 		nodes$counter <- nodes$counter + 1
 
@@ -118,12 +121,12 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 
 	# Revisar
 	getNode2Visit <- function() {
-		# length(nodes$tovisit) <- length(nodes$ids) <- nodes$size <- nodes$size - 1
 		idx <- nodes$tovisit[[1]]
 		nodes$tovisit[[1]] <- NULL
 		this <- nodes$ids[[1]]
 		nodes$ids[[1]] <- NULL
 
+		nodes$size <- nodes$size - 1
 		nodes$counter <- nodes$counter - 1
 		return(list(idx = idx, this = this))
 	}
@@ -133,7 +136,13 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 	}
 
 	thereAreNodes2Visit <- function() {
-		length(nodes$tovisit) > 0
+		nodes$counter > 0
+	}
+
+	link2Parent <- function(node, parent.id, branch) {
+		nodes$parent <- nodes$elem[[as.character(parent.id)]]
+		nodes$parent$descendants[[branch]] <- node
+		NULL
 	}
 
 	n.factory <- function(threshold) {
@@ -149,12 +158,6 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 		function() {
 			return(l.mean)
 		}
-	}
-
-	link2Parent <- function(node, parent.id, branch) {
-		nodes$parent <- nodes$elem[[as.character(parent.id)]]
-		nodes$parent$descendants[[branch]] <- node
-		NULL
 	}
 
 	build.MTRT.inc <- function() {
@@ -182,7 +185,6 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 				
 				nodes$n$eval <- l.factory(l.pred)
 				# Saves node for posterior reference
-
 				nodes$elem[[as.character(this.id)]] <- nodes$n
 
 				if(this.id > 1)
@@ -197,13 +199,13 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 			this.var <- variance(Y[idx,])
 			this.ss <- homogeneity(Y[idx,])
 
-			bests <- X[idx, lapply(.SD, function(attr, T, acvar, acss) best_split(attr, T, acvar, acss), T = Y, acvar = this.var, acss = this.ss)]
+			bests <- X[idx, lapply(.SD, function(attr, T, acvar, acss) best_split(attr, T, acvar, acss), T = Y[idx,], acvar = this.var, acss = this.ss)]
 
 			# Second stopping criteria
 			if(all(is.na(bests[1]))) {
 				nodes$n <- new.env()
 				nodes$n$descendants <- NULL
-				l.pred <- prototype(Y)
+				l.pred <- prototype(Y[idx,])
 				
 				nodes$n$eval <- l.factory(l.pred)
 				# Saves node for posterior reference
@@ -248,6 +250,7 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 		}
 
 		root <- nodes$elem[["1"]]
+
 		rm(nodes)
 
 		return(root)
@@ -279,7 +282,6 @@ predictMTRT <- function(mtrt, new.data) {
 		}
 		i <<- i + 1
 	}, predictions = predictions)
-
 	backup <- predictions
 	predictions <- as.data.table(matrix(unlist(predictions, use.names = F), ncol = length(mtrt$targets), byrow = TRUE))
 	names(predictions) <- mtrt$targets
