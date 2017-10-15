@@ -25,6 +25,7 @@ MORF <- function(x, y, n.trees = 100, mtry = NULL, ftest.signf = 0.05, min.size 
 			y.bootstrap <- y[idxs]
 
 			forest[[tr]] <- MTRT(x.bootstrap, y.bootstrap, ftest.signf, min.size, max.depth)
+			rm(x.bootstrap, y.bootstrap, idxs, sampled.cols)
 		}
 	} else {
 		# Parallel Tree building

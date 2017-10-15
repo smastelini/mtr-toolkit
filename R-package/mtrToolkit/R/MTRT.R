@@ -67,19 +67,23 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 		NULL
 	}
 
-	n.factory <- function(threshold) {
-		force(threshold)
-		function(new) {
-			# Returns the corresponding child's index
-			as.numeric(new > threshold) + 1
-		}
+	n.factory <- function(split) {
+		local({
+			default <- split;
+			function(new, threshold = default) {
+				# Returns the corresponding child's index
+				as.numeric(new > threshold) + 1
+			}
+		})
 	}
 
 	l.factory <- function(l.mean) {
-		force(l.mean)
-		function() {
-			return(l.mean)
-		}
+		local({
+			default <- l.mean;
+			function(leaf.mean = default) {
+				return(leaf.mean)
+			}
+		})
 	}
 
 	build.MTRT.inc <- function() {

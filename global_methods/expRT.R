@@ -8,15 +8,13 @@ set.seed(23423)
 
 datasets.folder <- "~/MEGA/K-fold_Split"
 output.prefix <- "~/MEGA/Experimentos/exp_MORF/all"
-output.sufix <- "morf_teste"
+output.sufix <- "morf_big_datasets"
 
 # bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
 # n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
-# bases <- c("rf1","rf2","scm1d","scm20d")
-# n.targets <- c(8,8,16,16)
-bases <- c("andro")
-n.targets <- c(6)
 
+bases <- c("rf1","rf2","scm1d","scm20d")
+n.targets <- c(8,8,16,16)
 
 # bases <- c("atp1d","atp7d","oes97","oes10","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
 # n.targets <- c(6,6,16,16,2,3,3,3,14,2,3,6,12,3)
@@ -60,9 +58,6 @@ for(i in seq_along(bases)) {
 
 		targets <- colnames(test)[(ncol(test)-n.targets[i]+1):ncol(test)]
 
-		train <- as.data.table(train)
-		test <- as.data.table(test)
-
 		x.train <- train[, !targets, with = FALSE]
 		y.train <- train[, targets, with = FALSE]
 
@@ -70,6 +65,9 @@ for(i in seq_along(bases)) {
 		y.test <- test[, targets, with = FALSE]
 
 		mtrt <- MORF(x.train, y.train, parallel = T)
+
+		rm(train, test, x.train, y.train)
+
 		predictions <- predict(mtrt, x.test, parallel = F)
 
 		errors <- sapply(seq(n.targets[i]), function(j, y, y.pred) RRMSE(y[[j]], y.pred[[j]]), y = y.test, y.pred = predictions)
@@ -79,9 +77,7 @@ for(i in seq_along(bases)) {
 		set(log, init:(init + n.targets[i]), paste0("R2.fold", formatC(k, width=2, flag="0")), c(mean(rsquareds), rsquareds))
 
 		# Making free memory
-		rm(mtrt, train, test, x.train, y.train, x.test, y.test, predictions)
-		# Calling the garbage collector
-		# gc()
+		rm(mtrt, x.test, y.test, predictions)
 	}
 	set(log, init:(init + n.targets[i]), "target_name", c("all", targets))
 	init <- init + n.targets[i] + 1
