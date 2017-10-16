@@ -8,20 +8,26 @@
 #' @export
 MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 	nodes <- new.env()
+	# Nodes
 	nodes$tovisit <- list(NULL)
+	# All instances should be evaluated at first
 	nodes$tovisit[[1]] <- seq(nrow(X))
+	# Nodes ids to linking the tree's nodes
 	nodes$ids <- list(NULL)
+	# The first id is the root node
 	nodes$ids[[1]] <- 1
 
+	# Structure to keep the tree hierarchy
 	# Parent, branch = {1:left, 2:right}, level
 	nodes$tree <- data.table(N1 = c(NA,NA,1))
 
+	# Structure to save the created nodes and leaves
 	nodes$elem <- list()
 
+	# Aux variables to efficiently add elements to the 'tovisit' and 'id' queues
 	nodes$counter <- 1
 	nodes$size <- 1
-	
-	# Revisar
+
 	addNode2Visit <- function(item, id, parent, pos, level) {
 		if(nodes$counter == nodes$size) {
 			length(nodes$tovisit) <- length(nodes$ids) <- nodes$size <- 2 * nodes$size
@@ -41,7 +47,6 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 		NULL
 	}
 
-	# Revisar
 	getNode2Visit <- function() {
 		idx <- nodes$tovisit[[1]]
 		nodes$tovisit[[1]] <- NULL
@@ -88,7 +93,7 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 
 	build.MTRT.inc <- function() {
 		node.id <- 2
-	
+
 		while(thereAreNodes2Visit()) {
 			n2v <- getNode2Visit()
 			idx <- n2v$idx
@@ -108,7 +113,7 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 					l.pred <- unname(Y[idx,])
 				else
 					l.pred <- prototype(Y[idx,])
-				
+
 				nodes$n$eval <- l.factory(l.pred)
 				# Saves node for posterior reference
 				nodes$elem[[as.character(this.id)]] <- nodes$n
@@ -132,7 +137,7 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 				nodes$n <- new.env()
 				nodes$n$descendants <- NULL
 				l.pred <- prototype(Y[idx,])
-				
+
 				nodes$n$eval <- l.factory(l.pred)
 				# Saves node for posterior reference
 				nodes$elem[[as.character(this.id)]] <- nodes$n
@@ -176,16 +181,17 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 		}
 
 		root <- nodes$elem[["1"]]
-
-		rm(nodes)
-
 		return(root)
 	}
-	
+
 	Y <- as.matrix(Y)
 	tree <- build.MTRT.inc()
 
-	retr <- list(tree = tree, targets = colnames(Y), type = "MTRT")
+	aux <- unlist(nodes, recursive = F)
+	rm(nodes)
+	rm(aux)
+
+	retr <- list(tree = unlist(tree, recursive = F), targets = colnames(Y), type = "MTRT")
 	return(retr)
 }
 

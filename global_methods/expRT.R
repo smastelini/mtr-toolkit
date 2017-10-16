@@ -8,19 +8,22 @@ set.seed(23423)
 
 datasets.folder <- "~/MEGA/K-fold_Split"
 output.prefix <- "~/MEGA/Experimentos/exp_MORF/all"
-output.sufix <- "morf_big_datasets"
+output.sufix <- "morf_rf1"
 
 # bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
 # n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
 
-bases <- c("rf1","rf2","scm1d","scm20d")
-n.targets <- c(8,8,16,16)
+# bases <- c("rf1","rf2","scm1d","scm20d")
+# n.targets <- c(8,8,16,16)
+
+bases <- c("rf1")
+n.targets <- c(8)
 
 # bases <- c("atp1d","atp7d","oes97","oes10","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
 # n.targets <- c(6,6,16,16,2,3,3,3,14,2,3,6,12,3)
 
 # Ensemble
-n.trees <- 100
+n.trees <- 20
 
 ftest.signf = 0.05
 min.size = 5
@@ -64,11 +67,15 @@ for(i in seq_along(bases)) {
 		x.test <- test[, !targets, with = FALSE]
 		y.test <- test[, targets, with = FALSE]
 
-		mtrt <- MORF(x.train, y.train, parallel = T)
-
+		mtrt <- MORF(x.train, y.train, parallel = T, n.trees = n.trees)
 		rm(train, test, x.train, y.train)
 
+
+		browser()
+
 		predictions <- predict(mtrt, x.test, parallel = F)
+
+		rm(mtrt)
 
 		errors <- sapply(seq(n.targets[i]), function(j, y, y.pred) RRMSE(y[[j]], y.pred[[j]]), y = y.test, y.pred = predictions)
 		set(log, init:(init + n.targets[i]), paste0("RRMSE.fold", formatC(k, width=2, flag="0")), c(mean(errors), errors))
@@ -77,7 +84,7 @@ for(i in seq_along(bases)) {
 		set(log, init:(init + n.targets[i]), paste0("R2.fold", formatC(k, width=2, flag="0")), c(mean(rsquareds), rsquareds))
 
 		# Making free memory
-		rm(mtrt, x.test, y.test, predictions)
+		rm(x.test, y.test, predictions)
 	}
 	set(log, init:(init + n.targets[i]), "target_name", c("all", targets))
 	init <- init + n.targets[i] + 1
