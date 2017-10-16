@@ -91,6 +91,69 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 		})
 	}
 
+	prototypeR <- function(Y) {
+		colMeans(Y)
+	}
+
+	varianceR <- function(Y) {
+	  # sum(Y[, lapply(.SD, var)])
+	  sum(apply(Y, 2, var))
+	}
+
+	homogeneityR <- function(Y) {
+	  c.mean <- prototypeR(Y)
+	  sum(colSums(sweep(Y, 2, c.mean)^2))
+	}
+
+	best.splitR <- function(attr, Y, actual.var, actual.ss) {
+		MTRT <- new.env()
+
+    to.eval <- unique(sort(attr))
+
+    # None split could brings some improvement => Homogeneous data
+    if(length(to.eval) == 1)
+      return(list(split = NA, heur = 0))
+
+    MTRT$best.h <- 0
+    MTRT$best.s <- NA
+
+    sapply(to.eval[-length(to.eval)], function(split.p) {
+      part <- attr <= split.p
+
+      var.p1 <- max(MTRT$variance(Y[part]), 0, na.rm = TRUE)
+      var.p2 <- max(MTRT$variance(Y[!part]), 0, na.rm = TRUE)
+
+      # Heuristic calculation
+      h <- actual.var - (length(which(part))/nrow(Y)*var.p1 + length(which(!part))/nrow(Y)*var.p2)
+
+      if(h > MTRT$best.h) {
+        MTRT$best.h <- h
+        MTRT$best.s <- split.p
+      }
+    })
+
+    # Gains weren't observed
+    if(MTRT$best.h == 0)
+      return(list(split = NA, heur = 0))
+
+    # Perform F Test once
+    part <- attr <= MTRT$best.s
+
+    sum.ss <- MTRT$homogeneity(Y[part]) + MTRT$homogeneity(Y[!part])
+		f.test <- (nrow(Y)-2)*(actual.ss-sum.ss)/sum.ss
+
+		best.s <- MTRT$best.s
+		best.h <- MTRT$best.h
+
+		rm(MTRT)
+
+    # It have passed the F-test
+    if(f.test > qf(1 - ftest.signf, 1, nrow(Y)-2))
+      return(list(split = best.s, heur = best.h))
+    else # It didn't make through this
+      return(list(split = NA, heur = 0))
+	}
+
 	build.MTRT.inc <- function() {
 		node.id <- 2
 
