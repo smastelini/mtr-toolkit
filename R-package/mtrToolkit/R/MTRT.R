@@ -209,30 +209,3 @@ predictMTRT <- function(mtrt, new.data) {
 	rm(backup)
 	return(predictions)
 }
-
-# predictMTRT <- function(mtrt, new.data) {
-# 	predictions <- list()
-# 	length(predictions) <- nrow(new.data)
-#
-# 	i <- 1
-# 	apply(new.data, 1, function(dat, predictions) {
-# 		root <- mtrt$tree
-#
-# 		while(TRUE) {
-# 			if(length(root$descendants) == 0) {
-# 				predictions[[i]] <<- root$eval(root)
-# 				break
-# 			} else {
-# 				next.n <- root$eval(dat[root$split.name], root)
-# 				root <- root$descendants[[next.n]]
-# 			}
-# 		}
-# 		i <<- i + 1
-# 	}, predictions = predictions)
-# 	backup <- predictions
-# 	predictions <- as.data.table(matrix(unlist(predictions, use.names = F), ncol = length(mtrt$targets), byrow = TRUE))
-# 	names(predictions) <- mtrt$targets
-# 	# Make some memory free
-# 	rm(backup)
-# 	return(predictions)
-# }
