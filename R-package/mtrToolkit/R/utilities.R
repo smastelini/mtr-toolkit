@@ -50,7 +50,7 @@ predict <- function(model, new.data, parallel = FALSE) {
 			rm(backup)
 			retr
 		},
-		KRCRTRF = {
+		FKRCRT = {
 			predictions <- list()
 			length(predictions) <- length(model$forest)
 

@@ -12,8 +12,6 @@
 MORF <- function(x, y, n.trees = 100, mtry = NULL, ftest.signf = 0.05, min.size = 5, max.depth = Inf, parallel = FALSE) {
 	if(is.null(mtry))
 		mtry <- max(floor(log2(ncol(x) + 1)), 1)
-	# Call garbage collector
-	# gc()
 	if(!parallel) {
 		forest <- list()
 		length(forest) <- n.trees
@@ -50,7 +48,7 @@ MORF <- function(x, y, n.trees = 100, mtry = NULL, ftest.signf = 0.05, min.size 
 }
 
 
-#' Creates a Random Forest ensemble of k-Random Clusters Regression Trees (k-RCRTRF).
+#' Creates a Random Forest ensemble of k-Random Clusters Regression Trees (Fk-RCRT).
 #'
 #' @param x, y The input features and target variables respectively
 #' @param n.trees The number of tree predictors (Default = 100)
@@ -60,9 +58,9 @@ MORF <- function(x, y, n.trees = 100, mtry = NULL, ftest.signf = 0.05, min.size 
 #' @param var.improvp Minimum variance decrease percentual when comparing a child to its parent needed to continue splitting (Default = 0.01)
 #' @param min.size Minimum size of generated clusteres (Default = 5, as in CLUS)
 #' @param parallel Whether to build the forest in parallel, using all disponible cores (Default = FALSE).
-#' @return A k-RCRTRF model
+#' @return A Fk-RCRT model
 #' @export
-KRCRTRF <- function(x, y, n.trees = 100, mtry = NULL, k = 3, max.depth = Inf, var.improvp = 0.01, min.size = NULL, parallel = FALSE) {
+FKRCRT <- function(x, y, n.trees = 100, mtry = NULL, k = 3, max.depth = Inf, var.improvp = 0.01, min.size = NULL, parallel = FALSE) {
 	if(is.null(mtry))
 		mtry <- max(floor(log2(ncol(x) + 1)), 1)
 
@@ -97,5 +95,5 @@ KRCRTRF <- function(x, y, n.trees = 100, mtry = NULL, k = 3, max.depth = Inf, va
 		parallel::stopCluster(cl)
 	}
 
-	list(forest = forest, type = "KRCRTRF")
+	list(forest = forest, type = "FKRCRT")
 }

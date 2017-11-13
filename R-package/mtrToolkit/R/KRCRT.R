@@ -23,10 +23,13 @@ KRCRT <- function(X, Y, k = 2, max.depth = Inf, var.improvp = 0.01, min.size = N
 			else
 				l.pred <- prototype(Y)
 			factory.l <- function(l.mean) {
-				force(l.mean)
-				function() {
+				f <- function() {
 					return(l.mean)
 				}
+				n.env <- new.env(parent = parent.env(f))
+				n.env$l.mean <- l.mean
+				enviroment(f) <- n.env
+				f
 			}
 
 			root$eval <- factory.l(l.pred)
@@ -55,11 +58,15 @@ KRCRT <- function(X, Y, k = 2, max.depth = Inf, var.improvp = 0.01, min.size = N
 
 		# Function factory
 		factory <- function(centers) {
-			force(centers)
-			function(new) {
+			f <- function(new) {
 				distances <- sapply(centers, function(c, nw) euclideanDist(nw, c), nw = new)
 				return(which.min(distances))
 			}
+
+			n.env <- new.env(parent = parent.env(f))
+			n.env$centers <- centers
+			enviroment(f) <- n.env
+			f
 		}
 
 		# Evaluation function

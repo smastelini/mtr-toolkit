@@ -15,16 +15,16 @@ techs <- c("ranger", "svm")
 folds.num <- 10
 
 datasets.folder <- "~/MEGA/MT_datasets"
-output.prefix <- "~/Desktop/TESTE"
+output.prefix <- "~/MEGA/Experimentos/exp_benchmarks_18dts"
 
-mt.techs <- c("MOTC")
+mt.techs <- c("ST", "MTRS", "ERC", "DSTARST", "MOTC", "MTAS", "MTSG")
 
 #Progress bar and remaining time exhibition
 showProgress <- FALSE
 
 must.compare <- TRUE
-generate.final.table <- FALSE
-generate.nemenyi.frame <- FALSE
+generate.final.table <- TRUE
+generate.nemenyi.frame <- TRUE
 ###############################################################################
 ###############################################################################
 ###############################################################################
