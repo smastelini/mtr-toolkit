@@ -26,9 +26,12 @@ KRCRT <- function(X, Y, k = 2, max.depth = Inf, var.improvp = 0.01, min.size = N
 				f <- function() {
 					return(l.mean)
 				}
-				n.env <- new.env(parent = parent.env(f))
+
+				oldE <- environment(f)
+				n.env <- new.env(parent = parent.env(oldE))
+
 				n.env$l.mean <- l.mean
-				enviroment(f) <- n.env
+				environment(f) <- n.env
 				f
 			}
 
@@ -63,9 +66,10 @@ KRCRT <- function(X, Y, k = 2, max.depth = Inf, var.improvp = 0.01, min.size = N
 				return(which.min(distances))
 			}
 
-			n.env <- new.env(parent = parent.env(f))
+			oldE <- environment(f)
+			n.env <- new.env(parent = parent.env(oldE))
 			n.env$centers <- centers
-			enviroment(f) <- n.env
+			environment(f) <- n.env
 			f
 		}
 

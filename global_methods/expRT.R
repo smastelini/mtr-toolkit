@@ -6,16 +6,17 @@ n.folds <- 10
 
 set.seed(23423)
 
-datasets.folder <- "~/mastelini/K-fold_Split"
+datasets.folder <- "~/MEGA/K-fold_Split"
+# datasets.folder <- "~/mastelini/K-fold_Split"
 output.prefix <- "~/mastelini/FKRT"
 output.sufix <- "f3rt"
 
 
-bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
-n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
+# bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
+# n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
 
-# bases <- c("atp1d","atp7d","oes97","oes10","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
-# n.targets <- c(6,6,16,16,2,3,3,3,14,2,3,6,12,3)
+bases <- c("andro")
+n.targets <- c(6)
 
 # Ensemble
 
@@ -30,8 +31,7 @@ max.depth = Inf
 # max.depth = Inf
 
 # Beggining of the Experiment
-# source("../utils_and_includes/utils_MT.R")
-source("~/mtr-toolkit/utils_and_includes/utils_MT.R")
+source("../utils_and_includes/utils_MT.R")
 
 dir.create(output.prefix, showWarnings = FALSE, recursive = TRUE)
 
