@@ -22,20 +22,8 @@ KRCRT <- function(X, Y, k = 2, max.depth = Inf, var.improvp = 0.01, min.size = N
 				l.pred <- Y
 			else
 				l.pred <- prototype(Y)
-			factory.l <- function(l.mean) {
-				f <- function() {
-					return(l.mean)
-				}
-
-				oldE <- environment(f)
-				n.env <- new.env(parent = parent.env(oldE))
-
-				n.env$l.mean <- l.mean
-				environment(f) <- n.env
-				f
-			}
-
-			root$eval <- factory.l(l.pred)
+			
+			root$preds <- l.pred
 			return(root)
 		}
 
@@ -59,22 +47,8 @@ KRCRT <- function(X, Y, k = 2, max.depth = Inf, var.improvp = 0.01, min.size = N
 		# ... and centroids
 		f.centroids <- lapply(successful.c, function(i, gen) unlist(gen[i]), gen = gen.centroids)
 
-		# Function factory
-		factory <- function(centers) {
-			f <- function(new) {
-				distances <- sapply(centers, function(c, nw) euclideanDist(nw, c), nw = new)
-				return(which.min(distances))
-			}
-
-			oldE <- environment(f)
-			n.env <- new.env(parent = parent.env(oldE))
-			n.env$centers <- centers
-			environment(f) <- n.env
-			f
-		}
-
 		# Evaluation function
-		root$eval <- factory(f.centroids)
+		root$centers <- f.centroids
 
 		root$descendants <- list()
 		length(root$descendants) <- length(successful.c)
@@ -110,10 +84,11 @@ predictKRCRT <- function(kclus, new.data) {
 		root <- kclus$tree
 		while(TRUE) {
 			if(length(root$descendants) == 0) {
-				predictions[[i]] <<- root$eval()
+				predictions[[i]] <<- root$preds
 				break
 			} else {
-				next.n <- root$eval(dat)
+				distances <- sapply(root$centers, function(c, nw) euclideanDist(nw, c), nw = dat)
+				next.n <- which.min(distances)
 				root <- root$descendants[[next.n]]
 			}
 		}
