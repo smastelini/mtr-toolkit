@@ -1,4 +1,4 @@
-dir.create(paste0(output.dir.morf, "/prediction_logs/", tech), showWarnings = FALSE, recursive = TRUE)
+dir.create(paste0(output.dir.morf, "/prediction_logs/morf"), showWarnings = FALSE, recursive = TRUE)
 
 targets <- list()
 maxs <- list()
@@ -76,13 +76,13 @@ for(i in 1:length(bases)) {
     
     prediction.log <- as.data.table(setNames(replicate(length(col.names.targets),numeric(nrow(x.test)), simplify = F),
                                              col.names.targets))
-    morf<-MORF(x.train, y.train, parallel=T)
-    predictions<-predict(morf, x.test)
+    morf <- MORF(x.train, y.train, parallel=T)
+    predictions <- predict(morf, x.test)
     for(t in targets[[i]]) {
       prediction.log[[t]] <- y.test[[t]]
       prediction.log[[paste0(t, ".pred")]] <- predictions[[t]]
     }
-    write.csv(data.frame(id=sample.names[test.idx],prediction.log, check.names = F), paste0(output.dir.morf, "/prediction_logs/",tech,"/predictions_MORF_", bases[i], paste0("_fold", formatC(k, width=2, flag="0")), ".csv"), row.names = FALSE)
+    write.csv(data.frame(id=sample.names[test.idx],prediction.log, check.names = F), paste0(output.dir.morf, "/prediction_logs/morf/predictions_MORF_", bases[i], paste0("_fold", formatC(k, width=2, flag="0")), ".csv"), row.names = FALSE)
   }
 }
 
@@ -99,7 +99,7 @@ lapply(bases, function(b) {
   folds.log <<- as.data.frame(setNames(replicate(length(names.perf.log),numeric(0),
                                                  simplify = F), names.perf.log), stringsAsFactors = FALSE)
   lapply(1:folds.num, function(k) {
-    log <- read.csv(paste0(getwd(),"/", tech, "/predictions_MORF_", b, paste0("_fold", formatC(k, width=2, flag="0")),".csv"), header=TRUE)
+    log <- read.csv(paste0(getwd(),"/morf/predictions_MORF_", b, paste0("_fold", formatC(k, width=2, flag="0")),".csv"), header=TRUE)
     folds.log[nrow(folds.log)+1, "aCC"] <<- aCC(log, targets[[i]])
     folds.log[nrow(folds.log), "ARE"] <<- ARE(log, targets[[i]])
     folds.log[nrow(folds.log), "MSE"] <<- MSE(log, targets[[i]])
@@ -119,7 +119,7 @@ lapply(bases, function(b) {
   performance.log[nrow(performance.log)+1, 1] <<- tech
   performance.log[nrow(performance.log), -1] <<- colMeans(folds.log)
   
-  write.csv(performance.log, paste0("../performance_MORF", tech, "_", b, ".csv"), row.names = FALSE)
+  write.csv(performance.log, paste0("../performance_MORF_", b, ".csv"), row.names = FALSE)
   i <<- i + 1
 })
 setwd(actual.folder)

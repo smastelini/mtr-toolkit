@@ -44,15 +44,17 @@ for(mt in mt.techs) {
 	assign(paste0("output.dir.", tolower(mt)), paste0(output.prefix, "/", mt))
 }
 
-for(tech in techs) {
-	if(tech == "parrf") {
-		suppressMessages(library(foreach))
-		suppressMessages(library(doSNOW))
-		registerDoSNOW(makeCluster(7, type="SOCK"))
-	}
-
-	#Make an experiment
-	for(mt in mt.techs) {
+for(mt in mt.techs) {
+	if(mt != "MORF") {
+		for(tech in techs) {
+			if(tech == "parrf") {
+				suppressMessages(library(foreach))
+				suppressMessages(library(doSNOW))
+				registerDoSNOW(makeCluster(7, type="SOCK"))
+			}
+			source(paste0(mt, ".R"))
+		}
+	} else {
 		source(paste0(mt, ".R"))
 	}
 }
@@ -64,19 +66,24 @@ if(must.compare) {
 	sapply(mt.techs, function(MT) {
 		sapply(bases, function(base) {
 			merged <<- data.frame()
-			sapply(techs, function(tech) {
-				if(MT == "DRS")
-					to.merge <- read.csv(paste0(paste0(output.prefix, "/", MT), "/performance_", MT, "_", tech, "_", base, "_L", number.layers, ".csv"), stringsAsFactors = F)
-				else
-					to.merge <- read.csv(paste0(paste0(output.prefix, "/", MT), "/performance_", MT, "_", tech, "_", base, ".csv"), stringsAsFactors = F)
+			if(MT != "MORF") {
+				sapply(techs, function(tech) {
+					if(MT == "DRS")
+						to.merge <- read.csv(paste0(paste0(output.prefix, "/", MT), "/performance_", MT, "_", tech, "_", base, "_L", number.layers, ".csv"), stringsAsFactors = F)
+					else
+						to.merge <- read.csv(paste0(paste0(output.prefix, "/", MT), "/performance_", MT, "_", tech, "_", base, ".csv"), stringsAsFactors = F)
 
-        if(MT == "DSTARST") {
-          best.phi <- which.min(to.merge[,"aRRMSE"])
-          to.merge <- to.merge[best.phi,]
-        }
-				merged <<- rbind(merged, to.merge)
+        	if(MT == "DSTARST") {
+          	best.phi <- which.min(to.merge[,"aRRMSE"])
+          	to.merge <- to.merge[best.phi,]
+       		}
+					merged <<- rbind(merged, to.merge)
 				# merged[nrow(merged),1] <<- tech
-			})
+				})
+			} else {
+				to.merge <- read.csv(paste0(paste0(output.prefix, "/", MT), "/performance_", MT, "_", base, ".csv"), stringsAsFactors = F)
+				merged <<- rbind(merged, to.merge)
+			}
 
 			write.csv(merged, paste0(comparison.folder, "/performance_", MT, "_", base, ".csv"), row.names = FALSE)
 		})
