@@ -8,7 +8,12 @@ double squaredDiff(NumericVector x, NumericVector y){
 
 // [[Rcpp::export]]
 NumericVector prototype(NumericMatrix X) {
-	return Rcpp::colMeans(X);
+	// return Rcpp::colMeans(X);
+	Rcpp::Environment base("package:base");
+	Rcpp::Function col_means = base["colMeans"];
+	Rcpp::NumericVector res = col_means(Rcpp::_["x"] = X);
+
+	return res;
 }
 
 // [[Rcpp::export]]
