@@ -14,6 +14,7 @@ suppressMessages(library(permute))
 suppressMessages(library(data.table))
 suppressMessages(library(kernlab))
 suppressMessages(library(ranger))
+suppressMessages(library(mtrToolkit))
 #Extra libs
 source("../utils_and_includes/utils_MT.R")
 # DSTARS -> Default

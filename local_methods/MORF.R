@@ -116,7 +116,7 @@ lapply(bases, function(b) {
       folds.log[nrow(folds.log), paste0("RMSE.", t)] <<- RMSE(r, p)
     }
   })
-  performance.log[nrow(performance.log)+1, 1] <<- tech
+  performance.log[nrow(performance.log)+1, 1] <<- "morf"
   performance.log[nrow(performance.log), -1] <<- colMeans(folds.log)
   
   write.csv(performance.log, paste0("../performance_MORF_", b, ".csv"), row.names = FALSE)
