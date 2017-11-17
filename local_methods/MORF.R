@@ -8,53 +8,53 @@ for(i in 1:length(bases)) {
   set.seed(exp.random.seeds[i])
   dataset <- read.csv(paste0(datasets.folder, "/", bases[i], ".csv"))
   dataset <- remove.unique(dataset)
-  
+
   targets[[i]] <- colnames(dataset)[(ncol(dataset)-n.targets[i]+1):ncol(dataset)]
-  
+
   dataset <- dataset[sample(nrow(dataset)),]
   sample.names <- rownames(dataset)
-  
+
   #Center and Scaling
   dataset <- as.data.table(dataset)
   invisible(dataset[, names(dataset) := lapply(.SD, as.numeric)])
-  
+
   maxs[[i]] <- as.numeric(dataset[, lapply(.SD, max)])
   names(maxs[[i]]) <- colnames(dataset)
   mins[[i]] <- as.numeric(dataset[, lapply(.SD, min)])
   names(mins[[i]]) <- colnames(dataset)
-  
+
   dataset <- as.data.table(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
-  
+
   len.fold <- round(nrow(dataset)/folds.num)
-  
+
   ######Use a testing set
   if(length(bases.teste) > 0 && folds.num == 1) {
     dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
     dataset.teste <- as.data.table(dataset.teste)
     invisible(dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)])
-    
+
     dataset.teste <- as.data.table(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
     init.bound <- nrow(dataset) + 1
-    
+
     dataset <- rbindlist(list(dataset, dataset.teste))
     sample.names <- c(sample.names, rownames(dataset.teste))
   }
   #######
-  
+
   x <- dataset[, !targets[[i]], with = FALSE]
   y <- dataset[, targets[[i]], with = FALSE]
-  
+
   if(showProgress){}else{print(bases[i])}
   col.names.targets <- c()
   for(t in targets[[i]]) {
     col.names.targets <- c(col.names.targets, t)
     col.names.targets <- c(col.names.targets, paste0(t, ".pred"))
   }
-  
+
   # Cross validation
   for(k in 1:folds.num) {
     if(showProgress){}else{print(paste0("Fold ", k))}
-    
+
     if(folds.num == 1) {
       if(length(bases.teste) > 0) {
         train.idx <- 1:(init.bound-1)
@@ -67,17 +67,17 @@ for(i in 1:length(bases)) {
       test.idx <- ((k-1)*len.fold + 1):(ifelse(k==folds.num, nrow(dataset), k*len.fold))
       train.idx <- setdiff(1:nrow(dataset), test.idx)
     }
-    
+
     x.train <- x[train.idx]
     y.train <- y[train.idx]
-    
+
     x.test <- x[test.idx]
     y.test <- y[test.idx]
-    
+
     prediction.log <- as.data.table(setNames(replicate(length(col.names.targets),numeric(nrow(x.test)), simplify = F),
                                              col.names.targets))
     morf <- MORF(x.train, y.train, parallel=T)
-    predictions <- predict(morf, x.test)
+    predictions <- mtrToolkit::predict(morf, x.test)
     for(t in targets[[i]]) {
       prediction.log[[t]] <- y.test[[t]]
       prediction.log[[paste0(t, ".pred")]] <- predictions[[t]]
@@ -95,7 +95,7 @@ lapply(bases, function(b) {
   names.perf.log <- c("aCC", "ARE", "MSE", "aRMSE", "aRRMSE", paste0("R2.", targets[[i]]), paste0("RMSE.", targets[[i]]))
   performance.log <<- data.frame(algorithm=character(0), as.data.frame(setNames(replicate(length(names.perf.log),numeric(0),
                                                                                           simplify = F), names.perf.log)), stringsAsFactors = FALSE)
-  
+
   folds.log <<- as.data.frame(setNames(replicate(length(names.perf.log),numeric(0),
                                                  simplify = F), names.perf.log), stringsAsFactors = FALSE)
   lapply(1:folds.num, function(k) {
@@ -105,20 +105,20 @@ lapply(bases, function(b) {
     folds.log[nrow(folds.log), "MSE"] <<- MSE(log, targets[[i]])
     folds.log[nrow(folds.log), "aRMSE"] <<- aRMSE(log, targets[[i]])
     folds.log[nrow(folds.log), "aRRMSE"] <<- aRRMSE(log, targets[[i]])
-    
+
     # targets
     for(t in targets[[i]]) {
       folds.log[nrow(folds.log), paste0("R2.", t)] <<- summary(lm(log[,t] ~ log[, paste0(t, ".pred")]))$r.squared
-      
+
       r <- (maxs[[i]][t]-mins[[i]][t])*log[,t] + mins[[i]][t]
       p <- (maxs[[i]][t]-mins[[i]][t])*log[,paste0(t, ".pred")] + mins[[i]][t]
-      
+
       folds.log[nrow(folds.log), paste0("RMSE.", t)] <<- RMSE(r, p)
     }
   })
   performance.log[nrow(performance.log)+1, 1] <<- "morf"
   performance.log[nrow(performance.log), -1] <<- colMeans(folds.log)
-  
+
   write.csv(performance.log, paste0("../performance_MORF_", b, ".csv"), row.names = FALSE)
   i <<- i + 1
 })

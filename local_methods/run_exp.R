@@ -1,4 +1,5 @@
 rm(list = ls())
+suppressMessages(library(mtrToolkit))
 suppressMessages(library(e1071))
 suppressMessages(library(RSNNS))
 suppressMessages(library(plyr))
@@ -14,7 +15,6 @@ suppressMessages(library(permute))
 suppressMessages(library(data.table))
 suppressMessages(library(kernlab))
 suppressMessages(library(ranger))
-suppressMessages(library(mtrToolkit))
 #Extra libs
 source("../utils_and_includes/utils_MT.R")
 # DSTARS -> Default
@@ -26,8 +26,8 @@ number.layers <- 10
 #Loads configuration file
 source("config.R")
 
-exp.random.seeds <- sample(99999, length(bases))
-# exp.random.seeds <- rep(5465, length(bases))
+# exp.random.seeds <- sample(99999, length(bases))
+exp.random.seeds <- rep(5465, length(bases))
 
 print("Generated random seeds:")
 print(exp.random.seeds)
@@ -46,6 +46,7 @@ for(mt in mt.techs) {
 }
 
 for(mt in mt.techs) {
+  print(mt)
 	if(mt != "MORF") {
 		for(tech in techs) {
 			if(tech == "parrf") {
