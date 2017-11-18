@@ -4,7 +4,7 @@ dir.create(paste0(output.dir.motc, "/prediction_logs/",tech), showWarnings = FAL
 dir.create(paste0(output.dir.motc, "/out_imp_assessment/",tech), showWarnings = FALSE, recursive = TRUE)
 dir.create(paste0(output.dir.motc, "/raw_logs/",tech), showWarnings = FALSE, recursive = TRUE)
 
-hoeffdings.bound <- function(observations, range, confidence = 10^-6) {
+hoeffding.bound <- function(observations, range, confidence = 10^-6) {
 	return(sqrt(((range^2)*log(1/confidence))/(2*observations)))
 }
 
@@ -46,17 +46,17 @@ getChainingTree <- function(imp, tar, hb, max.level) {
 	return(list(tree = chain$tree, hash = as.character(chain$hash), leafs = as.logical(chain$leafs), depth = chain$max.level))
 }
 
-buildChainTree <- function(motc, x.train, y.train, x.test, tech, targets) {
+buildChainTree <- function(motc, x.train, y.train, x.test, tech, targets, t.id) {
 	root.node <- 1
 	bct <- new.env()
-	len.preds <- length(unique(motc$hash[motc$leafs])) + length(motc$hash[!motc$leafs])
+	# len.preds <- length(unique(motc$hash[motc$leafs])) + length(motc$hash[!motc$leafs])
 
-	bct$pred.tr <- data.table(matrix(nrow=nrow(x.train), ncol=len.preds))
-	bct$pred.ts <- data.table(matrix(nrow=nrow(x.test), ncol=len.preds))
+	# bct$pred.tr <- data.table(matrix(nrow=nrow(x.train), ncol=len.preds))
+	# bct$pred.ts <- data.table(matrix(nrow=nrow(x.test), ncol=len.preds))
+
 	bct$xtr <- x.train
 	bct$xts <- x.test
 	bct$ytr <- y.train
-	bct$c.cont <- 1L
 
 	chainTravel <- function(t.node = 1, f.node = 0) {
 		edg <- which(motc$tree$orig == t.node)
@@ -64,49 +64,66 @@ buildChainTree <- function(motc, x.train, y.train, x.test, tech, targets) {
 		# Leaf node
 		if(length(edg) == 1 && is.na(motc$tree[edg,dest])) {
 			# Verifies if the leaf node's ST model was already trained
-			if(!(paste0("leaf.", motc$hash[t.node]) %in% names(bct$pred.ts))) {
-				if(is.null(meta.preds$tr[[motc$hash[t.node]]])) {
-					regressor <- train_(bct$xtr, bct$ytr[[motc$hash[t.node]]], tech, targets)
-					set(bct$pred.tr, NULL, bct$c.cont, predict_(regressor, bct$xtr, tech, targets))
-					set(bct$pred.ts, NULL, bct$c.cont, predict_(regressor, bct$xts, tech, targets))
-				} else {
-					set(bct$pred.tr, NULL, bct$c.cont, meta.preds$tr[[motc$hash[t.node]]])
-					set(bct$pred.ts, NULL, bct$c.cont, meta.preds$ts[[motc$hash[t.node]]])
-				}
+			if(is.null(mp$leafs.tr[[motc$hash[t.node]]]) && 
+				is.null(mp$tr[[motc$hash[t.node]]])) {
+				
+				regressor <- train_(bct$xtr, bct$ytr[[motc$hash[t.node]]], tech, targets)
+				mp$model.count <- mp$model.count + 1
 
-				if(f.node == 0) {
-					names(bct$pred.tr)[bct$c.cont] <- paste0("0.", motc$hash[t.node])
-					names(bct$pred.ts)[bct$c.cont] <- paste0("0.", motc$hash[t.node])
-				} else {
-					names(bct$pred.tr)[bct$c.cont] <- paste0("leaf.", motc$hash[t.node])
-					names(bct$pred.ts)[bct$c.cont] <- paste0("leaf.", motc$hash[t.node])
-				}
-				bct$c.cont <- bct$c.cont + 1L
+				mp$leafs.tr[[paste0("l.", motc$hash[t.node])]] <- predict_(regressor, bct$xtr, tech, targets)
+				mp$leafs.ts[[paste0("l.", motc$hash[t.node])]] <- predict_(regressor, bct$xts, tech, targets)
 			}
 		} else {
-			for(e in edg) {
+			for(e in edg)
 				chainTravel(motc$tree[e,dest], t.node)
-			}
 
 			leaf.sons <- motc$leafs[motc$tree[edg,dest]]
 			sons.names <- motc$hash[motc$tree[edg,dest]]
-			aug.names <- paste(t.node, sons.names, sep = ".")
-			aug.names[leaf.sons] <- paste0("leaf.", sons.names[leaf.sons])
+
+			# Get training set augments
+			augments.tr <- lapply(seq(leaf.sons), function(p, leaf, sonsn) {
+				if(leaf[p]) {
+					if(is.null(mp$tr[[sonsn[p]]]))
+						return(mp$leafs.tr[[paste0("l.", sonsn[p])]])
+					else
+						return(mp$tr[[sonsn[p]]])
+				} else
+					return(mp$nodes.tr[[paste(t.id, t.node, sonsn[p], sep = ".")]])
+
+			}, leaf = leaf.sons, sonsn = sons.names)
+
+			# Get testing set augments
+			augments.ts <- lapply(seq(leaf.sons), function(p, leaf, sonsn) {
+				if(leaf[p]) {
+					if(is.null(mp$ts[[sonsn[p]]]))
+						return(mp$leafs.ts[[paste0("l.", sonsn[p])]])
+					else
+						return(mp$ts[[sonsn[p]]])
+				} else
+					return(mp$nodes.ts[[paste(t.id, t.node, sonsn[p], sep = ".")]])
+
+			}, leaf = leaf.sons, sonsn = sons.names)
 
 			# Make augmented sets
-			set(bct$xtr, NULL, motc$hash[motc$tree[edg,dest]], bct$pred.tr[, aug.names, with = F])
-			set(bct$xts, NULL, motc$hash[motc$tree[edg,dest]], bct$pred.ts[, aug.names, with = F])
+			set(bct$xtr, NULL, motc$hash[motc$tree[edg,dest]], augments.tr)
+			set(bct$xts, NULL, motc$hash[motc$tree[edg,dest]], augments.ts)
 
 			regressor <- train_(bct$xtr, bct$ytr[[motc$hash[t.node]]], tech, targets)
+			mp$model.count <- mp$model.count + 1
 
 			# Save predictions
-			set(bct$pred.tr, NULL, bct$c.cont, predict_(regressor, bct$xtr, tech, targets))
-			set(bct$pred.ts, NULL, bct$c.cont, predict_(regressor, bct$xts, tech, targets))
-			# Set appropriate names
-			names(bct$pred.tr)[bct$c.cont] <- paste(f.node, motc$hash[t.node], sep = ".")
-			names(bct$pred.ts)[bct$c.cont] <- paste(f.node, motc$hash[t.node], sep = ".")
-
-			bct$c.cont <- bct$c.cont + 1L
+			# Root
+			if(f.node == 0) {
+				mp$tr[[motc$hash[t.node]]] <-
+					predict_(regressor, bct$xtr, tech, targets)
+				mp$ts[[motc$hash[t.node]]] <-
+					predict_(regressor, bct$xts, tech, targets)
+			} else { # Other nodes
+				mp$nodes.tr[[paste(t.id, f.node, motc$hash[t.node], sep = ".")]] <-
+					predict_(regressor, bct$xtr, tech, targets)
+				mp$nodes.ts[[paste(t.id, f.node, motc$hash[t.node], sep = ".")]] <-
+					predict_(regressor, bct$xts, tech, targets)
+			}
 
 			# Remove augmented features
 			bct$xtr[, motc$hash[motc$tree[edg,dest]] := NULL]
@@ -114,10 +131,10 @@ buildChainTree <- function(motc, x.train, y.train, x.test, tech, targets) {
 		}
 		return(NULL)
 	}
-
 	chainTravel()
 
-	return(list(tr = bct$pred.tr, ts = bct$pred.ts))
+	rm(bct)
+	return(NULL)
 }
 
 getPrintableChainTree <- function(motc) {
@@ -179,6 +196,8 @@ for(i in 1:length(bases)) {
 
 	if(showProgress){}else{print(bases[i])}
 
+	model.count <- data.table(fold = seq(folds.num), model_count = rep(0, folds.num))
+
 	# Cross validation
 	for(k in 1:folds.num) {
 		if(showProgress){}else{print(paste0("Fold ", k))}
@@ -213,39 +232,66 @@ for(i in 1:length(bases)) {
 
 		motc.max.depth <- round(ifelse(n.targets[i] > 6, log2(n.targets[i]), 2*log2(n.targets[i])))
 
-		meta.preds <- new.env()
-		meta.preds$tr <- list()
-		meta.preds$ts <- list()
-
-		sum.imps <- apply(timportance, 2, sum)
+		mp <- new.env()
+		mp$tr <- list()
+		mp$ts <- list()
+		mp$nodes.tr <- list()
+		mp$nodes.tr <- list()
+		mp$leafs.tr <- list()
+		mp$leafs.ts <- list()
+		mp$model.count <- 0
+		
+		aux.i <- timportance
+		diag(aux.i) <- 0
+		sum.imps <- apply(aux.i, 2, sum)
 		ord <- order(sum.imps)
 		t.ordered <- targets[[i]][ord]
+		
+		hb <- hoeffding.bound(n.targets[i] * nrow(x.train), range = max(timportance), confidence = 10e-7)
 
 		for(t in t.ordered) {
-				motc <- getChainingTree(timportance, t, hoeffdings.bound(nrow(x.train), range =
-							max(timportance[t,])), motc.max.depth)
+				motc <- getChainingTree(timportance, t, hb, motc.max.depth)
 
-				predictions <- buildChainTree(motc, x.train, y.train, x.test, tech, targets[[i]])
+				write.csv(getPrintableChainTree(motc), paste0(output.dir.motc, "/out_imp_assessment/", tech, "/",
+					bases[i], "_chain_tree_fold", formatC(k, width=2, flag="0"), "_T",
+					formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
 
-				meta.preds$tr[[t]] <- predictions$tr[, ncol(predictions$tr), with=FALSE]
-				meta.preds$ts[[t]] <- predictions$ts[, ncol(predictions$ts), with=FALSE]
-
-				write.csv(data.frame(id=sample.names[train.idx], predictions$tr, check.names = F), paste0(output.dir.motc, "/raw_logs/",tech,"/raw_MOTC_training_",
-									bases[i], "_fold", formatC(k, width=2, flag="0"), "_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
-				write.csv(data.frame(id=sample.names[test.idx], predictions$ts, check.names = F), paste0(output.dir.motc, "/raw_logs/",tech,"/raw_MOTC_testing_",
-									bases[i], "_fold", formatC(k, width=2, flag="0"), "_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
-
-				set(prediction.log, NULL, t, y.test[[t]])
-				set(prediction.log, NULL, paste0(t, ".pred"), predictions$ts[[paste0("0.",t)]])
-
-				write.csv(getPrintableChainTree(motc), paste0(output.dir.motc, "/out_imp_assessment/",tech,"/", bases[i], "_chain_tree_fold", formatC(k, width=2, flag="0"),
-									"_T", formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
-
+				buildChainTree(motc, x.train, y.train, x.test, tech, targets[[i]], ord[t.cont])
 				t.cont <- t.cont + 1
-			}
+		}
 
-		write.csv(data.frame(id=sample.names[test.idx], prediction.log, check.names = F), paste0(output.dir.motc, "/prediction_logs/",tech,"/predictions_MOTC_", bases[i], paste0("_fold", formatC(k, width=2, flag="0")), ".csv"), row.names = FALSE)
+		# Save the model accountage
+		set(model.count, k, "model_count", mp$model.count)
+
+		general.log.tr <- as.data.table(c(mp$leafs.tr, mp$nodes.tr, mp$tr))
+		general.log.ts <- as.data.table(c(mp$leafs.ts, mp$nodes.ts, mp$ts))
+
+		write.csv(data.frame(id=sample.names[train.idx], general.log.tr, check.names = F), 
+			paste0(output.dir.motc, "/raw_logs/", tech, "/raw_MOTC_training_",
+				bases[i], "_fold", formatC(k, width=2, flag="0"), ".csv"), 
+			row.names = FALSE)
+
+		write.csv(data.frame(id=sample.names[test.idx], general.log.ts, check.names = F), 
+			paste0(output.dir.motc, "/raw_logs/", tech, "/raw_MOTC_testing_",
+				bases[i], "_fold", formatC(k, width=2, flag="0"), ".csv"), 
+			row.names = FALSE)
+
+		for(t in targets[[i]]) {
+			set(prediction.log, NULL, t, y.test[[t]])
+			set(prediction.log, NULL, paste0(t, ".pred"), general.log.ts[[t]])
+		}
+
+		write.csv(data.frame(id=sample.names[test.idx], prediction.log, check.names = F), 
+			paste0(output.dir.motc, "/prediction_logs/", tech,"/predictions_MOTC_", bases[i], 
+				paste0("_fold", formatC(k, width=2, flag="0")), 
+			".csv"), row.names = FALSE)
 	}
+
+	rbindlist(list(model.count, list("mean", mean(model.count[, model_count]))))
+	write.csv(model.count, paste0(output.dir.motc, "/out_imp_assessment/", tech, "/",
+		bases[i], "_model_count.csv"), row.names = FALSE)
+
+	rm(mp)
 }
 
 #Performance metrics
