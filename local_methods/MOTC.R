@@ -1,4 +1,5 @@
 motc.importance.tech <- "rf_imp"
+confidence <- 10e-6
 
 dir.create(paste0(output.dir.motc, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
 dir.create(paste0(output.dir.motc, "/out_imp_assessment/",tech), showWarnings = FALSE, recursive = TRUE)
@@ -70,8 +71,13 @@ buildChainTree <- function(motc, x.train, y.train, x.test, tech, targets, t.id) 
 				regressor <- train_(bct$xtr, bct$ytr[[motc$hash[t.node]]], tech, targets)
 				mp$model.count <- mp$model.count + 1
 
-				mp$leafs.tr[[paste0("l.", motc$hash[t.node])]] <- predict_(regressor, bct$xtr, tech, targets)
-				mp$leafs.ts[[paste0("l.", motc$hash[t.node])]] <- predict_(regressor, bct$xts, tech, targets)
+				if(f.node == 0) {
+					mp$tr[[motc$hash[t.node]]] <- predict_(regressor, bct$xtr, tech, targets)
+					mp$ts[[motc$hash[t.node]]] <- predict_(regressor, bct$xts, tech, targets)
+				} else {
+					mp$leafs.tr[[paste0("l.", motc$hash[t.node])]] <- predict_(regressor, bct$xtr, tech, targets)
+					mp$leafs.ts[[paste0("l.", motc$hash[t.node])]] <- predict_(regressor, bct$xts, tech, targets)
+				}
 			}
 		} else {
 			for(e in edg)
@@ -231,6 +237,7 @@ for(i in 1:length(bases)) {
 		t.cont <- 1
 
 		motc.max.depth <- round(ifelse(n.targets[i] > 6, log2(n.targets[i]), 2*log2(n.targets[i])))
+		# motc.max.depth <- round(ifelse(n.targets[i] > 6, 2, 3))
 
 		mp <- new.env()
 		mp$tr <- list()
@@ -247,7 +254,8 @@ for(i in 1:length(bases)) {
 		ord <- order(sum.imps)
 		t.ordered <- targets[[i]][ord]
 		
-		hb <- hoeffding.bound(n.targets[i] * nrow(x.train), range = max(timportance), confidence = 10e-7)
+		hb <- hoeffding.bound(n.targets[i] * nrow(x.train), range = max(timportance), confidence = confidence)
+		# hb <- NULL
 
 		for(t in t.ordered) {
 				motc <- getChainingTree(timportance, t, hb, motc.max.depth)
