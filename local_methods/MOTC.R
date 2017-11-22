@@ -1,12 +1,12 @@
-motc.importance.tech <- "rf_imp"
-confidence <- 10e-6
+motc.importance.tech <- "pearson"
+delta <- 10e-6
 
 dir.create(paste0(output.dir.motc, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
 dir.create(paste0(output.dir.motc, "/out_imp_assessment/",tech), showWarnings = FALSE, recursive = TRUE)
 dir.create(paste0(output.dir.motc, "/raw_logs/",tech), showWarnings = FALSE, recursive = TRUE)
 
-hoeffding.bound <- function(observations, range, confidence = 10^-6) {
-	return(sqrt(((range^2)*log(1/confidence))/(2*observations)))
+hoeffding.bound <- function(observations, range, delta = 10^-6) {
+	return(sqrt(((range^2)*log(1/delta))/(2*observations)))
 }
 
 getChainingTree <- function(imp, tar, hb, max.level) {
@@ -65,9 +65,9 @@ buildChainTree <- function(motc, x.train, y.train, x.test, tech, targets, t.id) 
 		# Leaf node
 		if(length(edg) == 1 && is.na(motc$tree[edg,dest])) {
 			# Verifies if the leaf node's ST model was already trained
-			if(is.null(mp$leafs.tr[[motc$hash[t.node]]]) && 
+			if(is.null(mp$leafs.tr[[motc$hash[t.node]]]) &&
 				is.null(mp$tr[[motc$hash[t.node]]])) {
-				
+
 				regressor <- train_(bct$xtr, bct$ytr[[motc$hash[t.node]]], tech, targets)
 				mp$model.count <- mp$model.count + 1
 
@@ -237,7 +237,6 @@ for(i in 1:length(bases)) {
 		t.cont <- 1
 
 		motc.max.depth <- round(ifelse(n.targets[i] > 6, log2(n.targets[i]), 2*log2(n.targets[i])))
-		# motc.max.depth <- round(ifelse(n.targets[i] > 6, 2, 3))
 
 		mp <- new.env()
 		mp$tr <- list()
@@ -247,14 +246,14 @@ for(i in 1:length(bases)) {
 		mp$leafs.tr <- list()
 		mp$leafs.ts <- list()
 		mp$model.count <- 0
-		
+
 		aux.i <- timportance
 		diag(aux.i) <- 0
 		sum.imps <- apply(aux.i, 2, sum)
 		ord <- order(sum.imps)
 		t.ordered <- targets[[i]][ord]
-		
-		hb <- hoeffding.bound(n.targets[i] * nrow(x.train), range = max(timportance), confidence = confidence)
+
+		hb <- hoeffding.bound(n.targets[i] * nrow(x.train), range = max(timportance), delta = delta)
 		# hb <- NULL
 
 		for(t in t.ordered) {
@@ -274,14 +273,14 @@ for(i in 1:length(bases)) {
 		general.log.tr <- as.data.table(c(mp$leafs.tr, mp$nodes.tr, mp$tr))
 		general.log.ts <- as.data.table(c(mp$leafs.ts, mp$nodes.ts, mp$ts))
 
-		write.csv(data.frame(id=sample.names[train.idx], general.log.tr, check.names = F), 
+		write.csv(data.frame(id=sample.names[train.idx], general.log.tr, check.names = F),
 			paste0(output.dir.motc, "/raw_logs/", tech, "/raw_MOTC_training_",
-				bases[i], "_fold", formatC(k, width=2, flag="0"), ".csv"), 
+				bases[i], "_fold", formatC(k, width=2, flag="0"), ".csv"),
 			row.names = FALSE)
 
-		write.csv(data.frame(id=sample.names[test.idx], general.log.ts, check.names = F), 
+		write.csv(data.frame(id=sample.names[test.idx], general.log.ts, check.names = F),
 			paste0(output.dir.motc, "/raw_logs/", tech, "/raw_MOTC_testing_",
-				bases[i], "_fold", formatC(k, width=2, flag="0"), ".csv"), 
+				bases[i], "_fold", formatC(k, width=2, flag="0"), ".csv"),
 			row.names = FALSE)
 
 		for(t in targets[[i]]) {
@@ -289,9 +288,9 @@ for(i in 1:length(bases)) {
 			set(prediction.log, NULL, paste0(t, ".pred"), general.log.ts[[t]])
 		}
 
-		write.csv(data.frame(id=sample.names[test.idx], prediction.log, check.names = F), 
-			paste0(output.dir.motc, "/prediction_logs/", tech,"/predictions_MOTC_", bases[i], 
-				paste0("_fold", formatC(k, width=2, flag="0")), 
+		write.csv(data.frame(id=sample.names[test.idx], prediction.log, check.names = F),
+			paste0(output.dir.motc, "/prediction_logs/", tech,"/predictions_MOTC_", bases[i],
+				paste0("_fold", formatC(k, width=2, flag="0")),
 			".csv"), row.names = FALSE)
 	}
 
