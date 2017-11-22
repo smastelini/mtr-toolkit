@@ -24,8 +24,8 @@ techs <- c("ranger", "svm")
 
 folds.num <- 10
 
-datasets.folder <- "~/Desktop/MT_datasets"
-output.prefix <- "~/Desktop/MOTC_TUNING"
+datasets.folder <- "~/MEGA/MT_datasets"
+output.prefix <- "~/Desktop/MOTc"
 
 mt.techs <- c("MOTC")
 
