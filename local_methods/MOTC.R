@@ -1,5 +1,5 @@
 motc.importance.tech <- "rf_imp"
-confidence <- 10e-6
+confidence <- 10e-2
 
 dir.create(paste0(output.dir.motc, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
 dir.create(paste0(output.dir.motc, "/out_imp_assessment/",tech), showWarnings = FALSE, recursive = TRUE)
@@ -236,7 +236,7 @@ for(i in 1:length(bases)) {
 		prediction.log <- as.data.table(setNames(replicate(length(t.names),numeric(nrow(x.test)), simplify = F), t.names))
 		t.cont <- 1
 
-		motc.max.depth <- round(ifelse(n.targets[i] > 6, log2(n.targets[i]), 2*log2(n.targets[i])))
+		motc.max.depth <- round(ifelse(n.targets[i] >= 6, log2(n.targets[i]), 2*log2(n.targets[i])))
 		# motc.max.depth <- round(ifelse(n.targets[i] > 6, 2, 3))
 
 		mp <- new.env()
