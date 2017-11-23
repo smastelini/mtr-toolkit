@@ -83,7 +83,7 @@ for(i in 1:length(bases)) {
 		rf.importance <- list()
 		timportance <- matrix(nrow = length(targets[[i]]), ncol = length(targets[[i]]))
 
-		for(t in 1:length(targets[[i]])) {
+		for(t in seq(targets[[i]])) {
 			rf.aux <- randomForest::randomForest(y.train, y.train[[t]], importance = TRUE)
 			imp.aux <- randomForest::importance(rf.aux, type = 1)
 			imp.aux[imp.aux < 0] <- 0

@@ -1,5 +1,5 @@
 motc.importance.tech <- "rf_imp"
-confidence <- 10e-2
+delta <- 10e-2
 
 dir.create(paste0(output.dir.motc, "/prediction_logs/",tech), showWarnings = FALSE, recursive = TRUE)
 dir.create(paste0(output.dir.motc, "/out_imp_assessment/",tech), showWarnings = FALSE, recursive = TRUE)
