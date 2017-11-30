@@ -27,7 +27,7 @@ MORF <- function(x, y, n.trees = 100, mtry = NULL, ftest.signf = 0.05, min.size 
 		}
 	} else {
 		# Parallel Tree building
-		n.cores <- parallel::detectCores()
+		n.cores <- max(1, parallel::detectCores() - 1)
 		cl <- parallel::makeCluster(n.cores, type="FORK")
 
 		forest <- parallel::parLapply(cl, seq(n.trees), function(tr) {
@@ -42,6 +42,7 @@ MORF <- function(x, y, n.trees = 100, mtry = NULL, ftest.signf = 0.05, min.size 
 			mtrt
 		})
 		parallel::stopCluster(cl)
+		gc()
 	}
 
 	list(forest = forest, type = "MORF")

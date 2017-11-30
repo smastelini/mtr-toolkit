@@ -76,8 +76,12 @@ for(i in 1:length(bases)) {
 
     prediction.log <- as.data.table(setNames(replicate(length(col.names.targets),numeric(nrow(x.test)), simplify = F),
                                              col.names.targets))
-    morf <- MORF(x.train, y.train, parallel=T)
+
+
+    morf <- mtrToolkit::MORF(x.train, y.train, parallel=T)
     predictions <- mtrToolkit::predict(morf, x.test)
+    rm(morf)
+
     for(t in targets[[i]]) {
       prediction.log[[t]] <- y.test[[t]]
       prediction.log[[paste0(t, ".pred")]] <- predictions[[t]]

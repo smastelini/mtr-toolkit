@@ -1,4 +1,5 @@
 rm(list = ls())
+suppressMessages(library(data.table))
 suppressMessages(library(mtrToolkit))
 suppressMessages(library(e1071))
 suppressMessages(library(RSNNS))
@@ -12,7 +13,6 @@ suppressMessages(library(xgboost))
 suppressMessages(library(caret))
 suppressMessages(library(BBmisc))
 suppressMessages(library(permute))
-suppressMessages(library(data.table))
 suppressMessages(library(kernlab))
 suppressMessages(library(ranger))
 #Extra libs
@@ -26,8 +26,8 @@ number.layers <- 10
 #Loads configuration file
 source("config.R")
 
-# exp.random.seeds <- sample(99999, length(bases))
-exp.random.seeds <- rep(5465, length(bases))
+exp.random.seeds <- sample(99999, length(bases))
+# exp.random.seeds <- rep(5465, length(bases))
 
 print("Generated random seeds:")
 print(exp.random.seeds)
@@ -98,13 +98,21 @@ if(generate.final.table) {
 	b <- 1
 	for(i in bases) {
 		for(mt in mt.techs) {
-			tabela[nrow(tabela)+1,1] <- paste0("#",i," -> ",mt)
+			tabela[nrow(tabela)+1,1] <- paste0("#", i, " -> ", mt)
 			log <- read.csv(paste0(paste0(output.prefix, "/comparison_results"), "/performance_", mt, "_", i, ".csv"), stringsAsFactors = F)
-			rownames(log) <- techs
-			for(a in techs) {
-				tabela[nrow(tabela)+1,1] <- log[a,1]
-				tabela[nrow(tabela),2:ncol(tabela)] <- c(log[a,2:6], mean(as.numeric(log[a,7:(6+n.targets[b])])))
-			}
+
+      if(mt != "MORF") {
+        rownames(log) <- techs
+        for(a in techs) {
+          tabela[nrow(tabela)+1,1] <- log[a,1]
+          tabela[nrow(tabela),2:ncol(tabela)] <- c(log[a,2:6], mean(as.numeric(log[a,7:(6+n.targets[b])])))
+        }
+      } else {
+        rownames(log) <- mt
+        tabela[nrow(tabela)+1,1] <- log[mt,1]
+        tabela[nrow(tabela),2:ncol(tabela)] <- c(log[mt,2:6], mean(as.numeric(log[mt,7:(6+n.targets[b])])))
+      }
+
 		}
 		b <- b + 1
 		tabela[nrow(tabela)+1,1] <- ""
@@ -113,7 +121,11 @@ if(generate.final.table) {
 }
 
 if(generate.nemenyi.frame) {
-  nemenyi.cols <- apply(expand.grid(mt.techs, techs), 1, paste, collapse=".")
+  not.morf <- mt.techs != "MORF"
+  nemenyi.cols <- apply(expand.grid(mt.techs[not.morf], techs), 1, paste, collapse=".")
+  if("MORF" %in% mt.techs)
+    nemenyi.cols <- c(nemenyi.cols, "MORF")
+
   nemenyi <- data.frame(matrix(nrow=length(bases), ncol = length(nemenyi.cols)))
   colnames(nemenyi) <- nemenyi.cols
   rownames(nemenyi) <- bases
@@ -122,8 +134,12 @@ if(generate.nemenyi.frame) {
     for(mt in mt.techs) {
       log <- read.csv(paste0(paste0(output.prefix, "/comparison_results"), "/performance_", mt, "_", bases[b], ".csv"), stringsAsFactors = F)
 
-      for(i in seq(length(techs))) {
-        nemenyi[b, paste(mt, techs[i], sep = ".")] <- log[i, "aRRMSE"]
+      if(mt != "MORF") {
+        for(i in seq(length(techs))) {
+          nemenyi[b, paste(mt, techs[i], sep = ".")] <- log[i, "aRRMSE"]
+        }
+      } else {
+        nemenyi[b, mt] <- log[1, "aRRMSE"]
       }
     }
   }
