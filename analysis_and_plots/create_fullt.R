@@ -1,7 +1,5 @@
-# datasets <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
-# n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
-datasets <- c("atp1d","atp7d","oes97","oes10")
-n.targets <- c(6,6,16,16)
+datasets <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
+n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
 
 mt.techs <- c("ST", "MTRS", "ERC", "DSTARST")
 techs <- c("ranger", "svm", "xgboost", "cart")
@@ -40,14 +38,14 @@ RRMSE <- function(actual, predicted) {
 }
 
 targets <- list()
-row.n <- c()
+targ.n <- c()
 
 dataset.c <- 1
 for(d in datasets) {
   dataset <- read.csv(paste0(datasets.f, "/", d, ".csv"))
   targets[[d]] <- colnames(dataset)[(ncol(dataset) - n.targets[dataset.c] + 1):ncol(dataset)]
 
-  row.n <- c(row.n, paste0("all_", d), targets[[d]])
+  targ.n <- c(targ.n, d, targets[[d]])
 
   dataset.c <- dataset.c + 1
 }
@@ -55,13 +53,23 @@ for(d in datasets) {
 col.n <- apply(expand.grid(mt.techs, techs), 1, paste, collapse=".")
 
 # Error table
-ft <- data.frame(matrix(nrow=sum(n.targets + 1), ncol=length(col.n)))
+ft <- data.frame(matrix(nrow=sum(n.targets + 1), ncol=length(col.n)), stringsAsFactors = F)
 colnames(ft) <- col.n
-rownames(ft) <- row.n
+ft <- cbind(rep(datasets, n.targets + 1), targ.n, ft)
+colnames(ft)[1:2] <- c("dataset", "target")
 
-init <- 1
 for(d in datasets) {
-  full.names <- c(paste0("all_", d), targets[[d]])
+  full.names <- c(d, targets[[d]])
+
+  f.dataset <- ft[, "dataset"] == d
+
+  f.targets <- rep(FALSE, nrow(ft))
+  for(t in full.names) {
+		f.targets <- f.targets | ft[, "target"] == t
+  }
+
+  r.filtering <- f.dataset & f.targets
+
 
   for(mt in mt.techs) {
     for(tech in techs) {
@@ -83,20 +91,32 @@ for(d in datasets) {
       errors <- colMeans(foldl)
       errors <- c(mean(errors), errors)
 
-      ft[full.names, paste(mt, tech, sep=".")] <- errors
+      ft[which(r.filtering), paste(mt, tech, sep=".")] <- errors
     }
   }
 }
 
-write.csv(ft, paste0(where.save, "/complete_table.csv"), row.names=TRUE)
+write.csv(ft, paste0(where.save, "/complete_table.csv"), row.names=F)
 
 # DSTARS layer account table
 layers <- data.frame(matrix(nrow=sum(n.targets + 1), ncol=length(techs)))
-rownames(layers) <- row.n
 colnames(layers) <- techs
 
+layers <- cbind(rep(datasets, n.targets + 1), targ.n, layers)
+colnames(layers)[1:2] <- c("dataset", "target")
+
+
 for(d in datasets) {
-  full.names <- c(paste0("all_", d), targets[[d]])
+  full.names <- c(d, targets[[d]])
+
+  f.dataset <- layers[, "dataset"] == d
+
+  f.targets <- rep(FALSE, nrow(layers))
+  for(t in full.names) {
+  	f.targets <- f.targets | layers[, "target"] == t
+  }
+
+  r.filtering <- f.dataset & f.targets
   for(tech in techs) {
     lcount <- rep(0, n.targets[d])
     for(k in seq(n.folds)) {
@@ -106,8 +126,8 @@ for(d in datasets) {
     lcount <- lcount/n.folds
     lcount <- c(mean(lcount), lcount)
 
-    layers[full.names, tech] <- lcount
+    layers[which(r.filtering), tech] <- lcount
   }
 }
 
-write.csv(layers, paste0(where.save, "/complete_layers.csv"), row.names=TRUE)
+write.csv(layers, paste0(where.save, "/complete_layers.csv"), row.names=F)
