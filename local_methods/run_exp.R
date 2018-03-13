@@ -17,9 +17,12 @@ suppressMessages(library(kernlab))
 suppressMessages(library(ranger))
 #Extra libs
 source("../utils_and_includes/utils_MT.R")
-# DSTARS -> Default
+# DSTARST and DSTARS -> Defaults
+# Used only by DSTARST
 n.folds.tracking <- 10
+# Used by both DSTARS* versions
 dstars.delta <- 0.0001
+
 #DRS -> Default
 number.layers <- 10
 
