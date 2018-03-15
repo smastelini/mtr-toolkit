@@ -4,10 +4,11 @@ library(reshape2)
 library(ggplot2)
 library(randomForest)
 
-dataset.folder <- "~/MEGA/Experimentos/exp_A1-ExpertSystems/datasets"
-out.path <- "~/MEGA/Experimentos/exp_A1-ExpertSystems/correlation_analysis"
-bases <- c("base_PM_TR", "base_WB_TR")
-n.targets <- c(5, 6)
+dataset.folder <- "~/MEGA/MT_datasets"
+out.path <- "~/Desktop/dissertacao_corr"
+
+bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
+n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
 
 
 deps <- list()
@@ -37,7 +38,7 @@ plot_corr <- function(dplot, plot.title, out.path) {
   ggplot(data = dplot, aes(x=Targetsx, y=Targetsy, fill = abs(value))) +
     geom_tile(color = "white") + 
     scale_fill_gradient2(name=plot.title, low = "gray", mid = "darkgray", high = "black", limit = c(0,1)) +
-    theme(axis.text.x = element_text(angle = 0, vjust = 1, 
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, 
                                      size = 12, hjust = 0.5),
           axis.text.y = element_text(angle = 0, vjust = 0.5, 
                                      size = 12, hjust = 0)) +
