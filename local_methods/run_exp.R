@@ -49,7 +49,7 @@ for(mt in mt.techs) {
 }
 
 for(mt in mt.techs) {
-  print(mt)
+	print(mt)
 	if(mt != "MORF") {
 		for(tech in techs) {
 			if(tech == "parrf") {

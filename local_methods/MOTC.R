@@ -65,7 +65,7 @@ buildChainTree <- function(motc, x.train, y.train, x.test, tech, targets, t.id) 
 		# Leaf node
 		if(length(edg) == 1 && is.na(motc$tree[edg,dest])) {
 			# Verifies if the leaf node's ST model was already trained
-			if(is.null(mp$leafs.tr[[motc$hash[t.node]]]) &&
+			if(is.null(mp$leafs.tr[[paste0("l.", motc$hash[t.node])]]) &&
 				is.null(mp$tr[[motc$hash[t.node]]])) {
 
 				regressor <- train_(bct$xtr, bct$ytr[[motc$hash[t.node]]], tech, targets)
