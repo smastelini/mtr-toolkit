@@ -4,7 +4,7 @@
 \alias{MORF}
 \title{Creates a Random Forest ensemble of Multi-target Regression Trees -- Multi-output Random Forest (MORF) (as in CLUS).}
 \usage{
-MORF(x, y, n.trees = 100, mtry = NULL, ftest.signf = 0.05, min.size = 5,
+MORF(x, y, n.trees = 10, mtry = NULL, ftest.signf = 0.05, min.size = 5,
   max.depth = Inf, parallel = FALSE)
 }
 \arguments{

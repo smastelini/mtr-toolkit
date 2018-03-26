@@ -9,7 +9,7 @@ Description: This packages currently implements Multi-target Regression Trees an
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
-Imports: Rcpp (>= 0.12.12), parallel, data.table
+Imports: Rcpp, parallel, data.table
 Depends: data.table
 LinkingTo: Rcpp
 RoxygenNote: 6.0.1

@@ -5,6 +5,10 @@ prototype <- function(X) {
     .Call('_mtrToolkit_prototype', PACKAGE = 'mtrToolkit', X)
 }
 
+col_vars <- function(X) {
+    .Call('_mtrToolkit_col_vars', PACKAGE = 'mtrToolkit', X)
+}
+
 variance <- function(X) {
     .Call('_mtrToolkit_variance', PACKAGE = 'mtrToolkit', X)
 }
@@ -19,10 +23,6 @@ euclideanDist <- function(x, y) {
 
 calcEuclideanDist <- function(x, centroid) {
     .Call('_mtrToolkit_calcEuclideanDist', PACKAGE = 'mtrToolkit', x, centroid)
-}
-
-col_vars <- function(X) {
-    .Call('_mtrToolkit_col_vars', PACKAGE = 'mtrToolkit', X)
 }
 
 best_split <- function(attr, Y, actual_var, actual_ss, ftest_signf = 0.05) {

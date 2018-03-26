@@ -88,22 +88,22 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 
 			# Naive stopping criterion
 			if(length(idx) <= min.size || this.level > max.depth) {
-				nodes$n <- new.env(parent = emptyenv())
-				nodes$n$descendants <- NULL
+				n <- new.env(parent = emptyenv())
+				n$descendants <- NULL
 				if(length(idx) == 1)
 					l.pred <- unname(Y[idx,])
 				else
 					l.pred <- prototype(Y[idx,])
 
-				nodes$n$protot <- l.pred
-				# nodes$n$eval <- function(node) {
+				n$protot <- l.pred
+				# n$eval <- function(node) {
 				# 	node$protot
 				# }
 				# Saves node for posterior reference
-				nodes$elem[[as.character(this.id)]] <- nodes$n
+				nodes$elem[[as.character(this.id)]] <- n
 
 				if(this.id > 1)
-					link2Parent(nodes$n, parent.id, branch)
+					link2Parent(n, parent.id, branch)
 
 				if(thereAreNodes2Visit())
 					next
@@ -118,19 +118,19 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 
 			# Second stopping criteria
 			if(all(is.na(bests[1]))) {
-				nodes$n <- new.env(parent = emptyenv())
-				nodes$n$descendants <- NULL
+				n <- new.env(parent = emptyenv())
+				n$descendants <- NULL
 				l.pred <- prototype(Y[idx,])
 
-				nodes$n$protot <- l.pred
-				# nodes$n$eval <- function(node) {
+				n$protot <- l.pred
+				# n$eval <- function(node) {
 				# 	node$protot
 				# }
 				# Saves node for posterior reference
-				nodes$elem[[as.character(this.id)]] <- nodes$n
+				nodes$elem[[as.character(this.id)]] <- n
 
 				if(this.id > 1)
-					link2Parent(nodes$n, parent.id, branch)
+					link2Parent(n, parent.id, branch)
 
 				rm(bests)
 				if(thereAreNodes2Visit())
@@ -141,25 +141,25 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 
 			best.s <- which.max(unlist(bests[2], use.names = F))
 
-			nodes$n <- new.env(parent = emptyenv())
-			nodes$n$split.name <- names(bests)[best.s]
-			nodes$n$split.val <- unlist(bests[1, best.s, with = F], use.names = F)
+			n <- new.env(parent = emptyenv())
+			n$split.name <- names(bests)[best.s]
+			n$split.val <- unlist(bests[1, best.s, with = F], use.names = F)
 
-			# nodes$n$eval <- function(new, node) {
+			# n$eval <- function(new, node) {
 			# 	as.numeric(new > node$split.val) + 1
 			# }
-			nodes$n$descendants <- list()
+			n$descendants <- list()
 			# TODO categorical features
-			length(nodes$n$descendants) <- 2
+			length(n$descendants) <- 2
 
 			if(this.id > 1)
-				link2Parent(nodes$n, parent.id, branch)
+				link2Parent(n, parent.id, branch)
 
 			# Saves node for posterior reference
-			nodes$elem[[as.character(this.id)]] <- nodes$n
+			nodes$elem[[as.character(this.id)]] <- n
 
 			# Induced data partition
-			part <- X[idx, best.s, with = FALSE] <= nodes$n$split.val
+			part <- X[idx, best.s, with = FALSE] <= n$split.val
 
 			addNode2Visit(idx[part], node.id, this.id, 1, this.level + 1)
 			addNode2Visit(idx[!part], node.id + 1, this.id, 2, this.level + 1)
@@ -176,7 +176,7 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 	Y <- as.matrix(Y)
 	tree <- build.MTRT.inc()
 
-  targets <- colnames(Y)
+	targets <- colnames(Y)
 	rm(nodes, X, Y)
 
 	retr <- list(tree = unlist(tree, recursive = F), targets = targets, type = "MTRT")

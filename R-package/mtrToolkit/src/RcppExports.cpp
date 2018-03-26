@@ -16,6 +16,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// col_vars
+NumericVector col_vars(NumericMatrix X);
+RcppExport SEXP _mtrToolkit_col_vars(SEXP XSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    rcpp_result_gen = Rcpp::wrap(col_vars(X));
+    return rcpp_result_gen;
+END_RCPP
+}
 // variance
 double variance(NumericMatrix X);
 RcppExport SEXP _mtrToolkit_variance(SEXP XSEXP) {
@@ -62,17 +73,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// col_vars
-NumericVector col_vars(NumericMatrix X);
-RcppExport SEXP _mtrToolkit_col_vars(SEXP XSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
-    rcpp_result_gen = Rcpp::wrap(col_vars(X));
-    return rcpp_result_gen;
-END_RCPP
-}
 // best_split
 List best_split(NumericVector attr, NumericMatrix Y, double actual_var, double actual_ss, double ftest_signf);
 RcppExport SEXP _mtrToolkit_best_split(SEXP attrSEXP, SEXP YSEXP, SEXP actual_varSEXP, SEXP actual_ssSEXP, SEXP ftest_signfSEXP) {
@@ -91,11 +91,11 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_mtrToolkit_prototype", (DL_FUNC) &_mtrToolkit_prototype, 1},
+    {"_mtrToolkit_col_vars", (DL_FUNC) &_mtrToolkit_col_vars, 1},
     {"_mtrToolkit_variance", (DL_FUNC) &_mtrToolkit_variance, 1},
     {"_mtrToolkit_homogeneity", (DL_FUNC) &_mtrToolkit_homogeneity, 1},
     {"_mtrToolkit_euclideanDist", (DL_FUNC) &_mtrToolkit_euclideanDist, 2},
     {"_mtrToolkit_calcEuclideanDist", (DL_FUNC) &_mtrToolkit_calcEuclideanDist, 2},
-    {"_mtrToolkit_col_vars", (DL_FUNC) &_mtrToolkit_col_vars, 1},
     {"_mtrToolkit_best_split", (DL_FUNC) &_mtrToolkit_best_split, 5},
     {NULL, NULL, 0}
 };

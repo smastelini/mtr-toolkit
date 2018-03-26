@@ -17,25 +17,28 @@ NumericVector prototype(NumericMatrix X) {
 }
 
 // [[Rcpp::export]]
+NumericVector col_vars(NumericMatrix X) {
+  int n_col = X.ncol();
+  int n_row = X.nrow();
+  NumericVector result(n_col);
+
+  NumericVector m = prototype(X);
+
+  for(int i=0; i < n_row; i++) {
+    result += pow(X.row(i) - m, 2);
+  }
+
+  result = result/(n_row-1);
+
+  return result;
+}
+
+// [[Rcpp::export]]
 double variance(NumericMatrix X) {
 	if(X.nrow() <= 1 || X.ncol() == 0)
 		return 0.0;
 
-	double result = 0.0;
-	int n_col = X.ncol();
-	int n_row = X.nrow();
-
-	NumericVector m = prototype(X);
-
-	for(int j = 0; j < n_col; j++) {
-		double mnv = m(j);
-		double varS = 0.0;
-		for(int i = 0; i < n_row; i++) {
-			varS += pow(X(i,j) - mnv, 2);
-		}
-
-		result += varS/(n_row-1);
-	}
+	double result = sum(col_vars(X));
 
 	return result;
 }
@@ -75,27 +78,6 @@ NumericVector calcEuclideanDist(NumericMatrix x, NumericVector centroid){
 	}
 
 	return out;
-}
-
-// [[Rcpp::export]]
-NumericVector col_vars(NumericMatrix X) {
-	int n_col = X.ncol();
-	int n_row = X.nrow();
-	NumericVector result = no_init(n_col);
-
-	NumericVector m = prototype(X);
-
-	for(int j = 0; j < n_col; j++) {
-		double mnv = m(j);
-		double varS = 0.0;
-		for(int i = 0; i < n_row; i++) {
-			varS += pow(X(i,j) - mnv, 2);
-		}
-
-		result(j) = varS/(n_row-1);
-	}
-
-	return result;
 }
 
 std::list<int> whichRcpp(LogicalVector x) {
@@ -189,10 +171,14 @@ List best_split(NumericVector attr, NumericMatrix Y, double actual_var, double a
 
   sum_ss = homogeneity(sub_part1) + homogeneity(sub_part2);
 
-  f_test = (n_row-2)*(actual_ss-sum_ss)/sum_ss;
+  // f_test = (n_row-2)*(actual_ss-sum_ss)/sum_ss;
+  f_test = (actual_ss/(n_row-1))/(sum_ss/(n_row-2));
+
+  Rprintf("F-test: %f\n", f_test);
 
   // It have passed the F-test
-  if(f_test > R::qf(1 - ftest_signf, 1, n_row-2, true, false)) {
+  // if(f_test > R::qf(1 - ftest_signf, 1, n_row-2, true, false)) {
+  if(f_test > R::qf(ftest_signf, n_row-1, n_row-2, true, false)) {
     retr["split"] = best_s;
     retr["heur"] = best_h;
 

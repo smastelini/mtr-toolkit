@@ -9,7 +9,7 @@
 #' @param parallel Whether to build the forest in parallel, using all disponible cores (Default = FALSE).
 #' @return A MORF model
 #' @export
-MORF <- function(x, y, n.trees = 100, mtry = NULL, ftest.signf = 0.05, min.size = 5, max.depth = Inf, parallel = FALSE) {
+MORF <- function(x, y, n.trees = 10, mtry = NULL, ftest.signf = 0.05, min.size = 5, max.depth = Inf, parallel = FALSE) {
 	if(is.null(mtry))
 		mtry <- max(floor(log2(ncol(x) + 1)), 1)
 	if(!parallel) {
