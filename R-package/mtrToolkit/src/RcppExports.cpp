@@ -74,17 +74,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // best_split
-List best_split(NumericVector attr, NumericMatrix Y, double actual_var, double actual_ss, double ftest_signf);
-RcppExport SEXP _mtrToolkit_best_split(SEXP attrSEXP, SEXP YSEXP, SEXP actual_varSEXP, SEXP actual_ssSEXP, SEXP ftest_signfSEXP) {
+List best_split(NumericVector attr, NumericMatrix Y, double actual_var, NumericVector actual_prot, double ftest_signf);
+RcppExport SEXP _mtrToolkit_best_split(SEXP attrSEXP, SEXP YSEXP, SEXP actual_varSEXP, SEXP actual_protSEXP, SEXP ftest_signfSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type attr(attrSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type Y(YSEXP);
     Rcpp::traits::input_parameter< double >::type actual_var(actual_varSEXP);
-    Rcpp::traits::input_parameter< double >::type actual_ss(actual_ssSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type actual_prot(actual_protSEXP);
     Rcpp::traits::input_parameter< double >::type ftest_signf(ftest_signfSEXP);
-    rcpp_result_gen = Rcpp::wrap(best_split(attr, Y, actual_var, actual_ss, ftest_signf));
+    rcpp_result_gen = Rcpp::wrap(best_split(attr, Y, actual_var, actual_prot, ftest_signf));
     return rcpp_result_gen;
 END_RCPP
 }

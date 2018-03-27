@@ -1,3 +1,3 @@
 #' @useDynLib mtrToolkit
-#' @importFrom Rcpp sourceCpp data.table
+#' @importFrom Rcpp sourceCpp
 NULL

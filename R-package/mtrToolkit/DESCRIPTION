@@ -1,7 +1,7 @@
 Package: mtrToolkit
 Type: Package
 Title: A R Toolkit for multi-target regression methods
-Version: 0.1.0
+Version: 0.2.0
 Author: Saulo Martiello Mastelini
 Maintainer: Saulo Martiello Mastelini <saulomastelini@gmail.com>
 Description: This packages currently implements Multi-target Regression Trees and Ensembles thereof, as in the Clus framework. Besides that, a novel method called k-Random Clusters Regression Tree (KRCRT) is presented. As its name indicates, KRCRT creates random clusters for partitioning data and building multi-target regression trees. KRCRT is intended for use in ensembles.

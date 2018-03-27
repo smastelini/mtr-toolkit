@@ -78,7 +78,7 @@ for(i in 1:length(bases)) {
                                              col.names.targets))
 
 
-    morf <- mtrToolkit::MORF(x.train, y.train, parallel=T)
+    morf <- mtrToolkit::MORF(x.train, y.train, parallel=T, n.trees=100, ftest.signf=0.05)
     predictions <- mtrToolkit::predict(morf, x.test)
     rm(morf)
 

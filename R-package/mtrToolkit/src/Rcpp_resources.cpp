@@ -110,7 +110,7 @@ NumericMatrix subset_matrix(NumericMatrix X, std::list<int> idxs) {
 }
 
 // [[Rcpp::export]]
-List best_split(NumericVector attr, NumericMatrix Y, double actual_var, double actual_ss, double ftest_signf = 0.05) {
+List best_split(NumericVector attr, NumericMatrix Y, double actual_var, NumericVector actual_prot, double ftest_signf = 0.05) {
   NumericVector to_eval = sort_unique(attr);
 
   List retr;
@@ -125,7 +125,8 @@ List best_split(NumericVector attr, NumericMatrix Y, double actual_var, double a
 
   double best_h = 0;
   double best_s = NumericVector::get_na();
-  double split_p, h, var_p1, var_p2, sum_ss, f_test;
+  double split_p, h, var_p1, var_p2, sum_bh, sum_ih, f_test;
+  NumericVector prot_b1, prot_b2;
   std::list<int> part1, part2;
 
   NumericMatrix sub_part1, sub_part2;
@@ -148,6 +149,7 @@ List best_split(NumericVector attr, NumericMatrix Y, double actual_var, double a
 
     // Heuristic calculation
     h = actual_var - (branch1 + branch2);
+    
 
     if(h > best_h) {
       best_h = h;
@@ -155,36 +157,31 @@ List best_split(NumericVector attr, NumericMatrix Y, double actual_var, double a
     }
   }
 
-  // Gains weren't observed
-  if(best_h == 0) {
-    retr["split"] = NumericVector::get_na();
-    retr["heur"] = 0;
-    return retr;
-  }
-
-  // Perform F Test once
   part1 = whichRcpp(attr <= best_s);
   part2 = whichRcpp(attr > best_s);
 
   sub_part1 = subset_matrix(Y, part1);
   sub_part2 = subset_matrix(Y, part2);
 
-  sum_ss = homogeneity(sub_part1) + homogeneity(sub_part2);
+  sum_ih = homogeneity(sub_part1) + homogeneity(sub_part2);
 
-  // f_test = (n_row-2)*(actual_ss-sum_ss)/sum_ss;
-  f_test = (actual_ss/(n_row-1))/(sum_ss/(n_row-2));
+  prot_b1 = prototype(sub_part1);
+  prot_b2 = prototype(sub_part2);
 
-  Rprintf("F-test: %f\n", f_test);
+  sum_bh = part1.size()*sum(pow(actual_prot - prot_b1, 2)) +
+             part2.size()*sum(pow(actual_prot - prot_b2, 2));
 
-  // It have passed the F-test
-  // if(f_test > R::qf(1 - ftest_signf, 1, n_row-2, true, false)) {
-  if(f_test > R::qf(ftest_signf, n_row-1, n_row-2, true, false)) {
+  f_test = sum_bh/(sum_ih/(n_row-2));
+
+    // Rcout << "NUM: " << sum_bh << " DEN: " << sum_ih/(n_row-2) << " F-Test: " << f_test << " Crit-val:" << R::qf(1-ftest_signf, 1, n_row-2, true, false) << "\n";
+
+  if(f_test > R::qf(1-ftest_signf, 1, n_row-2, true, false)) {
     retr["split"] = best_s;
     retr["heur"] = best_h;
-
-  } else {// It didn't make through this
+  } else {
     retr["split"] = NumericVector::get_na();
     retr["heur"] = 0;
   }
+  
   return retr;
 }

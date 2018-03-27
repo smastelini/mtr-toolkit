@@ -25,7 +25,7 @@ calcEuclideanDist <- function(x, centroid) {
     .Call('_mtrToolkit_calcEuclideanDist', PACKAGE = 'mtrToolkit', x, centroid)
 }
 
-best_split <- function(attr, Y, actual_var, actual_ss, ftest_signf = 0.05) {
-    .Call('_mtrToolkit_best_split', PACKAGE = 'mtrToolkit', attr, Y, actual_var, actual_ss, ftest_signf)
+best_split <- function(attr, Y, actual_var, actual_prot, ftest_signf = 0.05) {
+    .Call('_mtrToolkit_best_split', PACKAGE = 'mtrToolkit', attr, Y, actual_var, actual_prot, ftest_signf)
 }
 

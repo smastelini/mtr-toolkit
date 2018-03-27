@@ -4,7 +4,7 @@
 \alias{MTRT}
 \title{Creates Multi-target Regression Trees (MTRT), as in CLUS}
 \usage{
-MTRT(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf)
+MTRT(X, Y, ftest.signf = 0.05, min.size = 2, max.depth = Inf)
 }
 \arguments{
 \item{X, }{Y The input features and target variables respectively}

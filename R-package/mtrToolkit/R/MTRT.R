@@ -6,7 +6,7 @@
 #' @param max.depth Maximum depth for generated trees (Default = Inf, split are made while it is possible)
 #' @return A MTRT model
 #' @export
-MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
+MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 2, max.depth = Inf) {
 	nodes <- new.env(parent = emptyenv())
 	# Nodes
 	nodes$tovisit <- list(NULL)
@@ -112,9 +112,9 @@ MTRT <- function(X, Y, ftest.signf = 0.05, min.size = 5, max.depth = Inf) {
 			}
 
 			this.var <- variance(Y[idx,])
-			this.ss <- homogeneity(Y[idx,])
+			this.prot <- prototype(Y[idx,])
 
-			bests <- X[idx, lapply(.SD, function(attr, T, acvar, acss) best_split(attr, T, acvar, acss), T = Y[idx,], acvar = this.var, acss = this.ss)]
+			bests <- X[idx, lapply(.SD, function(attr, T, acvar, acprot) best_split(attr, T, acvar, acprot), T = Y[idx,], acvar = this.var, acprot = this.prot)]
 
 			# Second stopping criteria
 			if(all(is.na(bests[1]))) {
