@@ -78,6 +78,10 @@ buildChainTree <- function(motc, x.train, y.train, x.test, tech, targets, t.id) 
 					mp$leafs.tr[[paste0("l.", motc$hash[t.node])]] <- predict_(regressor, bct$xtr, tech, targets)
 					mp$leafs.ts[[paste0("l.", motc$hash[t.node])]] <- predict_(regressor, bct$xts, tech, targets)
 				}
+			} else if(!is.null(mp$leafs.tr[[paste0("l.", motc$hash[t.node])]]) &&
+				is.null(mp$tr[[motc$hash[t.node]]])) {
+				mp$tr[[motc$hash[t.node]]] <- mp$leafs.tr[[paste0("l.", motc$hash[t.node])]]
+				mp$ts[[motc$hash[t.node]]] <- mp$leafs.ts[[paste0("l.", motc$hash[t.node])]]
 			}
 		} else {
 			for(e in edg)
