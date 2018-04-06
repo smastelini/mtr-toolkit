@@ -153,7 +153,7 @@ train_ <- function(x, y, tech='svm', targets) {
 		ranger={
 			# set(x, NULL, "Ranger_Target", y)
 			x[, Ranger_Target := y]
-		  ranger.form <- as.formula(paste0("Ranger_Target ~ ", paste(names(x)[-ncol(x)], collapse = " + ")))
+			ranger.form <- as.formula(paste0("Ranger_Target ~ ", paste(names(x)[-ncol(x)], collapse = " + ")))
 			reg <- ranger(ranger.form, data = x, verbose = F)
 			x[, Ranger_Target := NULL]
 			reg
@@ -243,4 +243,21 @@ getTargetImportance <- function(targets, method = "rf_imp") {
   rownames(timportance) <- colnames(timportance) <- colnames(targets)
 
   return(timportance)
+}
+
+getTargetCorrelations <- function(targets, method = "rf_imp") {
+	if(method == "rf_imp") {
+		timportance <- matrix(nrow = ncol(targets), ncol = ncol(targets))
+		for(t in seq(targets)) {
+			rf.aux <- randomForest::randomForest(targets, targets[[t]], importance = TRUE)
+			imp.aux <- randomForest::importance(rf.aux, type = 1)
+			timportance[t,] <- imp.aux
+		}
+	} else {
+		timportance <- abs(cor(targets, method = "pearson"))
+	}
+
+	rownames(timportance) <- colnames(timportance) <- colnames(targets)
+
+	return(timportance)
 }

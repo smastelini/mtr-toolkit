@@ -7,8 +7,9 @@ use.pls <- FALSE
 
 # bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
 # n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
-bases <- c("teste7")
-n.targets <- c(3)
+
+bases <- c("atp1d","oes97","osales","andro")
+n.targets <- c(6,16,12,6)
 
 # bases <- c("intacta_r_training", "intacta_rc_training", "intacta_rl_training", "intacta_rcl_training",
 # 					 "intacta_pca_training", "intacta_pcac_training", "intacta_pcal_training", "intacta_pcacl_training",
@@ -23,10 +24,10 @@ techs <- c("ranger", "svm")
 
 folds.num <- 10
 
-datasets.folder <- "~/Desktop/MTR-SYNTHETIC-BENCHMARKS/DATASET_7"
-output.prefix <- "~/Desktop/MTR-SYNTHETIC-BENCHMARKS/DATASET_7/out"
+datasets.folder <- "~/MEGA/MT_datasets"
+output.prefix <- "~/Desktop/MTR-ESR2"
 
-mt.techs <- c("ST", "MTRS", "ERC", "MOTC", "ORC", "DSTARS", "MTAS", "MTSG", "MTASD", "MTSGD")
+mt.techs <- c("ESR")
 # mt.techs <- c("ST")
 
 #Progress bar and remaining time exhibition
