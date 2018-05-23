@@ -85,7 +85,7 @@ for(i in seq(length(bases))) {
 			print(t)
 			for(m in seq(len.ensemble)) {
 				bootstrap.ids <- sample(nrow(x.train), replace=TRUE)
-				regressor <- train_(x.train[bootstrap.ids], y.train[bootstrap.ids, t, with=FALSE], tech, targets[[i]])
+				regressor <- train_(x.train[bootstrap.ids], y.train[bootstrap.ids, t, with=FALSE][[1]], tech, targets[[i]])
 				set(base.predictions.tr, NULL, paste(paste0("M", m), t, sep="."), predict_(regressor, x.train, tech, targets[[i]]))
 				set(base.predictions.ts, NULL, paste(paste0("M", m), t, sep="."), predict_(regressor, x.test, tech, targets[[i]]))
 			}
