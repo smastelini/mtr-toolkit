@@ -96,31 +96,34 @@ if(must.compare) {
 }
 
 if(generate.final.table) {
-	tabela <- data.frame(alg=character(0), aCC=numeric(0), ARE=numeric(0), MSE=numeric(0),
-					aRMSE=numeric(0), aRRMSE = numeric(0), mean.R2 = numeric(0), stringsAsFactors = F)
+	col.num <- 2*max(n.targets) + 6
+	tabela <- data.frame(matrix(nrow=0, ncol=col.num), stringsAsFactors = F)
 	b <- 1
 	for(i in bases) {
+		cnt <- 1
 		for(mt in mt.techs) {
-			tabela[nrow(tabela)+1,1] <- paste0("#", i, " -> ", mt)
 			log <- read.csv(paste0(paste0(output.prefix, "/comparison_results"), "/performance_", mt, "_", i, ".csv"), stringsAsFactors = F)
+			if(cnt == 1) {
+				c.nms <- c("Method/Algorithm", colnames(log)[2:ncol(log)])
+				tabela[nrow(tabela) + 1, 1:length(c.nms)] <- c.nms
+			}
+			tabela[nrow(tabela)+1,1] <- paste0("#", i, " -> ", mt)
 
-      if(mt != "MORF") {
-        rownames(log) <- techs
-        for(a in techs) {
-          tabela[nrow(tabela)+1,1] <- log[a,1]
-          tabela[nrow(tabela),2:ncol(tabela)] <- c(log[a,2:6], mean(as.numeric(log[a,7:(6+n.targets[b])])))
-        }
-      } else {
-        rownames(log) <- mt
-        tabela[nrow(tabela)+1,1] <- log[mt,1]
-        tabela[nrow(tabela),2:ncol(tabela)] <- c(log[mt,2:6], mean(as.numeric(log[mt,7:(6+n.targets[b])])))
-      }
-
-		}
+			if(mt != "MORF") {
+				rownames(log) <- techs
+				for(a in techs) {
+					tabela[nrow(tabela)+1, 1:ncol(log)] <- log[a,]
+				}
+			} else {
+				rownames(log) <- mt
+				tabela[nrow(tabela)+1, 1:ncol(log)] <- log
+			}
+			cnt <- cnt + 1
+		}	
 		b <- b + 1
 		tabela[nrow(tabela)+1,1] <- ""
 	}
-	write.csv(tabela, paste0(output.prefix, "/final_table.csv"), na = "", row.names = F)
+	write.table(tabela, paste0(output.prefix, "/final_table.csv"), na = "", row.names = F, col.names = F, quote = F, sep = ",")
 }
 
 if(generate.nemenyi.frame) {
