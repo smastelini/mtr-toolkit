@@ -261,3 +261,21 @@ getTargetCorrelations <- function(targets, method = "rf_imp") {
 
 	return(timportance)
 }
+
+getImportance <- function(x, y, method = "rf_imp") {
+	if(method == "rf_imp") {
+		timportance <- matrix(nrow = ncol(y), ncol = ncol(x))
+		for(t in seq(ncol(y))) {
+			rf.aux <- randomForest::randomForest(x, y[[t]], importance = TRUE)
+			imp.aux <- randomForest::importance(rf.aux, type = 1)
+			timportance[t,] <- imp.aux
+		}
+	} else {
+		timportance <- abs(cor(x, y, method = "pearson"))
+	}
+
+	rownames(timportance) <- colnames(y)
+	colnames(timportance) <- colnames(x)
+
+	return(timportance)
+}
