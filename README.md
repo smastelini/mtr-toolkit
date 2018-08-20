@@ -20,7 +20,7 @@ Currently, only local approaches are supported. The currently implemented method
 - ESR: Ensemble of Stacked Regressors (\*)
 
 
-Both SST (MTRS) and ERC were proposed by Spyromitros-Xioufis et. al (2016) and can be found in:
+Both SST (MTRS) and ERC were proposed by Spyromitros-Xioufis et al. (2016) and can be found in:
 
 - Spyromitros-Xioufis, E., Tsoumakas, G., Groves, W. and Vlahavas, I., 2016. Multi-target regression via input space expansion: treating targets as inputs. Machine Learning, 104(1), pp.55-98.
 
