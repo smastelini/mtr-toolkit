@@ -317,7 +317,7 @@ lapply(bases, function(b) {
 			}
 
 		})
-		performance.log[nrow(performance.log)+1, 1] <<- paste0(tech, " (phi=",phi, ")")
+		performance.log[nrow(performance.log)+1, 1] <<- paste0(tech, " (epsilon=", dstars.delta, " phi=", phi, ")")
 		performance.log[nrow(performance.log), -1] <<- colMeans(repetition.log)
 		write.csv(performance.log, paste0("../performance_DSTARST_", tech, "_", b, ".csv"), row.names = FALSE)
 	})

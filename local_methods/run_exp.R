@@ -47,6 +47,7 @@ for(mt in mt.techs) {
 	assign(paste0("output.dir.", tolower(mt)), paste0(output.prefix, "/", mt))
 }
 
+# Performs evaluation
 for(mt in mt.techs) {
 	print(mt)
   if(mt != "DSTARST") {
@@ -66,7 +67,6 @@ for(mt in mt.techs) {
 }
 
 if(must.compare) {
-	# mt.techs <- gsub("DSTARST", "DSTARS", mt.techs)
 	comparison.folder <- paste0(output.prefix, "/comparison_results")
 	dir.create(comparison.folder, showWarnings = FALSE, recursive = TRUE)
 	sapply(mt.techs, function(MT) {
@@ -75,13 +75,17 @@ if(must.compare) {
 			sapply(techs, function(tech) {
 				if(MT == "DRS")
 					to.merge <- read.csv(paste0(paste0(output.prefix, "/", MT), "/performance_", MT, "_", tech, "_", base, "_L", number.layers, ".csv"), stringsAsFactors = F)
-				else
+				else if(MT == "DSTARST") {
+          to.merge <- data.frame()
+          for(epsilon in dstars.epsilons) {
+            eps.aux <- read.csv(paste0(paste0(output.prefix, "/", MT, "_eps_", epsilon), "/performance_", MT, "_", tech, "_", base, ".csv"), stringsAsFactors = F)
+            best.phi <- which.min(eps.aux[, "aRRMSE"])
+            to.merge <- rbind(to.merge, eps.aux[best.phi,])
+          }
+        } else {
 					to.merge <- read.csv(paste0(paste0(output.prefix, "/", MT), "/performance_", MT, "_", tech, "_", base, ".csv"), stringsAsFactors = F)
+        }
 
-      	if(MT == "DSTARST") {
-        	best.phi <- which.min(to.merge[, "aRRMSE"])
-        	to.merge <- to.merge[best.phi,]
-     		}
 				merged <<- rbind(merged, to.merge)
 			})
 			write.csv(merged, paste0(comparison.folder, "/performance_", MT, "_", base, ".csv"), row.names = FALSE)
@@ -103,8 +107,7 @@ if(generate.final.table) {
 			}
 			tabela[nrow(tabela)+1,1] <- paste0("#", i, " -> ", mt)
 
-			rownames(log) <- techs
-			for(a in techs) {
+			for(a in seq(nrow(log))) {
 				tabela[nrow(tabela)+1, 1:ncol(log)] <- log[a,]
 			}
 			cnt <- cnt + 1

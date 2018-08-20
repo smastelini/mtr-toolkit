@@ -7,11 +7,10 @@ use.pls <- FALSE
 
 # Adicionar tabela com grid
 dstars.phis <- c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
-dstars.epsilons <- c(10^-1, 10^-2, 10^-3, 10^-4)
+dstars.epsilons <- c(10^-2, 10^-3, 10^-4)
 
-
-bases <- c("atp1d","oes97","osales","andro")
-n.targets <- c(6,16,12,6)
+bases <- c("atp1d", "oes97", "osales", "andro")
+n.targets <- c(6, 16, 12, 6)
 
 bases.teste <- NULL
 
@@ -28,8 +27,8 @@ mt.techs <- c("DSTARST")
 #Progress bar and remaining time exhibition
 showProgress <- FALSE
 
-must.compare <- FALSE
-generate.final.table <- FALSE
+must.compare <- TRUE
+generate.final.table <- TRUE
 generate.nemenyi.frame <- FALSE
 ###############################################################################
 ###############################################################################
