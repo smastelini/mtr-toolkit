@@ -1,6 +1,5 @@
 rm(list = ls())
 suppressMessages(library(data.table))
-suppressMessages(library(mtrToolkit))
 suppressMessages(library(e1071))
 suppressMessages(library(RSNNS))
 suppressMessages(library(plyr))
@@ -50,18 +49,20 @@ for(mt in mt.techs) {
 
 for(mt in mt.techs) {
 	print(mt)
-	if(mt != "MORF") {
-		for(tech in techs) {
-			if(tech == "parrf") {
-				suppressMessages(library(foreach))
-				suppressMessages(library(doSNOW))
-				registerDoSNOW(makeCluster(7, type="SOCK"))
-			}
-			source(paste0(mt, ".R"))
-		}
-	} else {
-		source(paste0(mt, ".R"))
-	}
+  if(mt != "DSTARST") {
+    for(tech in techs) {
+      source(paste0(mt, ".R"))
+    }
+  } else {
+    prefix.folder.dstarst <- output.dir.dstarst
+    for(dstars.delta in dstars.epsilons) {
+      print(paste0("Epsilon=", dstars.delta))
+      output.dir.dstarst <- paste0(prefix.folder.dstarst, "_eps_", dstars.delta)
+      for(tech in techs) {
+        source("DSTARST.R")
+      }
+    }
+  }
 }
 
 if(must.compare) {
@@ -71,25 +72,18 @@ if(must.compare) {
 	sapply(mt.techs, function(MT) {
 		sapply(bases, function(base) {
 			merged <<- data.frame()
-			if(MT != "MORF") {
-				sapply(techs, function(tech) {
-					if(MT == "DRS")
-						to.merge <- read.csv(paste0(paste0(output.prefix, "/", MT), "/performance_", MT, "_", tech, "_", base, "_L", number.layers, ".csv"), stringsAsFactors = F)
-					else
-						to.merge <- read.csv(paste0(paste0(output.prefix, "/", MT), "/performance_", MT, "_", tech, "_", base, ".csv"), stringsAsFactors = F)
+			sapply(techs, function(tech) {
+				if(MT == "DRS")
+					to.merge <- read.csv(paste0(paste0(output.prefix, "/", MT), "/performance_", MT, "_", tech, "_", base, "_L", number.layers, ".csv"), stringsAsFactors = F)
+				else
+					to.merge <- read.csv(paste0(paste0(output.prefix, "/", MT), "/performance_", MT, "_", tech, "_", base, ".csv"), stringsAsFactors = F)
 
-        	if(MT == "DSTARST") {
-          	best.phi <- which.min(to.merge[,"aRRMSE"])
-          	to.merge <- to.merge[best.phi,]
-       		}
-					merged <<- rbind(merged, to.merge)
-				# merged[nrow(merged),1] <<- tech
-				})
-			} else {
-				to.merge <- read.csv(paste0(paste0(output.prefix, "/", MT), "/performance_", MT, "_", base, ".csv"), stringsAsFactors = F)
+      	if(MT == "DSTARST") {
+        	best.phi <- which.min(to.merge[, "aRRMSE"])
+        	to.merge <- to.merge[best.phi,]
+     		}
 				merged <<- rbind(merged, to.merge)
-			}
-
+			})
 			write.csv(merged, paste0(comparison.folder, "/performance_", MT, "_", base, ".csv"), row.names = FALSE)
 		})
 	})
@@ -109,17 +103,12 @@ if(generate.final.table) {
 			}
 			tabela[nrow(tabela)+1,1] <- paste0("#", i, " -> ", mt)
 
-			if(mt != "MORF") {
-				rownames(log) <- techs
-				for(a in techs) {
-					tabela[nrow(tabela)+1, 1:ncol(log)] <- log[a,]
-				}
-			} else {
-				rownames(log) <- mt
-				tabela[nrow(tabela)+1, 1:ncol(log)] <- log
+			rownames(log) <- techs
+			for(a in techs) {
+				tabela[nrow(tabela)+1, 1:ncol(log)] <- log[a,]
 			}
 			cnt <- cnt + 1
-		}	
+		}
 		b <- b + 1
 		tabela[nrow(tabela)+1,1] <- ""
 	}
@@ -127,10 +116,7 @@ if(generate.final.table) {
 }
 
 if(generate.nemenyi.frame) {
-  not.morf <- mt.techs != "MORF"
-  nemenyi.cols <- apply(expand.grid(mt.techs[not.morf], techs), 1, paste, collapse=".")
-  if("MORF" %in% mt.techs)
-    nemenyi.cols <- c(nemenyi.cols, "MORF")
+  nemenyi.cols <- apply(expand.grid(mt.techs, techs), 1, paste, collapse=".")
 
   nemenyi <- data.frame(matrix(nrow=length(bases), ncol = length(nemenyi.cols)))
   colnames(nemenyi) <- nemenyi.cols
@@ -139,13 +125,8 @@ if(generate.nemenyi.frame) {
   for(b in seq(length(bases))) {
     for(mt in mt.techs) {
       log <- read.csv(paste0(paste0(output.prefix, "/comparison_results"), "/performance_", mt, "_", bases[b], ".csv"), stringsAsFactors = F)
-
-      if(mt != "MORF") {
-        for(i in seq(length(techs))) {
-          nemenyi[b, paste(mt, techs[i], sep = ".")] <- log[i, "aRRMSE"]
-        }
-      } else {
-        nemenyi[b, mt] <- log[1, "aRRMSE"]
+      for(i in seq(length(techs))) {
+        nemenyi[b, paste(mt, techs[i], sep = ".")] <- log[i, "aRRMSE"]
       }
     }
   }

@@ -5,18 +5,13 @@ use.pls <- FALSE
 # bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
 # n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
 
-# bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
-# n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
+# Adicionar tabela com grid
+dstars.phis <- c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
+dstars.epsilons <- c(10^-1, 10^-2, 10^-3, 10^-4)
+
 
 bases <- c("atp1d","oes97","osales","andro")
 n.targets <- c(6,16,12,6)
-
-# bases <- c("intacta_r_training", "intacta_rc_training", "intacta_rl_training", "intacta_rcl_training",
-# 					 "intacta_pca_training", "intacta_pcac_training", "intacta_pcal_training", "intacta_pcacl_training",
-# 					 "moida_r_training", "moida_rc_training", "moida_rl_training", "moida_rcl_training",
-# 					 "moida_pca_training", "moida_pcac_training", "moida_pcal_training", "moida_pcacl_training")
-
-# n.targets <- rep(9, length(bases))
 
 bases.teste <- NULL
 
@@ -24,18 +19,18 @@ techs <- c("ranger", "svm")
 
 folds.num <- 10
 
-datasets.folder <- "~/MEGA/MT_datasets"
-output.prefix <- "~/Desktop/MTR-ESR2"
+datasets.folder <- "~/Desktop/mtr_datasets"
+output.prefix <- "~/Desktop/GRID_TEST"
 
-mt.techs <- c("ESR")
+mt.techs <- c("DSTARST")
 # mt.techs <- c("ST")
 
 #Progress bar and remaining time exhibition
 showProgress <- FALSE
 
-must.compare <- TRUE
-generate.final.table <- TRUE
-generate.nemenyi.frame <- TRUE
+must.compare <- FALSE
+generate.final.table <- FALSE
+generate.nemenyi.frame <- FALSE
 ###############################################################################
 ###############################################################################
 ###############################################################################

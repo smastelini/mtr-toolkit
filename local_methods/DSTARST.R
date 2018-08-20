@@ -1,7 +1,7 @@
-dir.create(paste0(output.dir.dstarst, "/output_logs/tuning_raw_logs"), showWarnings = FALSE, recursive = TRUE)
+# dir.create(paste0(output.dir.dstarst, "/output_logs/tuning_raw_logs"), showWarnings = FALSE, recursive = TRUE)
 dir.create(paste0(output.dir.dstarst, "/output_logs/convergence_layers_logs"), showWarnings = FALSE, recursive = TRUE)
-dir.create(paste0(output.dir.dstarst, "/output_logs/modelling_raw_logs"), showWarnings = FALSE, recursive = TRUE)
-dir.create(paste0(output.dir.dstarst, "/output_logs/testing_raw_logs"), showWarnings = FALSE, recursive = TRUE)
+# dir.create(paste0(output.dir.dstarst, "/output_logs/modelling_raw_logs"), showWarnings = FALSE, recursive = TRUE)
+# dir.create(paste0(output.dir.dstarst, "/output_logs/testing_raw_logs"), showWarnings = FALSE, recursive = TRUE)
 dir.create(paste0(output.dir.dstarst, "/output_logs/testing_final_logs"), showWarnings = FALSE, recursive = TRUE)
 
 targets <- list()
@@ -180,6 +180,7 @@ for(i in 1:length(bases)) {
 						predictions.validation[[k]][, (paste(rlayer,t,sep=".")) := predict_(regressor, tck.val, tech, targets[[i]])]
 
 						rmse.validation <- RMSE(predictions.validation[[k]][[t]], predictions.validation[[k]][[paste(rlayer,t,sep=".")]])
+						# Aqui: Transformar o dstars.delta em um valor da matriz designada pelo método Taguchi
 						if(rmse.validation + dstars.delta > error.validation[t]) {
 							converged[t] <- TRUE
 						} else {
@@ -199,8 +200,8 @@ for(i in 1:length(bases)) {
 				rlayer <- rlayer + 1
 			}
 
-			write.csv(data.frame(id=modelling.names[training.idx], predictions.training[[k]], check.names = F), paste0(output.dir.dstarst, "/output_logs/tuning_raw_logs/", bases[i], "_", tech, "_training_predictions_EV_fold_", formatC(j, width=2, flag="0"), "_TN_fold", formatC(k, width=2, flag="0"), ".csv"), row.names = F)
-			write.csv(data.frame(id=modelling.names[validation.idx], predictions.validation[[k]], check.names = F), paste0(output.dir.dstarst, "/output_logs/tuning_raw_logs/", bases[i], "_", tech, "_validation_predictions_EV_fold_", formatC(j, width=2, flag="0"), "_TN_fold", formatC(k, width=2, flag="0"), ".csv"), row.names = F)
+			# write.csv(data.frame(id=modelling.names[training.idx], predictions.training[[k]], check.names = F), paste0(output.dir.dstarst, "/output_logs/'tuning'_raw_logs/", bases[i], "_", tech, "_training_predictions_EV_fold_", formatC(j, width=2, flag="0"), "_TN_fold", formatC(k, width=2, flag="0"), ".csv"), row.names = F)
+			# write.csv(data.frame(id=modelling.names[validation.idx], predictions.validation[[k]], check.names = F), paste0(output.dir.dstarst, "/output_logs/tuning_raw_logs/", bases[i], "_", tech, "_validation_predictions_EV_fold_", formatC(j, width=2, flag="0"), "_TN_fold", formatC(k, width=2, flag="0"), ".csv"), row.names = F)
 		}
 
 		rm(predictions.training, predictions.validation)
@@ -209,10 +210,10 @@ for(i in 1:length(bases)) {
 		invisible(convergence.tracking[, names(convergence.tracking) := lapply(.SD, function(nmrd, dnmd) nmrd/dnmd, dnmd = n.folds.tracking)])
 
 		# Test different phi values
-		for(dstars.phi in seq(0,1, 0.1)) {
+		for(dstars.phi in dstars.phis) {
 			dir.create(paste0(output.dir.dstarst, "/output_logs/convergence_layers_logs/phi=",dstars.phi), showWarnings = FALSE, recursive = TRUE)
-			dir.create(paste0(output.dir.dstarst, "/output_logs/modelling_raw_logs/phi=",dstars.phi), showWarnings = FALSE, recursive = TRUE)
-			dir.create(paste0(output.dir.dstarst, "/output_logs/testing_raw_logs/phi=",dstars.phi), showWarnings = FALSE, recursive = TRUE)
+			# dir.create(paste0(output.dir.dstarst, "/output_logs/modelling_raw_logs/phi=",dstars.phi), showWarnings = FALSE, recursive = TRUE)
+			# dir.create(paste0(output.dir.dstarst, "/output_logs/testing_raw_logs/phi=",dstars.phi), showWarnings = FALSE, recursive = TRUE)
 			dir.create(paste0(output.dir.dstarst, "/output_logs/testing_final_logs/phi=",dstars.phi), showWarnings = FALSE, recursive = TRUE)
 
 			convergence.tracking_ <- convergence.tracking[, lapply(.SD, function(z, threshold) z >= threshold, threshold = dstars.phi)]
@@ -273,8 +274,8 @@ for(i in 1:length(bases)) {
 				rlayer <- rlayer + 1
 			}
 
-			write.csv(data.frame(id=modelling.names, predictions.modelling, check.names = F), paste0(output.dir.dstarst, "/output_logs/modelling_raw_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_modelling_predictions_fold", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
-			write.csv(data.frame(id=testing.names, predictions.testing, check.names = F), paste0(output.dir.dstarst, "/output_logs/testing_raw_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_testing_predictions_fold", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
+			# write.csv(data.frame(id=modelling.names, predictions.modelling, check.names = F), paste0(output.dir.dstarst, "/output_logs/modelling_raw_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_modelling_predictions_fold", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
+			# write.csv(data.frame(id=testing.names, predictions.testing, check.names = F), paste0(output.dir.dstarst, "/output_logs/testing_raw_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_testing_predictions_fold", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
 
 			final.predictions <- testing.set.y
 			final.predictions[, (paste0(targets[[i]], ".pred")) := predictions.testing[, paste(convergence.layers_[nrow(convergence.layers_),-1], targets[[i]],sep="."), with = F]]
@@ -292,7 +293,7 @@ lapply(bases, function(b) {
 	names.perf.log <- c("aCC", "ARE", "MSE", "aRMSE", "aRRMSE", paste0("R2.", targets[[i]]), paste0("RMSE.", targets[[i]]))
 	performance.log <<- data.frame(dataset=character(0), as.data.frame(setNames(replicate(length(names.perf.log),numeric(0),
 							simplify = F), names.perf.log)), stringsAsFactors = FALSE)
-	lapply(seq(0,1, 0.1), function(phi) {
+	lapply(dstars.phis, function(phi) {
 
 
 		repetition.log <<- as.data.frame(setNames(replicate(length(names.perf.log),numeric(0),

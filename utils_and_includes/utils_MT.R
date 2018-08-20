@@ -147,9 +147,6 @@ train_ <- function(x, y, tech='svm', targets) {
 		  lr.form <- as.formula(paste0("LR_Target ~ ", paste(colnames(x), collapse = " + ")))
 			lm(lr.form, data = data2fit)
 		},
-		parrf={
-			foreach(ntree = c(70,70,70,70,70,70,80), .combine = combine, .packages = "randomForest") %dopar% randomForest(x, y, ntree = ntree)
-		},
 		ranger={
 			# set(x, NULL, "Ranger_Target", y)
 			x[, Ranger_Target := y]
