@@ -9,17 +9,11 @@ Some of the solutions are, currently, under tests. A documentation (possibly) wi
 Currently, only local approaches are supported. The currently implemented methods are (MTR methods proposed by Mastelini are marked with \*):
 
 - ST: Single-target
-
 - MTRS: Multi-target Regressor Stacking (a.k.a. SST -- Stacked Single-target)
-
 - ERC: Ensemble of Regressor Chains
-
 - DSTARS: Deep Structure for Tracking Asynchronous Regressor Stacking (\*)
-
 - DRS: Deep Regressor Stacking (\*)
-
 - MTAS: Multi-target Augmented Stacking (\*)
-
 - MOTC: Multi-output Tree Chaining (\*)
 - ORC: Optimum Regressor Chains (\*)
 - MTSG: Multi-target Stacked Generalization (\*)
