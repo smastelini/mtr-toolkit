@@ -37,7 +37,7 @@ where *configuration_file.R* is an input file containing configuration parameter
 An example of possible configuration file is presented below:
 
 
-```
+```R
 ###############################################################################
 #############################General settings##################################
 ###############################################################################
