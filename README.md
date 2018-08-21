@@ -1,4 +1,4 @@
-#mtr-toolkit: A multi-target regression (MTR) toolkit in R!
+# mtr-toolkit: A multi-target regression (MTR) toolkit in R!
 
 This project implements current state-of-the-art MTR solutions, as well as, new methods proposed by *Saulo Martiello Mastelini* (in conjunction with other researchers, e.g., *Sylvio Barbon Jr.* and *Everton Jose Santana*).
 
@@ -24,7 +24,7 @@ Both SST (MTRS) and ERC were proposed by Spyromitros-Xioufis et al. (2016) and c
 
 *I will add the corresponding papers for our methods ASAP (the ones that were already published).*
 
-##Basic usage:
+## Basic usage:
 
 All the implemented MTR methods are under *local_methods/*. To run an experiment the employed command is:
 
