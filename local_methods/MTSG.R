@@ -48,7 +48,6 @@ for(i in 1:length(bases)) {
 	y <- dataset[, targets[[i]], with = FALSE]
 
 	print(bases[i])
-	#print(bases[i])
 
 	col.names.targets <- c()
 	for(t in targets[[i]]) {

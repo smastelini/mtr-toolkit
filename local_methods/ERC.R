@@ -73,7 +73,6 @@ for(i in 1:length(bases)) {
 
 	# Cross validation
 	for(k in 1:folds.num) {
-		#print(paste0("Fold ", k))
 		print(paste0("Fold ", k))
 
 		if(folds.num == 1) {

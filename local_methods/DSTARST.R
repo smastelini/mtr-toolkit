@@ -125,11 +125,11 @@ for(i in 1:length(bases)) {
 		colnames(convergence.layers) <- c("folds/layers", targets[[i]])
 		convergence.tracking <- as.data.table(setNames(replicate(length(targets[[i]]), numeric(0), simplify = F), targets[[i]]))
 
-		print(paste("Tuning"))
+		print("Tracking")
 
 		# Cross validation
 		for(k in 1:n.folds.tracking) {
-			if(showProgress){pb$tick()}else{print(paste("Fold tuning", k))}
+			print(paste("Fold tuning", k))
 			validation.idx <- ((k-1)*len.fold.tuning + 1):(ifelse(k==n.folds.tracking, nrow(modelling.set.x), k*len.fold.tuning))
 			training.idx <- if(n.folds.tracking == 1) validation.idx else setdiff(1:nrow(modelling.set.x), validation.idx)
 
@@ -163,7 +163,7 @@ for(i in 1:length(bases)) {
 			converged <- uncorr
 			rlayer <- 1
 			while(!all(converged)) {
-				if(showProgress){pb$tick()}else{print(paste("Layer", rlayer))}
+				print(paste("Layer", rlayer))
 
 				for(t in targets[[i]]) {
 					if(!uncorr[t]) {

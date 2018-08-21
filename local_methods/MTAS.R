@@ -48,7 +48,6 @@ for(i in 1:length(bases)) {
 	y <- dataset[, targets[[i]], with = FALSE]
 
 	print(bases[i])
-	#print(bases[i])
 
 	col.names.targets <- c()
 	for(t in targets[[i]]) {
@@ -115,13 +114,13 @@ for(i in 1:length(bases)) {
 
 		print("Level 1")
 		for(t in targets[[i]]) {
-			else{print(t)
-				for(sgr in stacked.regressors) {
-					regressor <- train_(x.train, y.train[[t]], sgr, targets[[i]])
+			print(t)
+			for(sgr in stacked.regressors) {
+				regressor <- train_(x.train, y.train[[t]], sgr, targets[[i]])
 
-					set(predictions.l1.train, NULL, paste(sgr,t,sep="."), predict_(regressor, x.train, sgr, targets[[i]]))
-					set(predictions.l1.test, NULL, paste(sgr,t,sep="."), predict_(regressor, x.test, sgr, targets[[i]]))
-				}
+				set(predictions.l1.train, NULL, paste(sgr,t,sep="."), predict_(regressor, x.train, sgr, targets[[i]]))
+				set(predictions.l1.test, NULL, paste(sgr,t,sep="."), predict_(regressor, x.test, sgr, targets[[i]]))
+			}
 		}
 
 		print("Level 2")
