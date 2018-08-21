@@ -44,8 +44,7 @@ for(i in 1:length(bases)) {
 	x <- dataset[, !targets[[i]], with = FALSE]
 	y <- dataset[, targets[[i]], with = FALSE]
 
-	if(showProgress){pb$tick()}else{print(bases[i])}
-	#print(bases[i])
+	print(bases[i])
 
 	col.names.targets <- c()
 	for(t in targets[[i]]) {
@@ -75,7 +74,7 @@ for(i in 1:length(bases)) {
 	# Cross validation
 	for(k in 1:folds.num) {
 		#print(paste0("Fold ", k))
-		if(showProgress){pb$tick()}else{print(paste0("Fold ", k))}
+		print(paste0("Fold ", k))
 
 		if(folds.num == 1) {
 			if(length(bases.teste) > 0) {

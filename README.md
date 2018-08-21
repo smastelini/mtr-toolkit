@@ -1,12 +1,10 @@
-# mtr-toolkit
+#mtr-toolkit: A multi-target regression (MTR) toolkit in R!
 
-mtr-toolkit: A multi-target regression (MTR) toolkit in R!
-
-This project implements current state-of-the-art MTR solutions, as well as, new methods proposed by Saulo Martiello Mastelini (in conjunction with other researchers, e.g., Sylvio Barbon Jr. and Everton Jose Santana).
+This project implements current state-of-the-art MTR solutions, as well as, new methods proposed by *Saulo Martiello Mastelini* (in conjunction with other researchers, e.g., *Sylvio Barbon Jr.* and *Everton Jose Santana*).
 
 Some of the solutions are, currently, under tests. A documentation (possibly) will be created as the codes are improved and new publications are obtained.
 
-Currently, only local approaches are supported. The currently implemented methods are (MTR methods proposed by Mastelini are marked with \*):
+Currently, only local approaches are supported. The currently implemented methods are (MTR methods proposed by *Mastelini* are marked with \*):
 
 - ST: Single-target
 - MTRS: Multi-target Regressor Stacking (a.k.a. SST -- Stacked Single-target)
@@ -22,6 +20,66 @@ Currently, only local approaches are supported. The currently implemented method
 
 Both SST (MTRS) and ERC were proposed by Spyromitros-Xioufis et al. (2016) and can be found in:
 
-- Spyromitros-Xioufis, E., Tsoumakas, G., Groves, W. and Vlahavas, I., 2016. Multi-target regression via input space expansion: treating targets as inputs. Machine Learning, 104(1), pp.55-98.
+*- Spyromitros-Xioufis, E., Tsoumakas, G., Groves, W. and Vlahavas, I., 2016. Multi-target regression via input space expansion: treating targets as inputs. Machine Learning, 104(1), pp.55-98.*
 
-*** I will add the corresponding papers for our methods ASAP (the ones that were already published). ***
+*I will add the corresponding papers for our methods ASAP (the ones that were already published).*
+
+##Basic usage:
+
+All the implemented MTR methods are under *local_methods/*. To run an experiment the employed command is:
+
+```
+Rscript run_exp.R configuration_file.R
+```
+
+where *configuration_file.R* is an input file containing configuration parameters for running the experiments (e.g., datasets, number of targets, methods, regressors, output folder/file, etc.).
+
+An example of possible configuration file is presented below:
+
+
+```
+###############################################################################
+#############################General settings##################################
+###############################################################################
+
+# Determine whether to employ PLS as a feature extractor (PLS' scores are used as new input features)
+use.pls <- FALSE
+
+# Defines the datasets and their corresponding number of targets
+bases <- c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
+n.targets <- c(6,6,16,16,8,8,16,16,2,3,3,3,14,2,3,6,12,3)
+
+# Defines values for tuning the DSTARS algorithm (only used by the DSTARST version)
+dstars.phis <- c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
+dstars.epsilons <- c(10^-2, 10^-3, 10^-4)
+
+# Determines external testing sets. This option must be used along the setting of folds.num to 1
+bases.teste <- NULL
+
+# Determines the regression techniques to be used
+techs <- c("ranger", "svm")
+
+# Determines the number of CV folds for evaluation. (Use this parameter as 1 in conjunction with input test sets for train then test evaluations)
+folds.num <- 10
+
+# Determines the folder in which the input datasets are
+datasets.folder <- "~/Desktop/mtr_datasets"
+# Determines an output folder for results writing
+output.prefix <- "~/Desktop/GRID_TEST"
+
+# Determines the MTR methods to be run
+mt.techs <- c("ST", "MTRS", "ERC", "DSTARST")
+
+# Whether to unify the output logs of a same MTR method and different regressors
+must.compare <- TRUE
+# Whether to create a final table, comprising all the obtained results
+generate.final.table <- TRUE
+# Wheter to present the aRRMSE values of all methods in a table for easy comparison using statistical tests
+generate.nemenyi.frame <- FALSE
+###############################################################################
+###############################################################################
+###############################################################################
+
+```
+
+*The other folds in this repository have additional tools for MTR data analysis and plot. The corresponding documentation will be added in the future.*

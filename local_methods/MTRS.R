@@ -45,7 +45,7 @@ for(i in 1:length(bases)) {
 	x <- dataset[, !targets[[i]], with = FALSE]
 	y <- dataset[, targets[[i]], with = FALSE]
 
-	if(showProgress){}else{print(bases[i])}
+	print(bases[i])
 	#print(bases[i])
 
 	col.names.targets <- c()
@@ -56,7 +56,7 @@ for(i in 1:length(bases)) {
 
 	# Cross validation
 	for(k in 1:folds.num) {
-	  if(showProgress){}else{print(paste0("Fold ", k))}
+	  print(paste0("Fold ", k))
 
 		if(folds.num == 1) {
 			if(length(bases.teste) > 0) {
@@ -88,19 +88,19 @@ for(i in 1:length(bases)) {
 		prediction.log <- as.data.table(setNames(replicate(length(col.names.targets),numeric(nrow(x.test)), simplify = F),
 																									col.names.targets))
 
-		if(showProgress){}else{print("Level 1")}
+		print("Level 1")
 		for(t in targets[[i]]) {
-		  if(showProgress){pb$tick()}else{print(t)}
+		  print(t)
 			regressor <- train_(x.train, y.train[[t]], tech, targets[[i]])
 			predictions.l1.train[[t]] <- predict_(regressor, x.train, tech, targets[[i]])
 			predictions.l1.test[[t]] <- predict_(regressor, x.test, tech, targets[[i]])
 		}
 
-		if(showProgress){}else{print("Level 2")}
+		print("Level 2")
 		x.train[, (targets[[i]]) := predictions.l1.train]
 		x.test[, (targets[[i]]) := predictions.l1.test]
 		for(t in targets[[i]]) {
-		  if(showProgress){pb$tick()}else{print(t)}
+		  print(t)
 			regressor <- train_(x.train, y.train[[t]], tech, targets[[i]])
 			predictions <- predict_(regressor, x.test, tech, targets[[i]])
 			prediction.log[[t]] <- y.test[[t]]

@@ -47,7 +47,7 @@ for(i in 1:length(bases)) {
 	x <- dataset[, !targets[[i]], with = FALSE]
 	y <- dataset[, targets[[i]], with = FALSE]
 
-	if(showProgress){}else{print(bases[i])}
+	print(bases[i])
 	#print(bases[i])
 
 	col.names.targets <- c()
@@ -58,7 +58,7 @@ for(i in 1:length(bases)) {
 
 	# Cross validation
 	for(k in 1:folds.num) {
-	  if(showProgress){}else{print(paste0("Fold ", k))}
+	  print(paste0("Fold ", k))
 
 		if(folds.num == 1) {
 			if(length(bases.teste) > 0) {
@@ -113,9 +113,9 @@ for(i in 1:length(bases)) {
 		prediction.log <- as.data.table(setNames(replicate(length(col.names.targets),numeric(nrow(x.test)), simplify = F),
 																									col.names.targets))
 
-		if(showProgress){}else{print("Level 1")}
+		print("Level 1")
 		for(t in targets[[i]]) {
-			if(showProgress){pb$tick()}else{print(t)}
+			else{print(t)
 				for(sgr in stacked.regressors) {
 					regressor <- train_(x.train, y.train[[t]], sgr, targets[[i]])
 
@@ -124,12 +124,12 @@ for(i in 1:length(bases)) {
 				}
 		}
 
-		if(showProgress){}else{print("Level 2")}
+		print("Level 2")
 		for(t in targets[[i]]) {
 			chosen.t <- targets[[i]][rf.importance[[t]]]
 			names.t.l2 <- apply(expand.grid(stacked.regressors, chosen.t), 1, paste, collapse=".")
 
-		  if(showProgress){pb$tick()}else{print(t)}
+		  print(t)
 
 			x.train[, (names.t.l2) := predictions.l1.train[, names.t.l2, with = FALSE]]
 			x.test[, (names.t.l2) := predictions.l1.test[, names.t.l2, with = FALSE]]

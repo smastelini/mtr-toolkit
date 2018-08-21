@@ -25,8 +25,14 @@ dstars.delta <- 0.0001
 #DRS -> Default
 number.layers <- 10
 
+args = commandArgs(trailingOnly=TRUE)
+if(length(args) == 0) {
+  stop("At least one argument must be supplied (input file)", call.=FALSE)
+}
+
 #Loads configuration file
-source("config.R")
+# source("config.R")
+source(args[1])
 
 # exp.random.seeds <- sample(99999, length(bases))
 exp.random.seeds <- rep(5465, length(bases))

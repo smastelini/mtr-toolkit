@@ -48,10 +48,10 @@ for(i in 1:length(bases)) {
 	x <- dataset[,!targets[[i]], with = FALSE]
 	y <- dataset[,targets[[i]], with = FALSE]
 
-	if(showProgress){}else{print(bases[i])}
+	print(bases[i])
 
 	for(j in 1:folds.num) {
-		if(showProgress){}else{print(paste("Fold Training:", j))}
+		print(paste("Fold Training:", j))
 		if(folds.num == 1) {
 			if(length(bases.teste) > 0) {
 				modelling.idx <- 1:(init.bound-1)
@@ -125,7 +125,7 @@ for(i in 1:length(bases)) {
 		colnames(convergence.layers) <- c("folds/layers", targets[[i]])
 		convergence.tracking <- as.data.table(setNames(replicate(length(targets[[i]]), numeric(0), simplify = F), targets[[i]]))
 
-		if(showProgress){}else{print(paste("Tuning"))}
+		print(paste("Tuning"))
 
 		# Cross validation
 		for(k in 1:n.folds.tracking) {
@@ -222,7 +222,7 @@ for(i in 1:length(bases)) {
 			convergence.layers_ <- rbindlist(list(convergence.layers, as.list(c("modelling", as.numeric(convergence.tracking_[,lapply(.SD, function(z) BBmisc::which.last(z) - 1)])))))
 			write.csv(convergence.layers_, paste0(output.dir.dstarst, "/output_logs/convergence_layers_logs/phi=", dstars.phi, "/", bases[i], "_", tech, "_convergence_layers_EV_fold_", formatC(j, width=2, flag="0"), ".csv"), row.names = F)
 
-			if(showProgress){}else{print(paste("Fold", j, ", phi = ", dstars.phi, ", final modelling"))}
+			print(paste("Fold", j, ", phi = ", dstars.phi, ", final modelling"))
 
 			predictions.modelling <- y[modelling.idx]
 			predictions.testing <- y[testing.idx]
@@ -230,7 +230,7 @@ for(i in 1:length(bases)) {
 			max.layers.reached <- rep(FALSE, n.targets[i])
 			names(max.layers.reached) <- targets[[i]]
 
-			if(showProgress){}else{print("Layer 0")}
+			print("Layer 0")
 
 			for(t in targets[[i]]) {
 				regressor <- train_(modelling.set.x, modelling.set.y[[t]], tech, targets[[i]])
@@ -247,7 +247,7 @@ for(i in 1:length(bases)) {
 			rlayer <- 1
 
 			while(!all(max.layers.reached)) {
-				if(showProgress){}else{print(paste("Layer", rlayer))}
+				print(paste("Layer", rlayer))
 				for(t in targets[[i]]) {
 					if(convergence.tracking_[rlayer+1][[t]]) {
 						modelling.set.x_ <- x[modelling.idx]

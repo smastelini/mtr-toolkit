@@ -204,13 +204,13 @@ for(i in 1:length(bases)) {
 	x <- dataset[, !targets[[i]], with = FALSE]
 	y <- dataset[, targets[[i]], with = FALSE]
 
-	if(showProgress){}else{print(bases[i])}
+	print(bases[i])
 
 	model.count <- data.table(fold = seq(folds.num), model_count = rep(0, folds.num))
 
 	# Cross validation
 	for(k in 1:folds.num) {
-		if(showProgress){}else{print(paste0("Fold ", k))}
+		print(paste0("Fold ", k))
 
 		if(folds.num == 1) {
 			if(length(bases.teste) > 0) {

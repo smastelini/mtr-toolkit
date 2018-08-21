@@ -47,11 +47,11 @@ for(i in seq(length(bases))) {
 	x <- dataset[, !targets[[i]], with = FALSE]
 	y <- dataset[, targets[[i]], with = FALSE]
 
-	if(showProgress){} else {print(bases[i])}
-	
+	print(bases[i])
+
 	# Cross validation
 	for(k in 1:folds.num) {
-	  if(showProgress){} else {print(paste0("Fold ", k))}
+	  print(paste0("Fold ", k))
 
 		if(folds.num == 1) {
 			if(length(bases.teste) > 0) {

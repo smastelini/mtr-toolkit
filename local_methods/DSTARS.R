@@ -48,10 +48,10 @@ for(i in 1:length(bases)) {
 	x <- dataset[,!targets[[i]], with = FALSE]
 	y <- dataset[,targets[[i]], with = FALSE]
 
-	if(showProgress){}else{print(bases[i])}
+	print(bases[i])
 
 	for(j in 1:folds.num) {
-		if(showProgress){}else{print(paste("Fold Training:", j))}
+		print(paste("Fold Training:", j))
 		if(folds.num == 1) {
 			if(length(bases.teste) > 0) {
 				modelling.idx <- 1:(init.bound-1)
@@ -103,7 +103,7 @@ for(i in 1:length(bases)) {
 
 		cont <- 1
 		for(t in targets[[i]]) {
-			rf.aux <- randomForest::randomForest((predictions.validation[,paste(0,targets[[i]],sep="."), with = FALSE]), 
+			rf.aux <- randomForest::randomForest((predictions.validation[,paste(0,targets[[i]],sep="."), with = FALSE]),
 				predictions.validation[[t]], importance = TRUE)
 			imp.aux <- randomForest::importance(rf.aux, type = 1)
 			imp.aux[imp.aux < 0] <- 0
@@ -114,7 +114,7 @@ for(i in 1:length(bases)) {
 		}
 
 		rownames(timportance) <- colnames(timportance) <- targets[[i]]
-		write.csv(timportance, paste0(output.dir.dstars, "/output_logs/convergence_layers_logs/", 
+		write.csv(timportance, paste0(output.dir.dstars, "/output_logs/convergence_layers_logs/",
 			bases[i], "_", tech, "_RF_importance_", formatC(j, width=2, flag="0"), ".csv"))
 		###################################################################################
 
@@ -123,7 +123,7 @@ for(i in 1:length(bases)) {
 		colnames(convergence.layers) <- c("folds/layers", targets[[i]])
 		convergence.tracking <- as.data.table(setNames(replicate(length(targets[[i]]), logical(0), simplify = F), targets[[i]]))
 
-		if(showProgress){} else {print(paste("Tracking"))}
+		print(paste("Tracking"))
 
 		# Training
 		converged <- rep(FALSE, n.targets[i])
@@ -148,7 +148,7 @@ for(i in 1:length(bases)) {
 		convergence.layers <- rep(0, n.targets[i])
 		names(convergence.layers) <- targets[[i]]
 		convergence.tracking <- rbindlist(list(convergence.tracking, as.list(!converged)))
-		
+
 		# Separates (uncorrelated) ST tasks
 		converged <- uncorr
 		rlayer <- 1
@@ -162,7 +162,7 @@ for(i in 1:length(bases)) {
 
 					chosen.t <- targets[[i]][rf.importance[[t]]]
 
-					tck.tra[,(chosen.t) := predictions.training[, paste(convergence.layers[chosen.t], 
+					tck.tra[,(chosen.t) := predictions.training[, paste(convergence.layers[chosen.t],
 						chosen.t,sep="."), with = FALSE]]
 					tck.val[,(chosen.t) := predictions.validation[, paste(convergence.layers[chosen.t],
 						chosen.t,sep="."), with = FALSE]]
@@ -192,12 +192,12 @@ for(i in 1:length(bases)) {
 			"/output_logs/tuning_raw_logs/", bases[i], "_", tech, "_training_predictions_EV_fold_", formatC(j, width=2, flag="0"), ".csv"),
 				row.names = F)
 		write.csv(data.frame(id=modelling.names[oob.idx], predictions.validation, check.names = F), paste0(output.dir.dstars,
-			"/output_logs/tuning_raw_logs/", bases[i], "_", tech, "_validation_predictions_EV_fold_", formatC(j, width=2, flag="0"), ".csv"), 
+			"/output_logs/tuning_raw_logs/", bases[i], "_", tech, "_validation_predictions_EV_fold_", formatC(j, width=2, flag="0"), ".csv"),
 				row.names = F)
 
 		rm(predictions.training, predictions.validation)
-		write.csv(data.frame(layer=0:(nrow(convergence.tracking)-1), convergence.tracking, check.names = F), 
-			paste0(output.dir.dstars, "/output_logs/convergence_layers_logs/", bases[i], "_", tech, "_convergence_accounting_EV_fold_", 
+		write.csv(data.frame(layer=0:(nrow(convergence.tracking)-1), convergence.tracking, check.names = F),
+			paste0(output.dir.dstars, "/output_logs/convergence_layers_logs/", bases[i], "_", tech, "_convergence_accounting_EV_fold_",
 				formatC(j, width=2, flag="0"), ".csv"), row.names = F)
 
 		convergence.layers <- as.numeric(convergence.tracking[, lapply(.SD, function(z) BBmisc::which.last(z) - 1)])
@@ -210,7 +210,7 @@ for(i in 1:length(bases)) {
 		names(max.layers.reached) <- targets[[i]]
 
 		print("Final Modelling")
-		if(showProgress){}else{print("Layer 0")}
+		print("Layer 0")
 
 		for(t in targets[[i]]) {
 			regressor <- train_(modelling.set.x, modelling.set.y[[t]], tech, targets[[i]])
@@ -227,7 +227,7 @@ for(i in 1:length(bases)) {
 		rlayer <- 1
 
 		while(!all(max.layers.reached)) {
-			if(showProgress){}else{print(paste("Layer", rlayer))}
+			print(paste("Layer", rlayer))
 			for(t in targets[[i]]) {
 				if(convergence.tracking[rlayer+1][[t]]) {
 					chosen.t <- targets[[i]][rf.importance[[t]]]
@@ -266,7 +266,7 @@ for(i in 1:length(bases)) {
 		final.predictions[, (paste0(targets[[i]], ".pred")) := predictions.testing[, paste(convergence.layers,
 			targets[[i]], sep="."), with = F]]
 
-		write.csv(data.frame(id=testing.names, final.predictions, check.names = F), paste0(output.dir.dstars, 
+		write.csv(data.frame(id=testing.names, final.predictions, check.names = F), paste0(output.dir.dstars,
 			"/output_logs/testing_final_logs/", bases[i], "_", tech, "_testing_final_predictions_fold",
 				formatC(j, width=2, flag="0"), ".csv"), row.names = F)
 	}
@@ -280,11 +280,11 @@ lapply(bases, function(b) {
 	names.perf.log <- c("aCC", "ARE", "MSE", "aRMSE", "aRRMSE", paste0("R2.", targets[[i]]), paste0("RMSE.", targets[[i]]))
 	performance.log <<- data.frame(dataset=character(0), as.data.frame(setNames(replicate(length(names.perf.log),numeric(0),
 							simplify = F), names.perf.log)), stringsAsFactors = FALSE)
-	
+
 	repetition.log <<- as.data.frame(setNames(replicate(length(names.perf.log),numeric(0),
 							simplify = F), names.perf.log), stringsAsFactors = FALSE)
 	lapply(1:folds.num, function(k) {
-		log <- read.csv(paste0(getwd(), "/testing_final_logs/", b, "_", tech, "_testing_final_predictions_fold", 
+		log <- read.csv(paste0(getwd(), "/testing_final_logs/", b, "_", tech, "_testing_final_predictions_fold",
 			formatC(k, width=2, flag="0"), ".csv"))
 		repetition.log[nrow(repetition.log)+1, "aCC"] <<- aCC(log, targets[[i]])
 		repetition.log[nrow(repetition.log), "ARE"] <<- ARE(log, targets[[i]])
@@ -306,7 +306,7 @@ lapply(bases, function(b) {
 	performance.log[nrow(performance.log)+1, 1] <<- tech
 	performance.log[nrow(performance.log), -1] <<- colMeans(repetition.log)
 	write.csv(performance.log, paste0("../performance_DSTARS_", tech, "_", b, ".csv"), row.names = FALSE)
-	
+
 	i <<- i + 1
 })
 setwd(actual.folder)
