@@ -52,11 +52,6 @@ exp.random.seeds <- rep(5465, length(bases))
 cat("Generated random seeds:\n")
 cat(paste0(paste(exp.random.seeds, collapse="-"), "\n"))
 
-#ProgressBar creation
-if(showProgress){
-  source("progress_exp.R")
-}
-
 #Max. PLS components to evaluate
 train.test$comp.limit <- 40
 
