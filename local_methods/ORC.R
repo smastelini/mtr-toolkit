@@ -91,8 +91,8 @@ for(i in 1:length(bases)) {
 	len.fold <- round(nrow(dataset)/folds.num)
 
 	###################################Use a testing set#####################################
-	if(length(bases.teste) > 0 && folds.num == 1) {
-		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
+	if(length(bases.test) > 0 && folds.num == 1) {
+		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.test[i], ".csv"))
 		dataset.teste <- as.data.table(dataset.teste)
 		invisible(dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)])
 
@@ -107,16 +107,16 @@ for(i in 1:length(bases)) {
 	x <- dataset[, !targets[[i]], with = FALSE]
 	y <- dataset[, targets[[i]], with = FALSE]
 
-	if(showProgress){}else{print(bases[i])}
+	cat(paste0(bases[i], "\n"))
 
 	model.count <- data.table(fold = seq(folds.num), model_count = rep(0, folds.num))
 
 	# Cross validation
 	for(k in 1:folds.num) {
-		if(showProgress){}else{print(paste0("Fold ", k))}
+		cat(paste0("Fold ", k, "\n"))
 
 		if(folds.num == 1) {
-			if(length(bases.teste) > 0) {
+			if(length(bases.test) > 0) {
 				train.idx <- 1:(init.bound-1)
 				test.idx <- init.bound:nrow(dataset)
 			} else {
@@ -136,7 +136,7 @@ for(i in 1:length(bases)) {
 
 		###########################################Importance calc##############################################
 		timportance <- getTargetImportance(y.train, orc.importance.tech)
-		write.csv(timportance, paste0(output.dir.orc, "/out_imp_assessment/", tech, "/", bases[i], "_importance_fold", 
+		write.csv(timportance, paste0(output.dir.orc, "/out_imp_assessment/", tech, "/", bases[i], "_importance_fold",
 			formatC(k, width=2, flag="0"), ".csv"))
 		########################################################################################################
 
@@ -148,8 +148,8 @@ for(i in 1:length(bases)) {
 		trained.leaves <- rep(FALSE, n.targets[i])
 
 		names(leaves.tr) <- names(leaves.ts) <- names(trained.leaves) <- targets[[i]]
-		
-		
+
+
 		orc.max.depth <- round(ifelse(n.targets[i] >= 6, log2(n.targets[i]+1), 2*log2(n.targets[i]+1)))
 
 
@@ -201,7 +201,7 @@ for(i in 1:length(bases)) {
 
 					trained.leaves[orc$hash[l]] <- TRUE
 				}
-				
+
 				rc.pos <- 1
 				set(raw.tr, NULL, paste0("RC", formatC(rc.count, width=3, flag="0"), ".",
 					formatC(rc.pos, width=2, flag="0"), ".", orc$hash[l]), preds.tr)
@@ -244,7 +244,7 @@ for(i in 1:length(bases)) {
 				rc.count <- rc.count + 1
 			}
 
-			
+
 			if(nrow(orc$tree) > 1) {
 				cols.n <- paste0("RC", formatC(seq(rc.count - 1), width=3, flag="0"), ".",
 							formatC(lastt.rc, width=2, flag="0"), ".", orc$hash[1])
@@ -261,12 +261,12 @@ for(i in 1:length(bases)) {
 
 			write.csv(data.frame(id=sample.names[train.idx], raw.tr, check.names = F),
 				paste0(output.dir.orc, "/raw_logs/", tech, "/raw_ORC_training_",
-					bases[i], "_fold", formatC(k, width=2, flag="0"), "_T", 
+					bases[i], "_fold", formatC(k, width=2, flag="0"), "_T",
 						formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
 
 			write.csv(data.frame(id=sample.names[test.idx], raw.ts, check.names = F),
 				paste0(output.dir.orc, "/raw_logs/", tech, "/raw_ORC_testing_",
-					bases[i], "_fold", formatC(k, width=2, flag="0"), "_T", 
+					bases[i], "_fold", formatC(k, width=2, flag="0"), "_T",
 						formatC(t.cont, width=2, flag="0"), ".csv"), row.names = FALSE)
 
 			t.cont <- t.cont + 1
@@ -277,7 +277,7 @@ for(i in 1:length(bases)) {
 
 		write.csv(data.frame(id=sample.names[test.idx], logs.ts, check.names = F),
 			paste0(output.dir.orc, "/prediction_logs/", tech,"/predictions_ORC_", bases[i],
-				paste0("_fold", formatC(k, width=2, flag="0")), ".csv"), 
+				paste0("_fold", formatC(k, width=2, flag="0")), ".csv"),
 					row.names = FALSE)
 	}
 

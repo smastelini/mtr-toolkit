@@ -31,8 +31,8 @@ for(i in seq(length(bases))) {
 	len.fold <- round(nrow(dataset)/folds.num)
 
 	######Use a testing set
-	if(length(bases.teste) > 0 && folds.num == 1) {
-		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
+	if(length(bases.test) > 0 && folds.num == 1) {
+		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.test[i], ".csv"))
 		dataset.teste <- as.data.table(dataset.teste)
 		invisible(dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)])
 
@@ -47,14 +47,14 @@ for(i in seq(length(bases))) {
 	x <- dataset[, !targets[[i]], with = FALSE]
 	y <- dataset[, targets[[i]], with = FALSE]
 
-	if(showProgress){} else {print(bases[i])}
-	
+	cat(paste0(bases[i], "\n"))
+
 	# Cross validation
 	for(k in 1:folds.num) {
-	  if(showProgress){} else {print(paste0("Fold ", k))}
+	  cat(paste0("Fold ", k, "\n"))
 
 		if(folds.num == 1) {
-			if(length(bases.teste) > 0) {
+			if(length(bases.test) > 0) {
 				train.idx <- 1:(init.bound-1)
 				test.idx <- init.bound:nrow(dataset)
 			} else {
@@ -80,9 +80,9 @@ for(i in seq(length(bases))) {
 		names(base.predictions.tr) <- names(base.predictions.ts) <- names.basep
 
 		# Base predictors
-		print("Base predictions")
+		cat("Base predictions\n")
 		for(t in targets[[i]]) {
-			print(t)
+			cat(paste0(t, "\n"))
 			for(m in seq(len.ensemble)) {
 				bootstrap.ids <- sample(nrow(x.train), replace=TRUE)
 				regressor <- train_(x.train[bootstrap.ids], y.train[bootstrap.ids, t, with=FALSE][[1]], tech, targets[[i]])
@@ -101,9 +101,9 @@ for(i in seq(length(bases))) {
 
 		predictions.log <- y.test
 
-		print("Meta predictions")
+		cat("Meta predictions\n")
 		for(t in targets[[i]]) {
-			print(t)
+			cat(paste0(t, "\n"))
 			filtered <- targets[[i]][target.imp[t,] > 0]
 			filt.cn <- as.vector(outer(paste0("M", seq(len.ensemble)), filtered, paste, sep="."))
 

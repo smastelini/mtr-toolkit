@@ -26,7 +26,7 @@ for(tech in techs) {
     median.log[d, "aRRMSE.std"] <- sd(log[, "aRRMSE"])
     median.log[d, "median.phi"] <- seq(0,1,0.1)[which(log[, "aRRMSE"] == median(log[, "aRRMSE"]))[1]]
   }
-  g <- ggplot(aes(y = aRRMSE, x = dataset, fill=dataset), data = datap) + geom_boxplot() + 
+  g <- ggplot(aes(y = aRRMSE, x = dataset, fill=dataset), data = datap) + geom_boxplot() +
   	guides(fill=FALSE) + scale_fill_hue(l=40) + xlab("Base de dados")
 
   ggsave(paste0(where.save, "/boxplot_DSTARS_", regs[tech], ".pdf"), g, width=10, height=5)

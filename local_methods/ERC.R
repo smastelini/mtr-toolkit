@@ -28,8 +28,8 @@ for(i in 1:length(bases)) {
 	len.fold <- round(nrow(dataset)/folds.num)
 
 	######Use a testing set
-	if(length(bases.teste) > 0 && folds.num == 1) {
-		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
+	if(length(bases.test) > 0 && folds.num == 1) {
+		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.test[i], ".csv"))
 		dataset.teste <- as.data.table(dataset.teste)
 		invisible(dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)])
 
@@ -44,8 +44,7 @@ for(i in 1:length(bases)) {
 	x <- dataset[, !targets[[i]], with = FALSE]
 	y <- dataset[, targets[[i]], with = FALSE]
 
-	if(showProgress){pb$tick()}else{print(bases[i])}
-	#print(bases[i])
+	cat(paste0(bases[i], "\n"))
 
 	col.names.targets <- c()
 	for(t in targets[[i]]) {
@@ -74,11 +73,10 @@ for(i in 1:length(bases)) {
 
 	# Cross validation
 	for(k in 1:folds.num) {
-		#print(paste0("Fold ", k))
-		if(showProgress){pb$tick()}else{print(paste0("Fold ", k))}
+		cat(paste0("Fold ", k, "\n"))
 
 		if(folds.num == 1) {
-			if(length(bases.teste) > 0) {
+			if(length(bases.test) > 0) {
 				train.idx <- 1:(init.bound-1)
 				test.idx <- init.bound:nrow(dataset)
 			} else {

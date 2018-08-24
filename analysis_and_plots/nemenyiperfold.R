@@ -20,18 +20,18 @@ nemenyi <- data.frame(setNames(replicate(length(nem.names),numeric(n.nemenyi), s
 
 phis <- data.frame(ranger=c(0.3,0.5,0.4,0.3,0.5), svm=c(0.5,0.5,0.3,0.7,0.3))
 for(mt in mt.techs) {
-	print(mt)
+	cat(paste0(mt, "\n"))
 	for(tch in techs) {
-		print(tch)
+		cat(paste0(tch, "\n"))
 		indx <- 1
 		dataset.cont <- 1
 		for(b in seq(bases)) {
-			print(bases[b])
+			cat(paste0(bases[b], "\n"))
 			dataset <- read.csv(paste0(datasets.folder, "/", bases[b], ".csv"))
 			targets <- colnames(dataset)[(ncol(dataset)-n.targets[b]+1):ncol(dataset)]
 
 			for(k in seq(n.folds)) {
-				print(paste("Fold", k))
+				cat(paste0("Fold ", k, "\n"))
 				if(mt == "DSTARST") {
 					log <- read.csv(paste0(log.folder, "/", mt, "/output_logs/testing_final_logs/phi=", phis[dataset.cont,tch], "/", bases[b], "_",
 					tch, "_testing_final_predictions_fold", formatC(k, width=2, flag = "0"), ".csv"))
