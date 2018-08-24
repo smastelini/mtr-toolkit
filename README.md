@@ -74,7 +74,7 @@ mt.techs <- c("ST", "MTRS", "ERC", "DSTARST")
 must.compare <- TRUE
 # Whether to create a final table, comprising all the obtained results
 generate.final.table <- TRUE
-# Wheter to present the aRRMSE values of all methods in a table for easy comparison using statistical tests
+# Whether to present the aRRMSE values of all methods in a table for easy comparison using statistical tests
 generate.nemenyi.frame <- FALSE
 ###############################################################################
 ###############################################################################
