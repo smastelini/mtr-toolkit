@@ -32,8 +32,8 @@ for(i in 1:length(bases)) {
 	len.fold.eval <- round(nrow(dataset)/folds.num)
 
 	######Use a testing set
-	if(length(bases.teste) > 0 && folds.num == 1) {
-		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
+	if(length(bases.test) > 0 && folds.num == 1) {
+		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.test[i], ".csv"))
 		dataset.teste <- as.data.table(dataset.teste)
 		invisible(dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)])
 
@@ -48,12 +48,12 @@ for(i in 1:length(bases)) {
 	x <- dataset[,!targets[[i]], with = FALSE]
 	y <- dataset[,targets[[i]], with = FALSE]
 
-	print(bases[i])
+	cat(paste0(bases[i], "\n"))
 
 	for(j in 1:folds.num) {
-		print(paste("Fold Training:", j))
+		cat(paste0("Fold Training: ", j, "\n"))
 		if(folds.num == 1) {
-			if(length(bases.teste) > 0) {
+			if(length(bases.test) > 0) {
 				modelling.idx <- 1:(init.bound-1)
 				testing.idx <- init.bound:nrow(dataset)
 			} else {
@@ -123,7 +123,7 @@ for(i in 1:length(bases)) {
 		colnames(convergence.layers) <- c("folds/layers", targets[[i]])
 		convergence.tracking <- as.data.table(setNames(replicate(length(targets[[i]]), logical(0), simplify = F), targets[[i]]))
 
-		print("Tracking")
+		cat("Tracking\n")
 
 		# Training
 		converged <- rep(FALSE, n.targets[i])
@@ -153,7 +153,7 @@ for(i in 1:length(bases)) {
 		converged <- uncorr
 		rlayer <- 1
 		while(!all(converged)) {
-			print(paste("Layer", rlayer))
+			cat(paste0("Layer ", rlayer, "\n"))
 
 			for(t in targets[[i]]) {
 				if(!uncorr[t]) {
@@ -209,8 +209,8 @@ for(i in 1:length(bases)) {
 		max.layers.reached <- rep(FALSE, n.targets[i])
 		names(max.layers.reached) <- targets[[i]]
 
-		print("Final Modelling")
-		print("Layer 0")
+		cat("Final Modelling\n")
+		cat("Layer 0\n")
 
 		for(t in targets[[i]]) {
 			regressor <- train_(modelling.set.x, modelling.set.y[[t]], tech, targets[[i]])
@@ -227,7 +227,7 @@ for(i in 1:length(bases)) {
 		rlayer <- 1
 
 		while(!all(max.layers.reached)) {
-			print(paste("Layer", rlayer))
+			cat(paste0("Layer ", rlayer, "\n"))
 			for(t in targets[[i]]) {
 				if(convergence.tracking[rlayer+1][[t]]) {
 					chosen.t <- targets[[i]][rf.importance[[t]]]

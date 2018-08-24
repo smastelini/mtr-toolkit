@@ -123,15 +123,14 @@ train_ <- function(x, y, tech='svm', targets) {
 			train(x, y, trControl = trainControl(method="none"), method = "mlpML", tuneGrid=grid.mlp)$finalModel
 		},
 		pls={
-			if(ncol(x) < train.test$max.comp)
+			if(ncol(x) < train.test$comp.limit)
 				grid.pls <- data.frame(ncomp=ncol(x))
 			else
-				grid.pls <- data.frame(ncomp=train.test$max.comp)
+				grid.pls <- data.frame(ncomp=train.test$comp.limit)
 			train(x, y, trControl = trainControl(method="none"), method = "pls", tuneGrid=grid.pls)$finalModel
 		},
 		xgboost={
-			x <- as.matrix(x)
-			xgboost(x, y, nrounds = 100, early_stopping_rounds = 3, base_score = mean(y), silent = 1, print_every_n = 500, save_period = NULL)
+			xgboost(as.matrix(x), y, nrounds = 100, early_stopping_rounds = 3, base_score = mean(y), save_period = NULL, verbose = 0)
 		},
 		cart={
 			grid.cart <- data.frame(cp=0.01)
@@ -188,7 +187,7 @@ predict_ <- function(regressor, new.data, tech = 'svm', targets) {
 			predict(regressor, new.data, n.trees = 100)
 		},
 		mlp={
-			predict(regressor, new.data)
+			as.numeric(predict(regressor, new.data))
 		},
 		pls={
 			temp <- predict(regressor, new.data)
@@ -201,7 +200,7 @@ predict_ <- function(regressor, new.data, tech = 'svm', targets) {
 			predict(regressor, new.data)
 		},
 		ridge={
-			scale(as.matrix(new.data), center = regressor$xm, scale = regressor$scales)%*%regressor$coef + regressor$ym
+			as.numeric(scale(as.matrix(new.data), center = regressor$xm, scale = regressor$scales)%*%regressor$coef + regressor$ym)
 		},
 		lr={
 		  predict(regressor, new.data)

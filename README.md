@@ -54,7 +54,7 @@ dstars.phis <- c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 dstars.epsilons <- c(10^-2, 10^-3, 10^-4)
 
 # Determines external testing sets. This option must be used along the setting of folds.num to 1
-bases.teste <- NULL
+bases.test <- NULL
 
 # Determines the regression techniques to be used
 techs <- c("ranger", "svm")

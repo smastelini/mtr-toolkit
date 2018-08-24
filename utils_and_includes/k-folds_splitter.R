@@ -8,7 +8,7 @@ datasets <-  c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm
 
 source("utils_MT.R")
 
-print("Splitting")
+cat("Splitting\n")
 for(i in seq_along(datasets)) {
   dataset <- read.csv(paste0(datasets.folder, "/", datasets[i], ".csv"), stringsAsFactors = T)
   dataset <- remove.unique(dataset)
@@ -31,5 +31,5 @@ for(i in seq_along(datasets)) {
     write.csv(dataset[train.idx,], paste0(output.folder, "/", datasets[i], "_fold", formatC(k, width=2, flag="0"), "_train.csv"), row.names = F)
     write.csv(dataset[test.idx,], paste0(output.folder, "/", datasets[i], "_fold", formatC(k, width=2, flag="0"), "_test.csv"), row.names = F)
   }
-  print(datasets[i])
+  cat(paste0(datasets[i], "\n"))
 }

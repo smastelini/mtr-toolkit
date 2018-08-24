@@ -10,7 +10,7 @@ mins <- list()
 
 for (i in 1:length(bases)) {
   set.seed(exp.random.seeds[i])
-  print(bases[i])
+  cat(paste0(bases[i], "\n"))
 
 	dataset <- read.csv(paste0(datasets.folder, "/", bases[i], ".csv"))
 	dataset <- remove.unique(dataset)
@@ -33,8 +33,8 @@ for (i in 1:length(bases)) {
 	l.folds <- round(nrow(dataset)/folds.num)
 
   ######Use a testing set
-	if(length(bases.teste) > 0 && folds.num == 1) {
-		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.teste[i], ".csv"))
+	if(length(bases.test) > 0 && folds.num == 1) {
+		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.test[i], ".csv"))
 		dataset.teste <- as.data.table(dataset.teste)
 		invisible(dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)])
 
@@ -51,10 +51,10 @@ for (i in 1:length(bases)) {
 
 	# Cross validation Evaluation
 	for(k in 1:folds.num) {
-	  print(paste("Fold", k))
+	  cat(paste0("Fold ", k, "\n"))
 
 		if(folds.num == 1) {
-			if(length(bases.teste) > 0) {
+			if(length(bases.test) > 0) {
 				modelling.idx <- 1:(init.bound-1)
 				testing.idx <- init.bound:nrow(dataset)
 			} else {
@@ -75,13 +75,13 @@ for (i in 1:length(bases)) {
 
 		targets2rank <- targets[[i]]
 		for(r in 1:length(targets2rank)) { # Ranking targets
-		  print(paste("Target", r))
+		  cat(paste0("Target", r, "\n"))
 
 			l.errors <- matrix(data= 0, nrow=length(targets2rank), ncol=number.layers)
 			rownames(l.errors) <- targets2rank
 			colnames(l.errors) <- paste0("l", layers)
 
-			print("Tracking layers")
+			cat("Tracking layers\n")
 
 			for(m in 1:n.folds.tracking) {
 				if(n.folds.tracking == 1) {
@@ -130,7 +130,7 @@ for (i in 1:length(bases)) {
 				write.csv(tr.errors, paste0(output.dir.drs, "/output_logs/layers_errors/layers_errors_", bases[i], "_", tech, "_ef", formatC(k, width=2, flag="0"), "_step", r, "_tf", formatC(m, width=2, flag="0"), ".csv"))
 				l.errors <- l.errors + tr.errors
 			}
-			print("Done")
+			cat("Done\n")
 
 			#Normalize accounted errors
 			l.errors <- l.errors/n.folds.tracking

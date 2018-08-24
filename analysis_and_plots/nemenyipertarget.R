@@ -18,17 +18,17 @@ nem.names <- as.vector(outer(mt.techs, techs, paste, sep="."))
 nemenyi <- data.frame(setNames(replicate(length(nem.names),numeric(n.nemenyi), simplify = F),
 							nem.names))
 for(mt in mt.techs) {
-	print(mt)
+	cat(paste0(mt, "\n"))
 	for(tch in techs) {
-		print(tch)
+		cat(paste0(tch, "\n"))
 		indx <- 1
 		for(b in seq(bases)) {
-			print(bases[b])
+			cat(paste0(bases[b], "\n"))
 			dataset <- read.csv(paste0(datasets.folder, "/", bases[b], ".csv"))
 			targets <- colnames(dataset)[(ncol(dataset)-n.targets[b]+1):ncol(dataset)]
 
 			for(k in seq(n.folds)) {
-				print(paste("Fold", k))
+				cat(paste0("Fold ", k, "\n"))
 				log <- read.csv(paste0(log.folder, "/", mt, "/prediction_logs/", tch, "/predictions_",
 								mt, "_", bases[b], "_fold", formatC(k, width=2, flag = "0"), ".csv"))
 

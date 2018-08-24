@@ -15,10 +15,10 @@ nemenyi <- data.frame(setNames(replicate(length(nem.names),numeric(n.nemenyi), s
               nem.names))
 
 for(mt in compared.mt.techs) {
-  print(mt)
+  cat(paste0(mt, "\n"))
   indx <- 1
   for(b in seq(bases)) {
-    print(bases[b])
+    cat(paste0(bases[b], "\n"))
     for(k in seq(n.folds)) {
       if(mt == "ST")
         nemenyi[indx, mt] <- n.targets[b]
@@ -35,14 +35,14 @@ for(mt in compared.mt.techs) {
   }
 }
 
-print("MOTC")
+cat(paste0("MOTC", "\n"))
 for(tch in techs) {
-  print(tch)
+  cat(paste0(tch, "\n"))
   indx <- 1
   for(b in seq(bases)) {
-    print(bases[b])
+    cat(bases[b], "\n")
     for(k in seq(n.folds)) {
-      print(paste("Fold", k))
+      cat(paste0("Fold ", k, "\n"))
       target.count <- 0
       # Discount redundant leaf nodes
       leaf.cont <- 0

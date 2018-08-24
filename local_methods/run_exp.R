@@ -1,18 +1,30 @@
 rm(list = ls())
 suppressMessages(library(data.table))
+# SVM
 suppressMessages(library(e1071))
+# MLP
 suppressMessages(library(RSNNS))
 suppressMessages(library(plyr))
+# GBM
 suppressMessages(library(gbm))
+# PLS
 suppressMessages(library(pls))
+# CART
 suppressMessages(library(rpart))
+# RIDGE REGRESSION
 suppressMessages(library(MASS))
+# RF
 suppressMessages(library(randomForest))
+# XGBoost
 suppressMessages(library(xgboost))
+# Calling of multiple techniques
 suppressMessages(library(caret))
+# Auxiliary functions
 suppressMessages(library(BBmisc))
+# Auxiliary functions
 suppressMessages(library(permute))
-suppressMessages(library(kernlab))
+# suppressMessages(library(kernlab))
+# RF optimized
 suppressMessages(library(ranger))
 #Extra libs
 source("../utils_and_includes/utils_MT.R")
@@ -31,14 +43,14 @@ if(length(args) == 0) {
 }
 
 #Loads configuration file
-# source("config.R")
+# source("teste_config.R")
 source(args[1])
 
 # exp.random.seeds <- sample(99999, length(bases))
 exp.random.seeds <- rep(5465, length(bases))
 
-print("Generated random seeds:")
-print(exp.random.seeds)
+cat("Generated random seeds:\n")
+cat(paste0(paste(exp.random.seeds, collapse="-"), "\n"))
 
 #ProgressBar creation
 if(showProgress){
@@ -55,15 +67,20 @@ for(mt in mt.techs) {
 
 # Performs evaluation
 for(mt in mt.techs) {
-	print(mt)
+  cat("\n\n####################################\n\n")
+	cat(paste0("                ", mt))
+  cat("\n\n####################################\n\n")
   if(mt != "DSTARST") {
     for(tech in techs) {
+      cat("\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n")
+    	cat(paste0("               ", tech))
+      cat("\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n")
       source(paste0(mt, ".R"))
     }
   } else {
     prefix.folder.dstarst <- output.dir.dstarst
     for(dstars.delta in dstars.epsilons) {
-      print(paste0("Epsilon=", dstars.delta))
+      cat(paste0("Epsilon = ", dstars.delta, "\n"))
       output.dir.dstarst <- paste0(prefix.folder.dstarst, "_eps_", dstars.delta)
       for(tech in techs) {
         source("DSTARST.R")
