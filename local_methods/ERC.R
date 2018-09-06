@@ -122,7 +122,6 @@ for(i in 1:length(bases)) {
 			}
 
 			models[[actual.model]] <- list(pred.trn=pred.train, pred.tst=pred.test)
-			if(showProgress){pb$tick()}
 		}
 
 		#Prediction logs

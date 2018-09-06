@@ -103,7 +103,6 @@ for (i in 1:length(bases)) {
 
 				for(l in layers) {
 					for(t in targets2rank) {
-					  if(showProgress){pb$tick()}else{}
 						regressor <- train_(trX, trY[[t]], tech, targets2rank)
 
 						p.tr[,(paste(t, "pred", l, sep=".")) := predict_(regressor, trX, tech, targets2rank)]
