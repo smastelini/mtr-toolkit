@@ -110,7 +110,7 @@ train_ <- function(x, y, tech='svm', targets) {
 
 	regressor <- switch(tech,
 		svm={
-			svm(x,y,scale=FALSE)
+			svm(x,y)
 		},
 		rf={
 			randomForest(x,y)
