@@ -17,7 +17,7 @@ Currently, only local approaches are supported. The currently implemented method
 - MTSG: Multi-target Stacked Generalization (\*)
 - ESR: Ensemble of Stacked Regressors (\*)
 
-Currently supported regressors are (all the regression techniques are performed with their default parameters):
+The currently supported regressors are (all the regression techniques are performed with their default parameters):
 
 - ranger (*ranger* package implementation of Random Forest)
 - svm (Support Vector Machine -- using the rbf kernel)
