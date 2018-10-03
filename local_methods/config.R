@@ -17,8 +17,8 @@ techs <- c("ranger", "svm", "gbm", "xgboost", "lr", "ridge", "pls", "mlp", "cart
 
 folds.num <- 10
 
-datasets.folder <- "~/Desktop/mtr_datasets"
-output.prefix <- "~/OUTPUT_MTR2"
+datasets.folder <- "~/mtr_datasets"
+output.prefix <- "~/output_mtr"
 
 mt.techs <- c("ST", "SST", "ERC", "DSTARS", "DSTARST", "MTAS", "MTSG", "ESR", "MOTC", "ORC", "DRS")
 
