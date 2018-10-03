@@ -35,6 +35,7 @@ source("../utils_and_includes/utils_MT.R")
 n.folds.tracking <- 10
 # Used by both DSTARS* versions
 dstars.epsilon <- 0.0001
+dstars.phis <- c(0.4)
 
 #DRS -> Default
 number.layers <- 10
