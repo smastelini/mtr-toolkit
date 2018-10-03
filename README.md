@@ -37,7 +37,7 @@ Both SST (MTRS) and ERC were proposed by Spyromitros-Xioufis et al. (2016) and c
 \*\* Two versions of DSTARS are implemented:
 
 - DSTARS -> This version uses a single bootstrap sample when searching for the best regressor layer disposition. Therefore, it only uses the hyperparameter *'epsilon'* for the minimum expected value of error decrease when adding a new regressor.
-- DSTARST -> This version uses as internal k-fold Cross-validation for determining the best number of regressor layers. Hence, the hyperparameters *'phi'* and *'epsilon'* must be specified for selecting the regressor layers that contributed in at least *phi* percent of time, and the minimum amount of expected error decrease by adding a new regressor, respectively. Multiple values of *phi* and *epsilon* can be evaluated as it is shown next. We suggest using (*phi*, *epsilon*) = (0.4, 1e-4).
+- DSTARST -> This version uses as internal k-fold Cross-validation for determining the best number of regressor layers (by default, 10 folds are employed). Hence, the hyperparameters *'phi'* and *'epsilon'* must be specified for selecting the regressor layers that contributed in at least *phi* percent of time, and the minimum amount of expected error decrease by adding a new regressor, respectively. Multiple values of *phi* and *epsilon* can be evaluated as it is shown next. We suggest using (*phi*, *epsilon*) = (0.4, 1e-4).
 
 *I will add the corresponding papers for our methods ASAP (the ones that were already published).*
 
