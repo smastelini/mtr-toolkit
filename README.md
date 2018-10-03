@@ -28,7 +28,7 @@ The currently supported regressors are (all the regression techniques are perfor
 - pls (Partial Least Squares)
 - ridge (Ridge Regression)
 - lr (Linear Regression)
-- rf (*randomForest*'s implementation of Random Forest)
+- rf (*randomForest* package implementation of Random Forest)
 
 Both SST (MTRS) and ERC were proposed by Spyromitros-Xioufis et al. (2016) and can be found in:
 
