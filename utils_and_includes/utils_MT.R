@@ -275,3 +275,18 @@ getImportance <- function(x, y, method = "rf_imp") {
 
 	return(timportance)
 }
+
+get.normalization.params <- function(dataset, method="min-max") {
+	params <- list()
+
+	if(method == "min-max") {
+		params[["center"]] <- as.numeric(dataset[, lapply(.SD, min)])
+		params[["scale"]] <- as.numeric(dataset[, lapply(.SD, max)]) - params[["center"]]
+	} else if (method == "z-score") {
+		params[["center"]] <- as.numeric(dataset[, lapply(.SD, mean)])
+		params[["scale"]] <- as.numeric(dataset[, lapply(.SD, sd)])
+	}
+
+	names(params[["center"]]) <- names(params[["scale"]]) <- colnames(dataset)
+	return(params)
+}

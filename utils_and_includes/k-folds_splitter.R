@@ -3,6 +3,7 @@ rseed <- 5465
 datasets.folder <- "~/MEGA/MT_datasets"
 output.folder <- "~/MEGA/K-fold_Split"
 n.folds <- 10
+norm.method <- "min-max"
 
 datasets <-  c("atp1d","atp7d","oes97","oes10","rf1","rf2","scm1d","scm20d","edm","sf1","sf2","jura","wq","enb","slump","andro","osales","scpf")
 
@@ -17,10 +18,11 @@ for(i in seq_along(datasets)) {
 
   dataset <- as.data.frame(sapply(dataset, function(x) as.numeric(x)))
 
-  maxs <- apply(dataset, 2, max)
-  mins <- apply(dataset, 2, min)
+  norm.params <- get.normalization.params(dataset, norm.method)
+  centers <- norm.params[["center"]]
+  scales <- norm.params[["scale"]]
 
-	dataset <- as.data.frame(scale(dataset, center = mins, scale = maxs - mins))
+	dataset <- as.data.frame(scale(dataset, center = centers, scale = scales))
 
   len.fold <- round(nrow(dataset)/n.folds)
 

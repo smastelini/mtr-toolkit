@@ -5,8 +5,8 @@ dir.create(paste0(output.dir.drs, "/output_logs/testing_logs"), showWarnings = F
 dir.create(paste0(output.dir.drs, "/output_logs/layers_errors"), showWarnings = FALSE, recursive = TRUE)
 
 targets <- list()
-maxs <- list()
-mins <- list()
+centers <- list()
+scales <- list()
 
 for (i in 1:length(bases)) {
   set.seed(exp.random.seeds[i])
@@ -23,26 +23,25 @@ for (i in 1:length(bases)) {
 	dataset <- as.data.table(dataset)
 	invisible(dataset[, names(dataset) := lapply(.SD, as.numeric)])
 
-	maxs[[i]] <- as.numeric(dataset[, lapply(.SD, max)])
-	names(maxs[[i]]) <- colnames(dataset)
-	mins[[i]] <- as.numeric(dataset[, lapply(.SD, min)])
-	names(mins[[i]]) <- colnames(dataset)
+	norm.params <- get.normalization.params(dataset, norm.method)
+	centers[[i]] <- norm.params[["center"]]
+	scales[[i]] <- norm.params[["scale"]]
 
-	dataset <- as.data.table(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
+	dataset <- as.data.table(scale(dataset, center = centers[[i]], scale = scales[[i]]))
 
 	l.folds <- round(nrow(dataset)/folds.num)
 
   ######Use a testing set
 	if(length(bases.test) > 0 && folds.num == 1) {
-		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.test[i], ".csv"))
-		dataset.teste <- as.data.table(dataset.teste)
-		invisible(dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)])
+		dataset.test <- read.csv(paste0(datasets.folder, "/", bases.test[i], ".csv"))
+		dataset.test <- as.data.table(dataset.test[, colnames(dataset)])
+		invisible(dataset.test[, names(dataset.test) := lapply(.SD, as.numeric)])
 
-		dataset.teste <- as.data.table(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
+		dataset.test <- as.data.table(scale(dataset.test, center = centers[[i]], scale = scales[[i]]))
 		init.bound <- nrow(dataset) + 1
 
-		dataset <- rbindlist(list(dataset, dataset.teste))
-		sample.names <- c(sample.names, rownames(dataset.teste))
+		dataset <- rbindlist(list(dataset, dataset.test))
+		sample.names <- c(sample.names, rownames(dataset.test))
 	}
 	#######
 
@@ -189,6 +188,7 @@ setwd(paste0(output.dir.drs, "/output_logs"))
 for (i in 1:length(bases)) {
 	names.perf.log <- c("aCC", "ARE", "MSE", "aRMSE", "aRRMSE")
 	names.perf.log <- c(names.perf.log, paste("R2", targets[[i]], sep="."))
+	names.perf.log <- c(names.perf.log, paste("RRMSE", targets[[i]], sep="."))
 	names.perf.log <- c(names.perf.log, paste("RMSE", targets[[i]], sep="."))
 
 	performance.log <- data.frame(algorithm=character(0), as.data.frame(setNames(replicate(length(names.perf.log),numeric(0),
@@ -202,10 +202,11 @@ for (i in 1:length(bases)) {
 			logt <- logt[,-c(1)]
 			save.the.date <- if(rank == 1) logt else cbind(save.the.date, logt)
 
-			r <- (maxs[[i]][colnames(logt)[1]]-mins[[i]][colnames(logt)[1]])*logt[,colnames(logt)[1]] + mins[[i]][colnames(logt)[1]]
-			p <- (maxs[[i]][colnames(logt)[1]]-mins[[i]][colnames(logt)[1]])*logt[,colnames(logt)[2]] + mins[[i]][colnames(logt)[1]]
+			r <- scales[[i]][colnames(logt)[1]]*logt[, colnames(logt)[1]] + centers[[i]][colnames(logt)[1]]
+			p <- scales[[i]][colnames(logt)[1]]*logt[, colnames(logt)[2]] + centers[[i]][colnames(logt)[1]]
 
 			folds.log[nrow(folds.log)+1, paste0("RMSE.", colnames(logt)[1])] <- RMSE(r, p)
+			folds.log[nrow(folds.log), paste0("RRMSE.", colnames(logt)[1])] <- RRMSE(r, p)
 			folds.log[nrow(folds.log), paste0("R2.", colnames(logt)[1])] <- summary(lm(logt[,colnames(logt)[1]] ~ logt[,colnames(logt)[2]]))$r.squared
 		}
 

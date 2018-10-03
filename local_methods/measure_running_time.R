@@ -33,7 +33,7 @@ source("../utils_and_includes/utils_MT.R")
 # Used only by DSTARST
 n.folds.tracking <- 10
 # Used by both DSTARS* versions
-dstars.delta <- 0.0001
+dstars.epsilon <- 0.0001
 
 #DRS -> Default
 number.layers <- 10
@@ -56,7 +56,8 @@ output.prefix <- "~/mastelini/running_time_R"
 
 ###########################
 
-exp.random.seeds <- rep(5465, length(bases.iter))
+# exp.random.seeds <- rep(5465, length(bases.iter))
+exp.random.seeds <- sample(99999, length(bases))
 
 cat("Generated random seeds:\n")
 cat(paste0(paste(exp.random.seeds, collapse="-"), "\n"))

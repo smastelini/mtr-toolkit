@@ -4,8 +4,8 @@ dir.create(paste0(output.dir.mtsg, "/out_imp_assessment/",tech), showWarnings = 
 stacked.regressors <- techs
 
 targets <- list()
-maxs <- list()
-mins <- list()
+centers <- list()
+scales <- list()
 
 for(i in 1:length(bases)) {
 	set.seed(exp.random.seeds[i])
@@ -21,26 +21,25 @@ for(i in 1:length(bases)) {
 	dataset <- as.data.table(dataset)
 	invisible(dataset[, names(dataset) := lapply(.SD, as.numeric)])
 
-	maxs[[i]] <- as.numeric(dataset[, lapply(.SD, max)])
-	names(maxs[[i]]) <- colnames(dataset)
-	mins[[i]] <- as.numeric(dataset[, lapply(.SD, min)])
-	names(mins[[i]]) <- colnames(dataset)
+	norm.params <- get.normalization.params(dataset, norm.method)
+	centers[[i]] <- norm.params[["center"]]
+	scales[[i]] <- norm.params[["scale"]]
 
-	dataset <- as.data.table(scale(dataset, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
+	dataset <- as.data.table(scale(dataset, center = centers[[i]], scale = scales[[i]]))
 
 	len.fold <- round(nrow(dataset)/folds.num)
 
 	######Use a testing set
 	if(length(bases.test) > 0 && folds.num == 1) {
-		dataset.teste <- read.csv(paste0(datasets.folder, "/", bases.test[i], ".csv"))
-		dataset.teste <- as.data.table(dataset.teste)
-		invisible(dataset.teste[, names(dataset.teste) := lapply(.SD, as.numeric)])
+		dataset.test <- read.csv(paste0(datasets.folder, "/", bases.test[i], ".csv"))
+		dataset.test <- as.data.table(dataset.test[, colnames(dataset)])
+		invisible(dataset.test[, names(dataset.test) := lapply(.SD, as.numeric)])
 
-		dataset.teste <- as.data.table(scale(dataset.teste, center = mins[[i]], scale = maxs[[i]] - mins[[i]]))
+		dataset.test <- as.data.table(scale(dataset.test, center = centers[[i]], scale = scales[[i]]))
 		init.bound <- nrow(dataset) + 1
 
-		dataset <- rbindlist(list(dataset, dataset.teste))
-		sample.names <- c(sample.names, rownames(dataset.teste))
+		dataset <- rbindlist(list(dataset, dataset.test))
+		sample.names <- c(sample.names, rownames(dataset.test))
 	}
 	#######
 
@@ -151,7 +150,7 @@ setwd(paste0(output.dir.mtsg, "/prediction_logs"))
 i <<- 1
 
 lapply(bases, function(b) {
-	names.perf.log <- c("aCC", "ARE", "MSE", "aRMSE", "aRRMSE", paste0("R2.", targets[[i]]), paste0("RMSE.", targets[[i]]))
+	names.perf.log <- c("aCC", "ARE", "MSE", "aRMSE", "aRRMSE", paste0("R2.", targets[[i]]), paste0("RRMSE.", targets[[i]]), paste0("RMSE.", targets[[i]]))
 	performance.log <<- data.frame(algorithm=character(0), as.data.frame(setNames(replicate(length(names.perf.log),numeric(0),
 												simplify = F), names.perf.log)), stringsAsFactors = FALSE)
 
@@ -169,10 +168,11 @@ lapply(bases, function(b) {
 		for(t in targets[[i]]) {
 			folds.log[nrow(folds.log), paste0("R2.", t)] <<- summary(lm(log[,t] ~ log[, paste0(t, ".pred")]))$r.squared
 
-			r <- (maxs[[i]][t]-mins[[i]][t])*log[,t] + mins[[i]][t]
-			p <- (maxs[[i]][t]-mins[[i]][t])*log[,paste0(t, ".pred")] + mins[[i]][t]
+			r <- scales[[i]][t]*log[, t] + centers[[i]][t]
+			p <- scales[[i]][t]*log[, paste0(t, ".pred")] + centers[[i]][t]
 
 			folds.log[nrow(folds.log), paste0("RMSE.", t)] <<- RMSE(r, p)
+			folds.log[nrow(folds.log), paste0("RRMSE.", t)] <<- RRMSE(r, p)
 		}
 	})
 	performance.log[nrow(performance.log)+1, 1] <<- tech

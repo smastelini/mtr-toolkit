@@ -32,7 +32,7 @@ source("../utils_and_includes/utils_MT.R")
 # Used only by DSTARST
 n.folds.tracking <- 10
 # Used by both DSTARS* versions
-dstars.delta <- 0.0001
+dstars.epsilon <- 0.0001
 
 #DRS -> Default
 number.layers <- 10
@@ -68,16 +68,18 @@ for(mt in mt.techs) {
   if(mt != "DSTARST") {
     for(tech in techs) {
       cat("\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n")
-    	cat(paste0("               ", tech))
+    	cat(paste0("             ", mt, "-", tech))
       cat("\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n")
       source(paste0(mt, ".R"))
     }
   } else {
     prefix.folder.dstarst <- output.dir.dstarst
-    for(dstars.delta in dstars.epsilons) {
-      cat(paste0("Epsilon = ", dstars.delta, "\n"))
-      output.dir.dstarst <- paste0(prefix.folder.dstarst, "_eps_", dstars.delta)
+    for(dstars.epsilon in dstars.epsilons) {
+      output.dir.dstarst <- paste0(prefix.folder.dstarst, "_eps_", dstars.epsilon)
       for(tech in techs) {
+        cat("\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n")
+        cat(paste0("  ", mt, "-", tech, "-> Epsilon = ", dstars.epsilon))
+        cat("\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n")
         source("DSTARST.R")
       }
     }
@@ -112,7 +114,7 @@ if(must.compare) {
 }
 
 if(generate.final.table) {
-	col.num <- 2*max(n.targets) + 6
+	col.num <- 3*max(n.targets) + 6
 	tabela <- data.frame(matrix(nrow=0, ncol=col.num), stringsAsFactors = F)
 	b <- 1
 	for(i in bases) {
