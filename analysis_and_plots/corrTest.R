@@ -3,6 +3,7 @@ rm(list = ls())
 library(reshape2)
 library(ggplot2)
 library(randomForest)
+detach("package:ranger", unload=TRUE)
 
 dataset.folder <- "~/Desktop"
 out.path <- "~/Desktop"
