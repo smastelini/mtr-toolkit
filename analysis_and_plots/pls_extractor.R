@@ -4,6 +4,8 @@ library(mixOmics)
 
 include.testing.set <- TRUE
 
+n.targets <- 10
+
 datasets.folder <- "~/Documents/mtr-fluorescencia/dataset/"
 dataset <-
   read.csv(
@@ -40,7 +42,7 @@ for (num.comp in comprimentos) {
 }
 
 if (include.testing.set == TRUE) {
-  pls.m <- pls(X[, ], Y[, ], ncomp = num.comp)
+  pls.m <- pls(X[, ], Y[, ], ncomp = max(comprimentos))
   
   dataset <-
     read.csv(
