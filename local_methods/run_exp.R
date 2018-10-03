@@ -29,7 +29,7 @@ suppressMessages(library(ranger))
 #Extra libs
 source("../utils_and_includes/utils_MT.R")
 # DSTARST and DSTARS -> Defaults
-# Used only by DSTARST
+# Used only by DSTARST and DRS
 n.folds.tracking <- 10
 # Used by both DSTARS* versions
 dstars.epsilon <- 0.0001
