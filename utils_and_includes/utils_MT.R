@@ -178,7 +178,7 @@ predict_ <- function(regressor, new.data, tech = 'svm', targets) {
 
 	predicted <- switch(tech,
 		svm={
-			predict.svm(regressor, data.matrix(new.data))
+			predict(regressor, data.matrix(new.data))
 		},
 		rf={
 			predict(regressor, new.data)
