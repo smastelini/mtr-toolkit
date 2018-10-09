@@ -110,7 +110,7 @@ train_ <- function(x, y, tech='svm', targets) {
 
 	regressor <- switch(tech,
 		svm={
-			svm(x,y)
+			svm(data.matrix(x),y,scale=FALSE)
 		},
 		rf={
 			randomForest(x,y)
@@ -178,7 +178,7 @@ predict_ <- function(regressor, new.data, tech = 'svm', targets) {
 
 	predicted <- switch(tech,
 		svm={
-			predict(regressor, new.data)
+			predict.svm(regressor, data.matrix(new.data))
 		},
 		rf={
 			predict(regressor, new.data)
@@ -285,6 +285,9 @@ get.normalization.params <- function(dataset, method="min-max") {
 	} else if (method == "z-score") {
 		params[["center"]] <- as.numeric(dataset[, lapply(.SD, mean)])
 		params[["scale"]] <- as.numeric(dataset[, lapply(.SD, sd)])
+	} else if (method == "none") {
+		params[["center"]] <- rep(0.0, ncol(dataset))
+		params[["scale"]] <- rep(1.0, ncol(dataset))
 	}
 
 	names(params[["center"]]) <- names(params[["scale"]]) <- colnames(dataset)
