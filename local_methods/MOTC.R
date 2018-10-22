@@ -28,7 +28,7 @@ getChainingTree <- function(imp, tar, hb, max.level) {
 			if(is.null(chain$hb))
 				rel.idx <- which(chain$imp[target,] > 0)
 			else
-				rel.idx <- which(chain$imp[target,] >= chain$imp[target, max.i] - chain$hb)
+				rel.idx <- which(chain$imp[target,]/chain$imp[target, max.i] >= 1 - chain$hb)
 			rel <- colnames(chain$imp)[rel.idx]
 
 			next.t <- node.id + 1
@@ -240,8 +240,7 @@ for(i in 1:length(bases)) {
 		prediction.log <- as.data.table(setNames(replicate(length(t.names),numeric(nrow(x.test)), simplify = F), t.names))
 		t.cont <- 1
 
-		motc.max.depth <- round(ifelse(n.targets[i] >= 6, log2(n.targets[i]), 2*log2(n.targets[i])))
-		# motc.max.depth <- round(ifelse(n.targets[i] > 6, 2, 3))
+		motc.max.depth <- round(ifelse(n.targets[i] >= 6, log2(n.targets[i]), 2*log2(n.targets[i])))		
 
 		mp <- new.env()
 		mp$tr <- list()
@@ -258,7 +257,7 @@ for(i in 1:length(bases)) {
 		ord <- order(sum.imps)
 		t.ordered <- targets[[i]][ord]
 
-		hb <- hoeffding.bound(n.targets[i] * nrow(x.train), range = max(timportance), delta = delta)
+		hb <- hoeffding.bound(nrow(x.train), range = 1, delta = delta)
 		# hb <- NULL
 
 		for(t in t.ordered) {
