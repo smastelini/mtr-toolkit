@@ -65,10 +65,10 @@ for(i in seq(length(bases))) {
 			train.idx <- setdiff(1:nrow(dataset), test.idx)
 		}
 
-		x.train <- x[train.idx]
+		x.train <- remove.unique(x[train.idx])
 		y.train <- y[train.idx]
 
-		x.test <- x[test.idx]
+		x.test <- x[test.idx, names(x.train), with = FALSE]
 		y.test <- y[test.idx]
 
 		base.predictions.tr <- data.table(matrix(nrow=nrow(x.train), ncol=n.targets[i] * len.ensemble))
@@ -84,9 +84,10 @@ for(i in seq(length(bases))) {
 			cat(paste0(t, "\n"))
 			for(m in seq(len.ensemble)) {
 				bootstrap.ids <- sample(nrow(x.train), replace=TRUE)
-				regressor <- train_(x.train[bootstrap.ids], y.train[bootstrap.ids, t, with=FALSE][[1]], tech, targets[[i]])
-				set(base.predictions.tr, NULL, paste(paste0("M", m), t, sep="."), predict_(regressor, x.train, tech, targets[[i]]))
-				set(base.predictions.ts, NULL, paste(paste0("M", m), t, sep="."), predict_(regressor, x.test, tech, targets[[i]]))
+				x.bootstrap <- remove.unique(x.train[bootstrap.ids])
+				regressor <- train_(x.bootstrap, y.train[bootstrap.ids, t, with=FALSE][[1]], tech, targets[[i]])
+				set(base.predictions.tr, NULL, paste(paste0("M", m), t, sep="."), predict_(regressor, x.train[, names(x.bootstrap), with = FALSE], tech, targets[[i]]))
+				set(base.predictions.ts, NULL, paste(paste0("M", m), t, sep="."), predict_(regressor, x.test[, names(x.bootstrap), with = FALSE], tech, targets[[i]]))
 			}
 		}
 

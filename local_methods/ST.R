@@ -67,10 +67,10 @@ for(i in 1:length(bases)) {
 			train.idx <- setdiff(1:nrow(dataset), test.idx)
 		}
 
-		x.train <- x[train.idx]
+		x.train <- remove.unique(x[train.idx])
 		y.train <- y[train.idx]
 
-		x.test <- x[test.idx]
+		x.test <- x[test.idx, names(x.train), with = FALSE]
 		y.test <- y[test.idx]
 
 		prediction.log <- as.data.table(setNames(replicate(length(col.names.targets),numeric(nrow(x.test)), simplify = F),

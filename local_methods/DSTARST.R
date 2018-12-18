@@ -91,9 +91,10 @@ for(i in 1:length(bases)) {
 			predictions.validation[[k]] <- modelling.set.y[validation.idx]
 
 			for(t in targets[[i]]) {
-				regressor <- train_(modelling.set.x[training.idx], modelling.set.y[training.idx][[t]], tech, targets[[i]])
-				predictions.training[[k]][, (paste(0,t,sep=".")) := predict_(regressor, modelling.set.x[training.idx], tech, targets[[i]])]
-				predictions.validation[[k]][, (paste(0,t,sep=".")) := predict_(regressor, modelling.set.x[validation.idx], tech, targets[[i]])]
+				mod.data.train <- remove.unique(modelling.set.x[training.idx])
+				regressor <- train_(mod.data.train, modelling.set.y[training.idx][[t]], tech, targets[[i]])
+				predictions.training[[k]][, (paste(0,t,sep=".")) := predict_(regressor, modelling.set.x[training.idx, names(mod.data.train), with = FALSE], tech, targets[[i]])]
+				predictions.validation[[k]][, (paste(0,t,sep=".")) := predict_(regressor, modelling.set.x[validation.idx, names(mod.data.train), with = FALSE], tech, targets[[i]])]
 			}
 
 			pimp[validation.idx] <- predictions.validation[[k]]
@@ -166,8 +167,8 @@ for(i in 1:length(bases)) {
 
 				for(t in targets[[i]]) {
 					if(!uncorr[t]) {
-						tck.tra <- modelling.set.x[training.idx]
-						tck.val <- modelling.set.x[validation.idx]
+						tck.tra <- remove.unique(modelling.set.x[training.idx])
+						tck.val <- modelling.set.x[validation.idx, names(tck.tra), with = FALSE]
 
 						chosen.t <- targets[[i]][rf.importance[[t]]]
 
@@ -230,6 +231,8 @@ for(i in 1:length(bases)) {
 			names(max.layers.reached) <- targets[[i]]
 
 			cat("Layer 0\n")
+			modelling.set.x <- remove.unique(modelling.set.x)
+			testing.set.x <- testing.set.x[, names(testing.set.x), with = FALSE]
 
 			for(t in targets[[i]]) {
 				regressor <- train_(modelling.set.x, modelling.set.y[[t]], tech, targets[[i]])
@@ -249,8 +252,8 @@ for(i in 1:length(bases)) {
 				cat(paste0("Layer ", rlayer, "\n"))
 				for(t in targets[[i]]) {
 					if(convergence.tracking_[rlayer+1][[t]]) {
-						modelling.set.x_ <- x[modelling.idx]
-						testing.set.x_ <- x[testing.idx]
+						modelling.set.x_ <- remove.unique(x[modelling.idx])
+						testing.set.x_ <- x[testing.idx, names(modelling.set.x_), with = FALSE]
 						chosen.t <- targets[[i]][rf.importance[[t]]]
 
 						modelling.set.x_[,(chosen.t) := predictions.modelling[, paste(chosen.layers[chosen.t], chosen.t, sep="."), with = F]]

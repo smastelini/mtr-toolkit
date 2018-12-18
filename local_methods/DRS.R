@@ -65,9 +65,9 @@ for (i in 1:length(bases)) {
 			modelling.idx <- setdiff(1:nrow(dataset), testing.idx)
 		}
 
-		moX <- X[modelling.idx]
+		moX <- remove.unique(X[modelling.idx])
 		moY <- Y[modelling.idx]
-		teX <- X[testing.idx]
+		teX <- X[testing.idx, names(moX), with = FALSE]
 		teY <- Y[testing.idx]
 
 		lt.folds <- round(nrow(moX)/n.folds.tracking)
@@ -91,10 +91,10 @@ for (i in 1:length(bases)) {
 					training.idx <- setdiff(1:nrow(moX), validation.idx)
 				}
 
-				trX <- moX[training.idx]
+				trX <- remove.unique(moX[training.idx])
 				trY <- moY[training.idx]
 
-				vaX <- moX[validation.idx]
+				vaX <- moX[validation.idx, names(trX), with = FALSE]
 				vaY <- moY[validation.idx]
 
 				p.tr <- moY[training.idx]
@@ -139,8 +139,8 @@ for (i in 1:length(bases)) {
 
 			# Deepening for the "easiest" target
 
-			iset.mo <- X[modelling.idx]
-			iset.te <- X[testing.idx]
+			iset.mo <- remove.unique(X[modelling.idx])
+			iset.te <- X[testing.idx, names(iset.mo), with = FALSE]
 
 			p.mo <- Y[modelling.idx]
 			p.te <- Y[testing.idx]

@@ -66,22 +66,22 @@ for(i in 1:length(bases)) {
 
 		modelling.names <- sample.names[modelling.idx]
 
-		modelling.set.x <- x[modelling.idx]
+		modelling.set.x <- remove.unique(x[modelling.idx])
 		modelling.set.y <- y[modelling.idx]
 
 		testing.names <- sample.names[testing.idx]
 
-		testing.set.x <- x[testing.idx]
+		testing.set.x <- x[testing.idx, names(modelling.set.x), with = FALSE]
 		testing.set.y <- y[testing.idx]
 
 		# Bootstrap training and validation sets definition
 		bootstrap.idx <- sample(length(modelling.idx), replace=TRUE)
-		x.itb <- modelling.set.x[bootstrap.idx]
+		x.itb <- remove.unique(modelling.set.x[bootstrap.idx])
 		y.itb <- modelling.set.y[bootstrap.idx]
 
-		oob.idx <- unique(bootstrap.idx)
+		oob.idx <- setdiff(1:length(modelling.idx), unique(bootstrap.idx))
 
-		x.oob <- modelling.set.x[oob.idx]
+		x.oob <- modelling.set.x[oob.idx, names(x.itb), with = FALSE]
 		y.oob <- modelling.set.y[oob.idx]
 
 		predictions.training <- list()
