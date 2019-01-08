@@ -106,7 +106,7 @@ for(i in 1:length(bases)) {
 
 		cont <- 1
 		for(k in targets[[i]]) {
-			rf.aux <- randomForest::randomForest((pimp[,paste(0,targets[[i]],sep="."), with = FALSE]), pimp[[k]], importance = TRUE)
+			rf.aux <- randomForest::randomForest((pimp[, paste(0,targets[[i]],sep="."), with = FALSE]), pimp[[k]], importance = TRUE)
 			imp.aux <- randomForest::importance(rf.aux, type = 1)
 			imp.aux[imp.aux < 0] <- 0
 
@@ -172,8 +172,8 @@ for(i in 1:length(bases)) {
 
 						chosen.t <- targets[[i]][rf.importance[[t]]]
 
-						tck.tra[,(chosen.t) := predictions.training[[k]][,paste(convergence.layers[k,chosen.t, with = FALSE], chosen.t,sep="."), with = FALSE]]
-						tck.val[,(chosen.t) := predictions.validation[[k]][,paste(convergence.layers[k,chosen.t, , with = FALSE], chosen.t,sep="."), with = FALSE]]
+						tck.tra[,(chosen.t) := predictions.training[[k]][, paste(convergence.layers[k,chosen.t, with = FALSE], chosen.t,sep="."), with = FALSE]]
+						tck.val[,(chosen.t) := predictions.validation[[k]][, paste(convergence.layers[k,chosen.t, , with = FALSE], chosen.t,sep="."), with = FALSE]]
 
 						regressor <- train_(tck.tra, modelling.set.y[training.idx][[t]], tech, targets[[i]])
 						predictions.training[[k]][, (paste(rlayer,t,sep=".")) := predict_(regressor, tck.tra, tech, targets[[i]])]
@@ -190,7 +190,7 @@ for(i in 1:length(bases)) {
 						}
 					}
 				}
-        if(!all(converged)) {
+				if(!all(converged)) {
 					if(rlayer + 1 > nrow(convergence.tracking)) {
 						convergence.tracking <- rbindlist(list(convergence.tracking, as.list(as.numeric(!converged))))
 					} else {
@@ -232,7 +232,7 @@ for(i in 1:length(bases)) {
 
 			cat("Layer 0\n")
 			modelling.set.x <- remove.unique(modelling.set.x)
-			testing.set.x <- testing.set.x[, names(testing.set.x), with = FALSE]
+			testing.set.x <- testing.set.x[, names(modelling.set.x), with = FALSE]
 
 			for(t in targets[[i]]) {
 				regressor <- train_(modelling.set.x, modelling.set.y[[t]], tech, targets[[i]])
